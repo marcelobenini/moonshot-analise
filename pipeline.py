@@ -21,7 +21,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import analise, bi, cluster, consultoria, oportunidade, produto, score
+from moonshot import analise, bi, cluster, consultoria, geo, oportunidade, produto, score
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -160,6 +160,10 @@ def main():
                   'metodo_casamento'):
             base[c] = None
 
+    base = geo.enriquecer(base)
+    print(f'Geografia: {int(base["uf"].notna().sum())} com UF, '
+          f'{int(base["municipio"].notna().sum())} com municipio')
+
     # ---- Etapa 1 ---------------------------------------------------------
     base, evid = analise.classificar_base(base, CONFIG['max_categorias_por_resposta'])
     rank = analise.ranking_dores(base, evid)
@@ -187,8 +191,10 @@ def main():
     mat_urgencia = oportunidade.matriz_urgencia(base)
     pools = oportunidade.pools_por_linha(base)
     sobrep, pares = oportunidade.sobreposicao_linhas(base)
-    geo = oportunidade.geografia(base)
+    geo_uf = oportunidade.geografia(base)
     tab_nb = oportunidade.nabeauty(base)
+    tab_estados = geo.tabela_estados(base)
+    tab_municipios = geo.tabela_municipios(base)
 
     # ---- frentes do produto e recorte geografico -------------------------
     cob_frentes = produto.cobertura_frentes(base)
@@ -205,7 +211,8 @@ def main():
     ident = [] if args.sem_nomes else ['nome', 'email', 'telefone']
     cols_base = (['id_aluna', 'origem'] + ident + [
         'empresa', 'setor', 'nicho_grupo', 'nicho_fonte', 'vende_para_o_setor',
-        'localizacao', 'pais', 'uf', 'atua_fora_br',
+        'localizacao', 'pais', 'uf', 'uf_fonte', 'municipio', 'municipio_fonte',
+        'atua_fora_br',
         'tem_acompanhamento', 'consultor', 'programa', 'engajamento', 'em_risco',
         'resultado_relatado', 'consultorias_feitas', 'situacao', 'potenciais',
         'fat_mes_consultor', 'fat_delta', 'fat_razao', 'fat_confirmado_igual',
@@ -280,7 +287,9 @@ def main():
         'Oportunidade_Linhas': pools,
         'Venda_Cruzada': sobrep,
         'Venda_Cruzada_Pares': pares,
-        'Geografia_UF': geo,
+        'Geografia_UF': geo_uf,
+        'Mapa_Estados': tab_estados,
+        'Mapa_Municipios': tab_municipios,
         'Ecossistema_Nabeauty': tab_nb,
         'Frentes_Produto': cob_frentes,
         'Lacunas_Funcionalidade': tab_lacunas,
@@ -310,17 +319,22 @@ def main():
                           com_nomes=not args.sem_nomes,
                           extras={'matriz_urgencia': mat_urgencia, 'pools_linhas': pools,
                                   'venda_cruzada': sobrep, 'pares_linhas': pares,
-                                  'geografia': geo, 'nabeauty': tab_nb,
+                                  'geografia': geo_uf, 'estados': tab_estados,
+                                  'municipios': tab_municipios, 'nabeauty': tab_nb,
                                   'engajamento': tab_engaj, 'risco': tab_risco,
                                   'confronto_faturamento': tab_confronto})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')
 
+    geometria = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             'moonshot', 'br_estados.json')
     modelo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bi_template.html')
     if os.path.exists(modelo):
         with open(modelo, encoding='utf-8') as fh:
             html = fh.read()
         with open(json_bi, encoding='utf-8') as fh:
             html = html.replace('/*__DADOS__*/', fh.read())
+        with open(geometria, encoding='utf-8') as fh:
+            html = html.replace('/*__MAPA__*/', fh.read())
         pagina = os.path.join(args.saida, 'bi_moonshot.html')
         with open(pagina, 'w', encoding='utf-8') as fh:
             fh.write(html)

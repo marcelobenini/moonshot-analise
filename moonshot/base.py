@@ -219,18 +219,49 @@ UF_CIDADES = {
 }
 
 
+# Faixas de CEP por UF (primeiros 5 digitos). O CEP e o identificador mais
+# confiavel de estado no formulario: a aluna erra a sigla, escreve so o bairro
+# ou cita a cidade de outro estado, mas o CEP nao mente.
+CEP_UF = [
+    (1000, 19999, 'SP'), (20000, 28999, 'RJ'), (29000, 29999, 'ES'),
+    (30000, 39999, 'MG'), (40000, 48999, 'BA'), (49000, 49999, 'SE'),
+    (50000, 56999, 'PE'), (57000, 57999, 'AL'), (58000, 58999, 'PB'),
+    (59000, 59999, 'RN'), (60000, 63999, 'CE'), (64000, 64999, 'PI'),
+    (65000, 65999, 'MA'), (66000, 68899, 'PA'), (68900, 68999, 'AP'),
+    (69000, 69299, 'AM'), (69300, 69399, 'RR'), (69400, 69899, 'AM'),
+    (69900, 69999, 'AC'), (70000, 72799, 'DF'), (72800, 72999, 'GO'),
+    (73000, 73699, 'DF'), (73700, 76799, 'GO'), (76800, 76999, 'RO'),
+    (77000, 77999, 'TO'), (78000, 78899, 'MT'), (78900, 78999, 'RO'),
+    (79000, 79999, 'MS'), (80000, 87999, 'PR'), (88000, 89999, 'SC'),
+    (90000, 99999, 'RS'),
+]
+
+
+def _uf_por_cep(texto):
+    """UF a partir do CEP brasileiro (NNNNN-NNN ou 8 digitos seguidos)."""
+    for m in re.finditer(r'\b(\d{5})-?\d{3}\b', texto):
+        prefixo = int(m.group(1))
+        for ini, fim, uf in CEP_UF:
+            if ini <= prefixo <= fim:
+                return uf
+    return None
+
+
 def _uf(texto, pais):
     """UF brasileira deduzida de localizacao + endereco. None fora do Brasil."""
     if pais != 'Brasil' or not texto:
-        return None
+        return None, None
+    porcep = _uf_por_cep(texto)
+    if porcep:
+        return porcep, 'CEP'
     for cidade, sigla in UF_CIDADES.items():
         if cidade in texto:
-            return sigla
+            return sigla, 'cidade nomeada'
     # A sigla costuma fechar o endereco ("... - Zona Sul - SP"); lemos de tras.
     for m in reversed(re.findall(r'[\s,/\-–]([a-z]{2})\b', ' ' + texto)):
         if m in UF_SIGLAS:
-            return m.upper()
-    return None
+            return m.upper(), 'sigla no texto'
+    return None, None
 
 
 def _pais(texto):
@@ -311,7 +342,9 @@ def carregar(caminho, origem, ano_ref, fx, teto_plausivel):
         .agg(' '.join, axis=1).map(norm).str.contains(RX_FORNECEDOR, regex=True)
     fonte_local = (out['localizacao'].fillna('') + ' | ' + out['endereco'].fillna('')).map(norm)
     out['pais'] = fonte_local.map(_pais)
-    out['uf'] = [_uf(t, p) for t, p in zip(fonte_local, out['pais'])]
+    ufs = [_uf(t, p) for t, p in zip(fonte_local, out['pais'])]
+    out['uf'] = [u[0] for u in ufs]
+    out['uf_fonte'] = [u[1] for u in ufs]
     out['atua_fora_br'] = out['pais'] != 'Brasil' 
     out['processos_mapeados'] = out['processos'].map(_sim_nao)
     out['tem_orcamento_anual'] = out['orcamento'].map(_sim_nao)

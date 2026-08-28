@@ -11,6 +11,7 @@
   --accent:#c2185b; --accent-soft:#fce7ef; --accent-ink:#fffafb;
   --s1:#c2185b; --s2:#d98324; --s3:#1565c0;
   --good:#0b8a5a; --warn:#c98500; --crit:#c62828;
+  --map-lo:#fdeef4; --map-hi:#a3134b; --map-linha:#e8cdd8;
   --shadow:0 1px 2px rgba(120,40,70,.05),0 10px 30px -14px rgba(120,40,70,.20);
 }
 @media (prefers-color-scheme:dark){
@@ -22,6 +23,7 @@
     --accent:#f48fb1; --accent-soft:#33202a; --accent-ink:#1c1418;
     --s1:#e0507f; --s2:#c08a20; --s3:#4b91e8;
     --good:#3aab7e; --warn:#d69a2a; --crit:#e06a6a;
+    --map-lo:#2c1a22; --map-hi:#f06a9a; --map-linha:#4a3038;
     --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
   }
 }
@@ -33,6 +35,7 @@
   --accent:#f48fb1; --accent-soft:#33202a; --accent-ink:#1c1418;
   --s1:#e0507f; --s2:#c08a20; --s3:#4b91e8;
   --good:#3aab7e; --warn:#d69a2a; --crit:#e06a6a;
+  --map-lo:#2c1a22; --map-hi:#f06a9a; --map-linha:#4a3038;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
@@ -169,6 +172,42 @@ td.wrapok{white-space:normal; min-width:210px}
 .quad{border-left:3px solid var(--line-strong); padding:8px 12px; background:var(--panel); border-radius:0 7px 7px 0}
 .quad b{font-size:12.5px; display:block; margin-bottom:2px}
 .quad span{font-size:12px; color:var(--ink-2); line-height:1.5}
+/* ---------- mapa ---------- */
+.mapa-grid{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:22px; align-items:start}
+.mapa-wrap{position:relative; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:10px}
+.mapa-wrap svg{width:100%; height:auto}
+.uf{stroke:var(--map-linha); stroke-width:1; cursor:pointer; transition:opacity .12s}
+.uf:hover{stroke:var(--accent); stroke-width:2.2}
+.uf[aria-pressed=true]{stroke:var(--accent); stroke-width:2.6}
+.uf.vazio{fill:var(--panel-2)!important; cursor:default}
+.uf.vazio:hover{stroke:var(--map-linha); stroke-width:1}
+.uf-lab{font-family:"IBM Plex Mono",monospace; font-size:15px; pointer-events:none; font-weight:500}
+.mapa-legenda{display:flex; align-items:center; gap:10px; margin-top:12px; font-size:12px; color:var(--ink-2)}
+.rampa{flex:1; height:10px; border-radius:5px; max-width:230px;
+  background:linear-gradient(90deg,var(--map-lo),var(--map-hi))}
+.painel-uf{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface)}
+.painel-uf header{background:var(--accent-soft); padding:13px 16px; border-bottom:1px solid var(--line);
+  display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.painel-uf header h4{margin:0; font-family:Fraunces,serif; font-size:17px; font-weight:600}
+.painel-uf header button{border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2);
+  font-family:"IBM Plex Mono",monospace; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer}
+.painel-uf header button:hover{color:var(--ink)}
+.painel-uf .corpo{max-height:520px; overflow-y:auto}
+.painel-uf .resumo{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line)}
+.painel-uf .resumo div{background:var(--surface); padding:10px 14px}
+.painel-uf .resumo b{display:block; font-family:"IBM Plex Mono",monospace; font-size:19px;
+  color:var(--accent); font-variant-numeric:tabular-nums}
+.painel-uf .resumo span{font-size:11px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace;
+  letter-spacing:.08em; text-transform:uppercase}
+.cid{display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--line);
+  font-size:13.5px}
+.cid:last-child{border-bottom:0}
+.cid .n{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--ink-2);
+  font-size:12.5px; margin-left:auto; white-space:nowrap}
+.cid .bar{flex:0 0 74px; height:7px; border-radius:4px; background:var(--panel-2); overflow:hidden}
+.cid .bar i{display:block; height:100%; background:var(--accent); border-radius:4px}
+@media (max-width:860px){.mapa-grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 @media (max-width:640px){
   .wrap,.top-inner{padding-left:16px; padding-right:16px}
@@ -191,6 +230,38 @@ td.wrapok{white-space:normal; min-width:210px}
 
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
+
+  <section id="sec-mapa">
+    <div class="sec-head">
+      <h2>Onde elas estão</h2>
+      <div class="seg" id="seg-mapa" role="group" aria-label="Métrica do mapa">
+        <button data-v="alunas" aria-pressed="true">Alunas</button>
+        <button data-v="classeA" aria-pressed="false">Classe A</button>
+        <button data-v="risco" aria-pressed="false">Risco</button>
+        <button data-v="fat" aria-pressed="false">Faturamento</button>
+      </div>
+    </div>
+    <p class="sec-note">Clique num estado para ver a distribuição por cidade. A intensidade segue a
+      métrica escolhida; estado sem aluna no recorte fica neutro.</p>
+    <div class="mapa-grid">
+      <div>
+        <div class="mapa-wrap" id="mapa"></div>
+        <div class="mapa-legenda">
+          <span id="leg-lo" class="mono"></span><span class="rampa"></span><span id="leg-hi" class="mono"></span>
+          <span id="leg-nome"></span>
+        </div>
+      </div>
+      <div class="painel-uf">
+        <header>
+          <h4 id="uf-titulo">Brasil</h4>
+          <button id="uf-voltar" hidden>Voltar ao país</button>
+        </header>
+        <div class="resumo" id="uf-resumo"></div>
+        <div class="corpo" id="uf-lista"></div>
+      </div>
+    </div>
+    <p class="foot" id="mapa-nota"></p>
+  </section>
 
   <section id="sec-dores">
     <div class="sec-head">
@@ -336,6 +407,7 @@ td.wrapok{white-space:normal; min-width:210px}
 
 <script>
 const DADOS = /*__DADOS__*/;
+const MAPA = /*__MAPA__*/;
 const A = DADOS.alunas, META = DADOS.meta, REF = DADOS.referencia;
 const $ = s => document.querySelector(s);
 
@@ -362,7 +434,8 @@ const FILTROS = [
   { id: 'engajamento', lab: 'Engajamento', campo: 'engajamento',
     rot: v => (META.rotulos_engajamento || {})[v] || v },
 ];
-const estado = { painel: 'esp', ordenar: 'score_oportunidade', desc: true };
+const estado = { painel: 'esp', metricaMapa: 'alunas',
+                 ordenar: 'score_oportunidade', desc: true };
 FILTROS.forEach(f => estado[f.id] = '');
 
 function montarFiltros() {
@@ -713,6 +786,7 @@ function render() {
     ` Base deste painel: ${comDor.length} alunas com ao menos uma dor classificada.`;
   barrasH($('#ch-dores'), itensDor, comDor.length);
 
+  renderMapa(f);
   renderOportunidades(f);
   renderConsultoria(f);
 
@@ -979,6 +1053,123 @@ function renderOportunidades(f) {
   ], nb.sort((a, b) => (b.fat_brl || 0) - (a.fat_brl || 0)));
 }
 
+/* ---------- Mapa do Brasil ---------- */
+const METRICAS = {
+  alunas:  { rot: 'Alunas',      calc: g => g.length, fmt: v => v,
+             leg: 'nº de alunas no estado' },
+  classeA: { rot: 'Classe A',    calc: g => g.filter(a => a.classe === 'A').length, fmt: v => v,
+             leg: 'alunas classe A (score ≥ 60)' },
+  risco:   { rot: 'Risco',       leg: 'taxa de risco entre quem tem relato do consultor',
+             calc: g => { const c = g.filter(a => a.engajamento); return c.length >= 5
+               ? 100 * c.filter(a => a.em_risco).length / c.length : null; },
+             fmt: v => v == null ? '—' : v.toFixed(0) + '%' },
+  fat:     { rot: 'Faturamento', leg: 'faturamento mensal mediano',
+             calc: g => mediana(g.map(a => a.fat_brl)), fmt: v => brl(v) },
+};
+let ufSelecionada = null;
+
+function renderMapa(f) {
+  const m = METRICAS[estado.metricaMapa];
+  const porUF = {};
+  f.filter(a => a.uf).forEach(a => (porUF[a.uf] = porUF[a.uf] || []).push(a));
+  const valores = {};
+  Object.entries(porUF).forEach(([uf, g]) => valores[uf] = m.calc(g));
+  const nums = Object.values(valores).filter(v => v != null && !isNaN(v));
+  const max = nums.length ? Math.max(...nums) : 1;
+  const min = nums.length ? Math.min(...nums) : 0;
+  /* SP concentra a base inteira (409 contra 47 do segundo). Numa escala linear
+     todos os outros estados virariam a mesma mancha clara. A raiz quadrada
+     preserva a ordem e devolve contraste ao meio da distribuicao — e a legenda
+     diz que a escala nao e linear, porque comparar areas coloridas de cabeca
+     assumindo linearidade seria erro de leitura. */
+  const naoLinear = estado.metricaMapa === 'alunas' || estado.metricaMapa === 'classeA';
+  const escala = v => naoLinear ? Math.sqrt(Math.max(0, v)) : v;
+
+  const vb = MAPA._viewBox;
+  const partes = [`<svg viewBox="${vb}" role="img" aria-label="Mapa do Brasil por estado">`];
+  Object.keys(MAPA).filter(k => !k.startsWith('_')).forEach(uf => {
+    const geo = MAPA[uf], g = porUF[uf] || [], v = valores[uf];
+    const vazio = !g.length || v == null;
+    const t = (max === min) ? (vazio ? 0 : 1)
+      : (escala(v) - escala(min)) / (escala(max) - escala(min));
+    const fill = vazio ? 'var(--panel-2)'
+      : `color-mix(in oklab, var(--map-hi) ${(12 + 88 * t).toFixed(0)}%, var(--map-lo))`;
+    const titulo = vazio ? `${geo.nome}: nenhuma aluna no recorte`
+      : `${geo.nome}: ${g.length} aluna(s) · ${m.rot} ${m.fmt(v)}`;
+    partes.push(`<path class="uf${vazio ? ' vazio' : ''}" data-uf="${uf}" d="${geo.d}"
+      fill="${fill}" tabindex="${vazio ? -1 : 0}" role="button"
+      aria-pressed="${ufSelecionada === uf}"><title>${titulo}</title></path>`);
+  });
+  Object.keys(MAPA).filter(k => !k.startsWith('_')).forEach(uf => {
+    const geo = MAPA[uf], g = porUF[uf] || [], v = valores[uf];
+    if (!g.length) return;
+    const t = (max === min) ? 1 : (v == null ? 0
+      : (escala(v) - escala(min)) / (escala(max) - escala(min)));
+    partes.push(`<text class="uf-lab" x="${geo.cx}" y="${geo.cy}" text-anchor="middle"
+      fill="${t > 0.55 ? 'var(--surface)' : 'var(--ink)'}">${uf}</text>`);
+  });
+  partes.push('</svg>');
+  $('#mapa').innerHTML = partes.join('');
+
+  $('#leg-lo').textContent = nums.length ? m.fmt(min) : '—';
+  $('#leg-hi').textContent = nums.length ? m.fmt(max) : '—';
+  $('#leg-nome').textContent = m.leg + (naoLinear && nums.length > 2
+    ? ' · escala de raiz (SP concentra a base e achataria o resto)' : '');
+
+  $('#mapa').querySelectorAll('.uf:not(.vazio)').forEach(el => {
+    const abrir = () => { ufSelecionada = ufSelecionada === el.dataset.uf ? null : el.dataset.uf;
+                          render(); };
+    el.addEventListener('click', abrir);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+  });
+
+  /* painel lateral */
+  const alvo = ufSelecionada ? (porUF[ufSelecionada] || []) : f.filter(a => a.uf);
+  const semUF = f.filter(a => !a.uf).length;
+  const semMun = alvo.filter(a => !a.municipio).length;
+  $('#uf-titulo').textContent = ufSelecionada
+    ? (MAPA[ufSelecionada]?.nome || ufSelecionada) : 'Brasil — todos os estados';
+  $('#uf-voltar').hidden = !ufSelecionada;
+  $('#uf-resumo').innerHTML = `
+    <div><b>${alvo.length}</b><span>alunas</span></div>
+    <div><b>${brl(mediana(alvo.map(a => a.fat_brl)))}</b><span>faturamento mediano</span></div>
+    <div><b>${alvo.filter(a => a.classe === 'A').length}</b><span>classe A</span></div>
+    <div><b>${alvo.filter(a => a.em_risco).length}</b><span>em risco</span></div>`;
+
+  if (ufSelecionada) {
+    const porCidade = {};
+    alvo.filter(a => a.municipio).forEach(a =>
+      (porCidade[a.municipio] = porCidade[a.municipio] || []).push(a));
+    const linhas = Object.entries(porCidade).sort((a, b) => b[1].length - a[1].length);
+    const maxC = linhas.length ? linhas[0][1].length : 1;
+    $('#uf-lista').innerHTML = linhas.length
+      ? linhas.map(([c, g]) => `<div class="cid">
+          <div class="bar"><i style="width:${(100 * g.length / maxC).toFixed(0)}%"></i></div>
+          <span>${c}</span>
+          <span class="n">${g.length} · ${brl(mediana(g.map(a => a.fat_brl)))}</span></div>`).join('')
+        + (semMun ? `<div class="cid"><span style="color:var(--ink-3)">
+            ${semMun} sem cidade identificada</span></div>` : '')
+      : `<div class="cid"><span style="color:var(--ink-3)">Nenhuma cidade identificada
+          neste estado — as ${alvo.length} alunas têm só a UF.</span></div>`;
+  } else {
+    const linhas = Object.entries(porUF).sort((a, b) => b[1].length - a[1].length);
+    const maxU = linhas.length ? linhas[0][1].length : 1;
+    $('#uf-lista').innerHTML = linhas.map(([uf, g]) => `<div class="cid">
+        <div class="bar"><i style="width:${(100 * g.length / maxU).toFixed(0)}%"></i></div>
+        <span><b>${uf}</b> ${MAPA[uf]?.nome || ''}</span>
+        <span class="n">${g.length} · ${brl(mediana(g.map(a => a.fat_brl)))}</span></div>`).join('')
+      || '<div class="cid"><span style="color:var(--ink-3)">Nenhuma aluna com estado no recorte.</span></div>';
+  }
+
+  const comUF = f.filter(a => a.uf).length, comMun = f.filter(a => a.municipio).length;
+  $('#mapa-nota').innerHTML = `O mapa mostra as ${comUF} alunas cujo estado foi identificado, ` +
+    `de ${f.length} no recorte. <b>${semUF} ficaram de fora</b>: atuam fora do Brasil ou não deram ` +
+    `endereço reconhecível. O estado vem do CEP quando existe (mais confiável), senão da cidade ` +
+    `nomeada ou da sigla no texto. A cidade foi identificada em ${comMun} — as que faltam ` +
+    `escreveram só o bairro, e por isso aparecem no estado mas não na lista de cidades.`;
+}
+
 /* ---------- Realidade x inferência ---------- */
 const COR_ENGAJ = {
   ganho: 'var(--good)', engajada: 'var(--s1)', neutro: 'var(--ink-3)',
@@ -1087,6 +1278,14 @@ function renderConsultoria(f) {
         String(r.situacao).slice(0, 190).replace(/</g, '&lt;')}${String(r.situacao).length > 190 ? '…' : ''}</span>` : '—' },
   ], risco.slice(0, 120));
 }
+
+$('#seg-mapa').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  estado.metricaMapa = b.dataset.v;
+  [...e.currentTarget.children].forEach(x => x.setAttribute('aria-pressed', x === b));
+  render();
+});
+$('#uf-voltar').addEventListener('click', () => { ufSelecionada = null; render(); });
 
 $('#seg-painel').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;

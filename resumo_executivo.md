@@ -237,6 +237,30 @@ Testei se a divergência entre dor declarada e inferida prediria desengajamento 
 
 ---
 
+## 6d. Onde as alunas estão — mapa e concentração
+
+A cobertura geográfica subiu de 82% para **95,2% das brasileiras (636 de 668)** ao usar a faixa de CEP para identificar o estado: o CEP resolveu 524 casos, contra 71 por cidade nomeada e 41 por sigla solta no texto. É o identificador mais confiável do formulário — a aluna erra a sigla e escreve só o bairro, mas o CEP não mente.
+
+O município foi identificado em **581 alunas**, comparando o texto contra a lista dos 5.565 municípios do IBGE e restringindo a busca à UF já detectada (242 nomes de cidade se repetem entre estados; sem a restrição, "Bom Jesus" casaria com qualquer um dos onze).
+
+| UF | Alunas | Fatur. mediano | Classe A |
+|---|---|---|---|
+| **SP** | **409** | R$ 15.010 | 48 |
+| DF | 47 | R$ 20.015 | — |
+| PR | 39 | R$ 20.000 | — |
+| RJ | 34 | R$ 20.000 | — |
+| MG | 21 | R$ 25.000 | — |
+| SC | 14 | R$ 30.000 | — |
+| RS | 11 | R$ 20.000 | — |
+
+**A concentração é mais extrema do que a leitura anterior indicava: SP tem 409 alunas — 64% de todas as brasileiras localizadas, e mais que os outros 26 estados somados.** Dentro de SP, a capital tem 136, seguida de Guarulhos (17), Barueri (13), Campinas (12) e Sorocaba (10).
+
+Isso resolve a questão do presencial de forma bem mais direta do que antes: **São Paulo capital sozinha comporta turmas recorrentes**, a região metropolitana adiciona outras cinco praças com 5 a 17 alunas cada, e fora do eixo SP–DF–PR–RJ nenhum estado sustenta uma turma sem juntar gente de longe.
+
+O mapa está no BI, com quatro métricas (alunas, classe A, taxa de risco, faturamento mediano) e detalhamento por cidade ao clicar no estado.
+
+---
+
 ## 7. Portugal — a hipótese não se sustenta como está
 
 27 alunas atuam em Portugal (identificadas por localização e endereço, com nome de rua descartado e CEP de 4 dígitos como confirmação). O contraste, em números absolutos porque os sub-recortes são pequenos:

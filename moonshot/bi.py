@@ -44,7 +44,7 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
     pronta eles seriam decorativos. Os agregados vao junto so como referencia
     (o estado sem filtro), para conferir contra o Excel.
     """
-    campos = ['id_aluna', 'origem', 'pais', 'uf', 'nicho_grupo', 'classe', 'score_oportunidade',
+    campos = ['id_aluna', 'origem', 'pais', 'uf', 'municipio', 'nicho_grupo', 'classe', 'score_oportunidade',
               'produto_ancora', 'fat_brl', 'equipe_n', 'equipe_total', 'porte_equipe',
               'faixa_faturamento', 'anos_operacao', 'dor_declarada_1', 'dor_inferida_1',
               'justificativa_inferencia', 'processos_mapeados', 'usa_sistema_gestao',

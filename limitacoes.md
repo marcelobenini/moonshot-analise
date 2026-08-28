@@ -131,11 +131,25 @@ Consequências práticas:
 
 A identificação do ecossistema Nabeauty vem de busca textual por "nabeauty"/"na beauty" em setor, empresa e produtos. Isso significa: **pode haver franqueada que não citou a marca** (e ficou de fora) e pode haver homônimo ou aluna que apenas menciona a marca sem vínculo (e entrou indevidamente). Confira contra o cadastro real de franqueadas antes de usar a lista comercialmente. Duas das 14 não têm faturamento classificável e uma tem R$ 1.000/mês, o que sugere vínculos de naturezas diferentes no mesmo balde.
 
-## 18. A UF cobre 548 das 668 brasileiras
+## 18. Geografia: 95,2% de UF, 82% de município, e o que sobra
 
-A unidade federativa é deduzida de texto livre (cidade nomeada, ou sigla no fim do endereço). **120 brasileiras ficaram sem UF** — escreveram só o bairro, ou nada reconhecível. A tabela de geografia, portanto, subestima todos os estados, e subestima de forma desigual: quem escreve endereço completo tende a ser diferente de quem escreve "atendo em casa".
+A UF é deduzida em três passadas, nesta ordem: **faixa de CEP** (524 casos, a mais confiável), **cidade nomeada** (71) e **sigla solta no texto** (41). Cobertura: 636 de 668 brasileiras.
 
-O corte de 10 alunas para "turma presencial fecha" é arbitrário — escolhi-o para ser conservador, não porque haja evidência de que 10 seja o mínimo viável de uma turma. Ajuste ao seu modelo.
+**32 brasileiras ficaram sem estado** — escreveram só o bairro ou nada reconhecível. Some-se a elas as 40 que atuam fora do Brasil, e o mapa deixa 72 das 708 de fora. Essa exclusão não é aleatória: quem escreve endereço completo tende a ser diferente de quem escreve "atendo em casa".
+
+O município saiu em **581 alunas**, casando o texto contra os 5.565 municípios do IBGE com a busca restrita à UF. As **55 que têm estado mas não cidade** são majoritariamente bairros da capital paulista escritos sem o nome da cidade ("Freguesia do Ó", "Itaquera", "Parque São Lucas"). Elas aparecem no mapa como SP mas não entram na lista de cidades — **o número de São Paulo capital, portanto, está subestimado.**
+
+Riscos residuais do casamento de município: nomes curtos e palavras comuns em endereço ("Centro", "Bonito", "Boa Vista", "Porto") foram excluídos da busca para evitar falso positivo, o que também derruba as alunas que realmente moram nessas cidades. Auditoria manual de 16 casamentos: 16 corretos.
+
+O corte de 10 alunas para "turma presencial fecha" é arbitrário — escolhi-o para ser conservador, não porque haja evidência de que 10 seja o mínimo viável. Ajuste ao seu modelo.
+
+## 18b. A escala de cor do mapa não é linear
+
+Nas métricas de contagem (alunas, classe A) a intensidade usa **raiz quadrada**, não proporção direta. Sem isso, SP com 409 alunas contra 47 do segundo colocado transformaria os outros 26 estados numa mancha clara indistinguível.
+
+A consequência é que **comparar duas cores do mapa a olho não dá a razão entre os números**: um estado com o dobro da cor não tem o dobro de alunas. A legenda avisa, e a lista ao lado do mapa traz sempre o número absoluto — use a lista para comparar, o mapa para localizar.
+
+Na métrica de risco, estados com menos de 5 alunas com relato ficam neutros de propósito: uma taxa sobre 2 pessoas coloriria o mapa com ruído.
 
 ## 19. A matriz de urgência é a parte mais sólida, com uma ressalva
 
