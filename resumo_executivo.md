@@ -59,27 +59,51 @@ De 404 alunas com as duas leituras disponíveis, **258 (64%) têm um gargalo nos
 
 ---
 
-## 4. As 3 oportunidades de produto mais claras
+## 4. As 7 frentes do sistema × demanda declarada
 
-### A. Gestão de equipe e produtividade — bolsão de ~320 alunas
-Reter/liderar (195) + contratar (125) nas perguntas espontâneas. É a maior dor declarada **e** o ponto onde o dado mostra falha estrutural (produtividade plana). Produto: rotina de gestão, metas por pessoa, painel de produtividade individual. Entre as 139 alunas classe A, **73 têm recrutamento/equipe como produto-âncora** — o maior grupo de longe.
+Cada frente é alimentada por categorias de dor. A tabela mostra quantas das 708 alunas citam ao menos uma delas.
 
-### B. Visibilidade financeira e operacional — bolsão de ~180 a 240 alunas
-179 faturam ≥ R$ 30 mil sem processos mapeados; 132 têm controle financeiro como gargalo inferido. Produto: fluxo de caixa e DRE automáticos, painel em tempo real. **É a frente com maior distância entre dor real e dor percebida** — exige vender diagnóstico antes de vender ferramenta.
+| # | Frente do sistema | Alunas | % | Classe A | É a porta de entrada de |
+|---|---|---|---|---|---|
+| 1 | **Administração de pessoas e processos** | 422 | 59,6% | 97 | 160 |
+| 2 | **Tráfego orgânico e pago automatizado** | 368 | 52,0% | 61 | 144 |
+| 3 | **Atendimento automatizado** | 267 | 37,7% | 55 | 105 |
+| 4 | **Controle financeiro** | 250 | 35,3% | 50 | 192 |
+| 5 | **Agente comercial de IA** | 185 | 26,1% | 38 | 21 |
+| 6 | **Recrutamento e seleção** | 162 | 22,9% | 32 | 37 |
+| 7 | **Bot de dúvidas do nicho** | 37 | 5,2% | 11 | 0 |
 
-### C. Capacidade da profissional solo — bolsão de 213 alunas (32 prioritárias)
-213 alunas trabalham sozinhas. Destas, **32 faturam ≥ R$ 20 mil/mês sozinhas** (mediana R$ 30 mil): são o teto do próprio negócio. Produto: agendamento e atendimento automatizados, que devolvem horas sem exigir contratação. Ticket menor, ciclo de venda mais curto, e o caso em que a IA substitui trabalho de forma mais direta.
+Duas leituras importam mais que a ordem:
+
+**"Alunas" e "porta de entrada" não coincidem.** Tráfego tem demanda ampla (368) mas é âncora de 144; controle financeiro tem demanda menor (250) e é âncora de 192. Amplitude de demanda não é o mesmo que motivo para comprar — a frente financeira ganha porque combina dor declarada com faturamento alto, que é onde o contrato fecha.
+
+**O bot de dúvidas é a única frente sem base de dor.** Nenhuma das 13 categorias validadas o alimenta. Medi a demanda por um tema à parte (dúvida sobre técnica, protocolo, produto, regulamentação): **37 alunas, 5,2%**. É a frente mais fraca do sistema em evidência de demanda — o que não significa que não sirva, e sim que não sustenta uma venda sozinha.
 
 ---
 
-## 5. Alerta sobre o produto proposto
+## 5. Lacunas: onde produto e dor não se encontram
 
-O sistema descrito no briefing tem **tráfego integrado à Meta** e **atendimento** como frentes principais. Na base filtrada:
+### Dor sem frente — Mentalidade, 210 alunas (29,7%)
+Medo, insegurança, procrastinação, crenças que travam a dona. É a 4ª maior dor da base e **nenhuma frente do sistema atende**. Não deve virar software: é território de mentoria. Mas é o maior bolsão de dor sem produto, e explica por que o programa vende mesmo quando a ferramenta não resolve.
 
-- **Tráfego pago: 10 alunas (1,9%)** nas perguntas espontâneas — última colocação entre as 13 categorias. 55 (8,2%) no ranking consolidado.
-- **Atendimento e agenda: 16 alunas (3,1%)** espontâneas, penúltima. 42 (6,3%) no consolidado.
+### Funcionalidade candidata #1 — Metas, indicadores e decisão: 139 alunas (19,6%)
+Minerei os termos que aparecem no texto das alunas e **não** são cobertos por nenhuma das 13 categorias. Um tema coerente saltou: "tomar decisões" (63), "visão estratégica" (31), "metas claras" (21), "longo prazo" (50), "clareza dos números".
 
-Apenas 114 alunas (16,1%) mencionam fazer tráfego pago hoje, e 148 (20,9%) usam algum sistema de gestão. Isso **não** significa que a frente de tráfego não tenha valor — significa que ela não abre porta. A porta é gestão de equipe e visibilidade financeira; tráfego é expansão de contrato, não entrada.
+Elas não querem só que o sistema execute — querem saber **se está dando certo**. O briefing já prevê dashboard em tempo real *para os consultores acompanharem*. A oportunidade é virar esse painel para a aluna: metas por pessoa, indicadores do mês, alerta de desvio. É a funcionalidade nova com maior demanda medida, e reaproveita infraestrutura que o sistema já terá.
+
+### Funcionalidade candidata #2 — Dúvida técnica do nicho: 37 alunas (5,2%)
+Protocolo, vigilância sanitária, escolha de produto, fornecedor. É a base do bot de dúvidas, e é pequena. Sugere escopo enxuto: um assistente de conformidade e protocolo embutido, não um produto próprio.
+
+### Descartada — Precificação por procedimento: 3 alunas
+Aparece, mas com N absoluto de 3. Não sustenta funcionalidade. Registrada para não voltar como palpite.
+
+---
+
+## 5b. A ordem de ataque
+
+Nas perguntas espontâneas, **tráfego pago é a 13ª de 13 (10 alunas, 1,9%)** e atendimento/agenda a 12ª (16, 3,1%). No consolidado sobem para 8,2% e 6,3%. Só 114 alunas (16,1%) fazem tráfego pago hoje e 148 (20,9%) usam sistema de gestão.
+
+A frente de tráfego tem demanda ampla quando se soma captação e conteúdo (368 alunas) — mas quase ninguém nomeia **anúncio** como sua dor. A porta é gestão de equipe e visibilidade financeira; tráfego entra depois, dentro de um contrato já aberto.
 
 ---
 
@@ -89,22 +113,54 @@ Score 0–100 (capacidade de pagar 30, complexidade operacional 25, aderência d
 
 | # | ID | Aluna | Empresa | Score | Fatur./mês | Equipe | Porta de entrada |
 |---|---|---|---|---|---|---|---|
-| 1 | A0041 | Looyse Ribeiro | Looyse Beauty | 87,0 | R$ 52.500 | 9 | Recrutamento |
-| 2 | A0174 | Franciele Caroline Siqueira | Franciele Siqueira Clinic | 85,5 | R$ 150.000 | 6 | Recrutamento |
-| 3 | A0073 | Jehan | Dona Nita Esmalteria | 85,0 | R$ 70.000 | 18 | Recrutamento |
-| 4 | A0202 | Paulo Cesar do Amaral | Modena CliniQ Estética | 84,8 | R$ 42.000 | 6 | Recrutamento |
-| 5 | A0445 | Rebecca Rebelo Cabral | Nabeauty Belém | 83,8 | R$ 50.000 | 5 | Atendimento |
-| 6 | A0421 | Silvia Mara Silva França | Silvia França Excelência | 83,8 | R$ 200.000 | 5 | Financeiro |
-| 7 | A0502 | Camila Alencar Gonzalez | Studio B | 82,8 | R$ 80.070 | 6 | Atendimento |
-| 8 | A0438 | Luciana Pereira | Nabeauty São José dos Campos | 82,5 | R$ 60.000 | 7 | Recrutamento |
-| 9 | A0352 | Ariela Rocha Soares | Luv Studio | 80,2 | R$ 171.006 | 13 | Recrutamento |
-| 10 | A0088 | Rosianni Viana | Ateliê do Cabelo | 80,2 | R$ 100.000 | 6 | Recrutamento |
+| 1 | A0041 | Looyse Ribeiro | Looyse Beauty | 84,5 | R$ 52.500 | 9 | Recrutamento |
+| 2 | A0073 | Jehan | Dona Nita Esmalteria | 82,5 | R$ 70.000 | 18 | Financeiro |
+| 3 | A0154 | Giselle Gomes | GG Hair Salon | 81,8 | R$ 90.070 | 5 | Financeiro |
+| 4 | A0502 | Camila Alencar Gonzalez | Studio B | 80,2 | R$ 80.070 | 6 | Financeiro |
+| 5 | A0110 | Dayse Rodrigues de Sousa | Clínica Dayse Andrade | 79,5 | R$ 43.000 | 7 | Atendimento |
+| 6 | A0445 | Rebecca Rebelo Cabral | Nabeauty Belém | 78,8 | R$ 50.000 | 5 | Financeiro |
+| 7 | A0174 | Franciele Caroline Siqueira | Franciele Siqueira Clinic | 78,0 | R$ 150.000 | 6 | Financeiro |
+| 8 | A0088 | Rosianni Viana | Ateliê do Cabelo | 77,8 | R$ 100.000 | 6 | Atendimento |
+| 9 | A0051 | Isabelle Mendes | Villa Prime Estética Avançada | 77,2 | R$ 230.000 | 27 | Financeiro |
+| 10 | A0280 | Poliana Zanchet Giordani | Salão Oficina do Cabelo | 77,2 | R$ 75.000 | 16 | Recrutamento |
 
-**Classe A: 139 alunas** (score ≥ 60), faturamento mediano R$ 56 mil, 7 pessoas. Classe B: 302. Classe C: 227. Sem score: 40 (38 por não ter dor classificável).
+**Classe A: 109 alunas** (score ≥ 60), faturamento mediano R$ 60 mil, 7 pessoas. Classe B: 287. Classe C: 272. Sem score: 40 (38 por não ter dor classificável).
+
+Entre as 109 classe A, a porta de entrada mais comum é **controle financeiro (39)**, seguida de pessoas e processos (31), recrutamento (14), atendimento (13), tráfego (10) e agente comercial (2).
 
 ---
 
-## 7. O filtro de nicho não mudou nenhuma conclusão
+## 7. Portugal — a hipótese não se sustenta como está
+
+27 alunas atuam em Portugal (identificadas por localização e endereço, com nome de rua descartado e CEP de 4 dígitos como confirmação). O contraste, em números absolutos porque os sub-recortes são pequenos:
+
+| Indicador | Portugal | Resto da base |
+|---|---|---|
+| Alunas | 27 | 681 |
+| Faturamento mensal mediano | **R$ 7.653** | **R$ 17.506** |
+| Equipe mediana | 3 | 2 |
+| Usa sistema de gestão/agenda | 3 de 27 | 145 de 681 (21%) |
+| Faz tráfego pago | 6 de 27 | 108 de 681 (16%) |
+| Usa CRM | 3 de 27 | 48 de 681 (7%) |
+| Usa IA ou automação | 4 de 27 | 57 de 681 (8%) |
+| Processos não mapeados | 22 de 27 (81%) | 587 de 681 (86%) |
+| Classe A | 2 de 27 | 107 de 681 (16%) |
+
+**A direção da hipótese se confirma, a conclusão de negócio não.**
+
+O atraso em sistema de gestão é real: 3 em 27 contra 21% no Brasil. Mas três coisas cortam contra a tese de entrada:
+
+1. **A capacidade de pagar é menos da metade.** R$ 7.653 contra R$ 17.506 de mediana mensal. "Atrasado em sistema" e "mercado rentável" não são a mesma coisa — pode significar simplesmente que o mercado não paga por sistema.
+2. **Não estão atrasadas em tudo.** Em tráfego pago (6 de 27), CRM (3 de 27) e IA (4 de 27) as portuguesas aparecem proporcionalmente à frente das brasileiras. O atraso é específico de sistema de gestão, não generalizado.
+3. **Só 2 são classe A.** O topo da fila de abordagem praticamente não tem Portugal.
+
+**N = 27, com sub-células de 3 a 6 pessoas.** Esta base não dimensiona mercado português — ela gera hipótese. O que ela justifica é uma pesquisa dedicada em Portugal com amostra própria, não uma decisão de expansão. E a hipótese que ela sugere testar não é "vender o sistema todo", é "vender só a camada de gestão e agenda, a preço local".
+
+Fora do Brasil e de Portugal: 13 alunas em 8 países, nenhuma com N que permita leitura.
+
+---
+
+## 8. O filtro de nicho não mudou nenhuma conclusão
 
 Rodei a análise com e sem o recorte. As 29 excluídas eram poucas demais para mover qualquer indicador:
 
@@ -120,3 +176,13 @@ O filtro vale por rigor de escopo, não porque corrigia um viés. Um efeito cola
 **Clustering:** 607 casos completos e 16 variáveis numéricas atenderam ao critério. K-means de k = 2 a 8; melhor silhouette **0,188 em k = 2**, abaixo do corte de 0,25. A base é um contínuo, não tem grupos separáveis. Segmentação por regra mantida.
 
 Para reproduzir sem o recorte: `python3 pipeline.py --nichos todos`.
+
+---
+
+## 9. Onde ver isto de forma interativa
+
+O pipeline gera também **`bi_moonshot.html`**, um BI que recalcula tudo — KPIs, ranking de dores, cobertura das frentes, produtividade, fila de abordagem — sob filtros de país, classe, produto-âncora, porte, faixa de faturamento e formulário. O ranking de dores alterna entre pergunta espontânea, induzida e consolidado.
+
+A regra da célula pequena está implementada no próprio BI: **qualquer percentual vira contagem absoluta quando o recorte tem menos de 10 alunas.** Filtrar até sobrarem 4 pessoas não produz "75%".
+
+E-mail, telefone e endereço não vão para o BI — ficam apenas no Excel.

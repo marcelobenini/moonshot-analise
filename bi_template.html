@@ -1,0 +1,657 @@
+<title>Radar Moonshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ground:#faf9f7; --surface:#ffffff; --panel:#f3f1ee; --panel-2:#ebe8e4;
+  --ink:#141317; --ink-2:#5a565e; --ink-3:#8a8590;
+  --line:#e3dfdb; --line-strong:#cbc5c0;
+  --accent:#4a3aa7; --accent-soft:#eceafa; --accent-ink:#ffffff;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --shadow:0 1px 2px rgba(20,19,23,.06),0 8px 24px -12px rgba(20,19,23,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#17161a; --surface:#1e1d22; --panel:#25242a; --panel-2:#2e2d34;
+    --ink:#f5f4f2; --ink-2:#b3aeb8; --ink-3:#8a8590;
+    --line:#312f37; --line-strong:#443f4c;
+    --accent:#9085e9; --accent-soft:#292440; --accent-ink:#17161a;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#17161a; --surface:#1e1d22; --panel:#25242a; --panel-2:#2e2d34;
+  --ink:#f5f4f2; --ink-2:#b3aeb8; --ink-3:#8a8590;
+  --line:#312f37; --line-strong:#443f4c;
+  --accent:#9085e9; --accent-soft:#292440; --accent-ink:#17161a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px 96px}
+h1,h2,h3{font-family:Fraunces,Georgia,"Times New Roman",serif; font-weight:600; text-wrap:balance; margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-variant-numeric:tabular-nums}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-3); font-weight:500}
+
+/* ---------- topo ---------- */
+header.top{border-bottom:1px solid var(--line); background:var(--surface); margin-bottom:28px}
+.top-inner{max-width:1180px; margin:0 auto; padding:26px 24px 0}
+.title-row{display:flex; flex-wrap:wrap; align-items:baseline; gap:14px 18px; margin-bottom:4px}
+h1{font-size:clamp(26px,3.4vw,36px); letter-spacing:-.015em}
+.sub{color:var(--ink-2); font-size:14px; max-width:64ch; margin:6px 0 20px}
+.filters{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-end; padding-bottom:18px}
+.f{display:flex; flex-direction:column; gap:5px}
+.f label{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-3)}
+select,button.reset{
+  font-family:inherit; font-size:13.5px; color:var(--ink); background:var(--panel);
+  border:1px solid var(--line-strong); border-radius:7px; padding:7px 10px; min-width:132px; cursor:pointer;
+}
+select:focus-visible,button:focus-visible,th[role=button]:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px}
+button.reset{min-width:auto; background:transparent; color:var(--ink-2)}
+button.reset:hover{color:var(--ink); border-color:var(--ink-3)}
+.count{margin-left:auto; font-size:13px; color:var(--ink-2); padding-bottom:8px}
+.count b{color:var(--ink); font-family:"IBM Plex Mono",monospace}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:12px; margin-bottom:32px}
+.kpi{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:14px 16px}
+.kpi .v{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:25px; font-weight:600; letter-spacing:-.02em; line-height:1.15}
+.kpi .k{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--ink-3); margin-top:5px}
+.kpi .n{font-size:11.5px; color:var(--ink-3); margin-top:3px}
+
+/* ---------- seções ---------- */
+section{background:var(--surface); border:1px solid var(--line); border-radius:13px;
+  padding:24px 26px 26px; margin-bottom:20px; box-shadow:var(--shadow)}
+.sec-head{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:baseline; margin-bottom:6px}
+h2{font-size:20px; letter-spacing:-.01em}
+.sec-note{color:var(--ink-2); font-size:13.5px; max-width:74ch; margin:8px 0 18px}
+.seg{display:inline-flex; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:2px; gap:2px}
+.seg button{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.05em;
+  border:0; background:transparent; color:var(--ink-2); padding:5px 11px; border-radius:6px; cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent); color:var(--accent-ink); font-weight:600}
+
+/* ---------- gráficos ---------- */
+.chart{width:100%; overflow-x:auto}
+svg{display:block; max-width:100%}
+svg text{font-family:"IBM Plex Sans",sans-serif}
+.tick{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-3); font-variant-numeric:tabular-nums}
+.blab{font-size:12.5px; fill:var(--ink)}
+.bval{font-family:"IBM Plex Mono",monospace; font-size:11.5px; fill:var(--ink-2); font-variant-numeric:tabular-nums}
+.grid{stroke:var(--line); stroke-width:1}
+.axis{stroke:var(--line-strong); stroke-width:1}
+.bar{transition:opacity .12s}
+.bar:hover{opacity:.78}
+
+/* ---------- tabelas ---------- */
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px}
+table{border-collapse:collapse; width:100%; font-size:13.5px}
+th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); white-space:nowrap}
+th{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:500; background:var(--panel); position:sticky; top:0; z-index:1}
+th[role=button]{cursor:pointer; user-select:none}
+th[role=button]:hover{color:var(--ink)}
+th .arw{opacity:.45; margin-left:3px}
+tbody tr:hover{background:var(--panel)}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right}
+td.wrapok{white-space:normal; min-width:210px}
+.pill{display:inline-flex; align-items:center; gap:5px; font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px; font-weight:600; letter-spacing:.06em; padding:2px 8px; border-radius:999px;
+  border:1px solid transparent}
+.pill.A{background:color-mix(in srgb,var(--good) 15%,transparent); color:var(--good); border-color:color-mix(in srgb,var(--good) 40%,transparent)}
+.pill.B{background:color-mix(in srgb,var(--s1) 14%,transparent); color:var(--s1); border-color:color-mix(in srgb,var(--s1) 38%,transparent)}
+.pill.C{background:var(--panel-2); color:var(--ink-2); border-color:var(--line-strong)}
+.dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex:none}
+
+/* ---------- destaques ---------- */
+.callouts{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; margin-top:18px}
+.callout{border:1px solid var(--line); border-left:3px solid var(--ink-3); border-radius:9px;
+  padding:13px 15px; background:var(--panel)}
+.callout.gap{border-left-color:var(--crit)}
+.callout.op{border-left-color:var(--good)}
+.callout.warn{border-left-color:var(--warn)}
+.callout h4{margin:0 0 5px; font-size:13px; font-family:"IBM Plex Sans",sans-serif; font-weight:700}
+.callout p{margin:0; font-size:12.5px; color:var(--ink-2); line-height:1.5}
+.callout .big{font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:600; color:var(--ink);
+  display:block; margin-bottom:2px; font-variant-numeric:tabular-nums}
+.legend{display:flex; flex-wrap:wrap; gap:8px 18px; margin:14px 0 0; font-size:12px; color:var(--ink-2)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.foot{color:var(--ink-3); font-size:12px; margin-top:14px; line-height:1.6}
+.empty{padding:34px 0; text-align:center; color:var(--ink-3); font-size:13.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+@media (max-width:640px){
+  .wrap,.top-inner{padding-left:16px; padding-right:16px}
+  section{padding:20px 16px 22px}
+  .count{margin-left:0; width:100%}
+}
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="title-row">
+      <h1>Radar Moonshot</h1>
+      <span class="eyebrow" id="stamp"></span>
+    </div>
+    <p class="sub">Dores declaradas, gargalos inferidos e prioridade de abordagem das alunas de beleza,
+      estética e saúde. Todo percentual vira contagem absoluta quando o recorte tem menos de 10 alunas.</p>
+    <div class="filters" id="filters"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
+
+  <section id="sec-dores">
+    <div class="sec-head">
+      <h2>Dores declaradas</h2>
+      <div class="seg" id="seg-painel" role="group" aria-label="Enquadramento da pergunta">
+        <button data-v="esp" aria-pressed="true">Espontânea</button>
+        <button data-v="ind" aria-pressed="false">Induzida</button>
+        <button data-v="all" aria-pressed="false">Consolidado</button>
+      </div>
+    </div>
+    <p class="sec-note" id="nota-dores"></p>
+    <div class="chart" id="ch-dores"></div>
+    <p class="foot">Contagem por número de alunas que citaram, não por número de menções: quem repete a
+      mesma dor três vezes conta uma. Passe o cursor na barra para ver a definição da categoria.</p>
+  </section>
+
+  <section id="sec-frentes">
+    <h2>Frentes do sistema × demanda declarada</h2>
+    <p class="sec-note">Cada frente do produto é alimentada por categorias de dor. A barra mostra quantas
+      alunas do recorte citam ao menos uma delas. Barra hachurada = frente sem nenhuma categoria de dor
+      que a sustente.</p>
+    <div class="chart" id="ch-frentes"></div>
+    <div class="callouts" id="lacunas"></div>
+  </section>
+
+  <section id="sec-prod">
+    <h2>Produtividade por porte</h2>
+    <p class="sec-note">Faturamento mediano por pessoa no negócio, incluindo a dona. Se contratar
+      aumentasse a produtividade, esta linha subiria da esquerda para a direita.</p>
+    <div class="chart" id="ch-prod"></div>
+    <p class="foot" id="foot-prod"></p>
+  </section>
+
+  <section id="sec-fat">
+    <h2>Faturamento e porte</h2>
+    <p class="sec-note">Distribuição do faturamento mensal declarado, convertido para reais. Faixas
+      ancoradas nos quartis observados.</p>
+    <div class="chart" id="ch-fat"></div>
+    <div class="chart" id="ch-heat" style="margin-top:26px"></div>
+  </section>
+
+  <section id="sec-pt">
+    <div class="sec-head">
+      <h2>Portugal</h2>
+      <span class="eyebrow" id="pt-n"></span>
+    </div>
+    <p class="sec-note">Comparação do recorte português contra o resto da base. Ignora os filtros acima,
+      para o contraste não ser calculado sobre um punhado de alunas.</p>
+    <div class="tblwrap"><table id="tb-pt"></table></div>
+    <div class="callouts" id="pt-callouts"></div>
+  </section>
+
+  <section id="sec-div">
+    <h2>Divergência: o que ela diz × o que os dados mostram</h2>
+    <p class="sec-note" id="nota-div"></p>
+    <div class="tblwrap"><table id="tb-div"></table></div>
+  </section>
+
+  <section id="sec-rank">
+    <div class="sec-head">
+      <h2>Prioridade de abordagem</h2>
+      <span class="eyebrow" id="rank-n"></span>
+    </div>
+    <p class="sec-note">Score 0–100: capacidade de pagar 30, complexidade operacional 25, aderência da
+      dor 30, maturidade digital 15. Clique no cabeçalho para reordenar. E-mail e telefone ficam só no
+      Excel, fora desta página.</p>
+    <div class="tblwrap" style="max-height:560px; overflow-y:auto"><table id="tb-rank"></table></div>
+  </section>
+</div>
+
+<script>
+const DADOS = /*__DADOS__*/;
+const A = DADOS.alunas, META = DADOS.meta, REF = DADOS.referencia;
+const $ = s => document.querySelector(s);
+
+/* Regra da celula pequena: abaixo de 10 alunas o percentual mente sobre a
+   solidez do numero, entao mostramos a contagem. Vale em toda a pagina. */
+const MIN_PCT = 10;
+const pct = (n, base) => (n >= MIN_PCT && base > 0) ? (100 * n / base).toFixed(1) + '%' : n + (n === 1 ? ' aluna' : ' alunas');
+const brl = v => v == null ? '—' : 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const num = v => v == null ? '—' : Math.round(v).toLocaleString('pt-BR');
+const mediana = xs => { const v = xs.filter(x => x != null).sort((a, b) => a - b); if (!v.length) return null;
+  const m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
+const rotulo = c => META.rotulos_dor[c] || META.rotulos_tema[c] ||
+  (c || '').replace(/_/g, ' ').replace(/^./, s => s.toUpperCase());
+
+/* ---------- filtros ---------- */
+const FILTROS = [
+  { id: 'pais', lab: 'País', campo: 'pais' },
+  { id: 'classe', lab: 'Classe', campo: 'classe', ordem: ['A', 'B', 'C'] },
+  { id: 'ancora', lab: 'Produto-âncora', campo: 'produto_ancora', rot: v => META.rotulos_frente[v] || v },
+  { id: 'porte', lab: 'Porte', campo: 'porte_equipe' },
+  { id: 'faixa', lab: 'Faturamento', campo: 'faixa_faturamento' },
+  { id: 'origem', lab: 'Formulário', campo: 'origem' },
+];
+const estado = { painel: 'esp', ordenar: 'score_oportunidade', desc: true };
+FILTROS.forEach(f => estado[f.id] = '');
+
+function montarFiltros() {
+  const alvo = $('#filters');
+  FILTROS.forEach(f => {
+    const vals = [...new Set(A.map(a => a[f.campo]).filter(v => v != null && v !== ''))];
+    vals.sort((a, b) => f.ordem ? f.ordem.indexOf(a) - f.ordem.indexOf(b) : String(a).localeCompare(String(b), 'pt'));
+    const d = document.createElement('div'); d.className = 'f';
+    d.innerHTML = `<label for="s-${f.id}">${f.lab}</label><select id="s-${f.id}">
+      <option value="">Todas</option>${vals.map(v =>
+        `<option value="${v}">${f.rot ? f.rot(v) : v}</option>`).join('')}</select>`;
+    alvo.appendChild(d);
+    d.querySelector('select').addEventListener('change', e => { estado[f.id] = e.target.value; render(); });
+  });
+  const b = document.createElement('button');
+  b.className = 'reset'; b.textContent = 'Limpar filtros';
+  b.addEventListener('click', () => {
+    FILTROS.forEach(f => { estado[f.id] = ''; $('#s-' + f.id).value = ''; }); render();
+  });
+  alvo.appendChild(b);
+  const c = document.createElement('div'); c.className = 'count'; c.id = 'contagem'; alvo.appendChild(c);
+}
+
+const filtrar = () => A.filter(a => FILTROS.every(f => !estado[f.id] || String(a[f.campo]) === estado[f.id]));
+
+/* ---------- SVG ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, txt) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (txt != null) n.textContent = txt;
+  return n;
+}
+function svgBase(w, h) {
+  const s = el('svg', { viewBox: `0 0 ${w} ${h}`, width: w, height: h, role: 'img' });
+  s.style.minWidth = Math.min(w, 560) + 'px';
+  return s;
+}
+function tip(node, texto) {
+  const t = el('title'); t.textContent = texto; node.appendChild(t);
+}
+
+/* Barras horizontais. itens: {rot, n, cor, hachura, sub} */
+function barrasH(alvo, itens, base, opts = {}) {
+  alvo.innerHTML = '';
+  if (!itens.length) { alvo.innerHTML = '<p class="empty">Nenhuma aluna no recorte atual.</p>'; return; }
+  const rotW = opts.rotW || 205, padR = 96, alt = 27, gap = 7, topo = 26;
+  const w = Math.max(620, rotW + padR + 340);
+  const larg = w - rotW - padR;
+  const h = topo + itens.length * (alt + gap) + 12;
+  const max = Math.max(...itens.map(i => i.n), 1);
+  const s = svgBase(w, h);
+
+  for (let g = 0; g <= 4; g++) {
+    const x = rotW + (larg * g / 4);
+    s.appendChild(el('line', { x1: x, y1: topo - 8, x2: x, y2: h - 14, class: 'grid' }));
+    s.appendChild(el('text', { x, y: topo - 14, class: 'tick', 'text-anchor': 'middle' },
+      Math.round(max * g / 4)));
+  }
+  if (opts.hachura) {
+    const defs = el('defs');
+    const p = el('pattern', { id: 'hach', width: 7, height: 7, patternTransform: 'rotate(45)',
+      patternUnits: 'userSpaceOnUse' });
+    p.appendChild(el('rect', { width: 7, height: 7, fill: 'var(--panel-2)' }));
+    p.appendChild(el('line', { x1: 0, y1: 0, x2: 0, y2: 7, stroke: 'var(--ink-3)', 'stroke-width': 3 }));
+    defs.appendChild(p); s.appendChild(defs);
+  }
+  itens.forEach((it, i) => {
+    const y = topo + i * (alt + gap);
+    const bw = Math.max(2, larg * it.n / max);
+    s.appendChild(el('text', { x: rotW - 12, y: y + alt / 2 + 4, class: 'blab', 'text-anchor': 'end' }, it.rot));
+    const r = el('rect', { x: rotW, y, width: bw, height: alt, rx: 4,
+      fill: it.hachura ? 'url(#hach)' : (it.cor || 'var(--s1)'), class: 'bar' });
+    tip(r, `${it.rot}: ${it.n} de ${base} alunas${it.dica ? ' — ' + it.dica : ''}`);
+    s.appendChild(r);
+    s.appendChild(el('text', { x: rotW + bw + 9, y: y + alt / 2 + 4, class: 'bval' },
+      it.n + '  ·  ' + pct(it.n, base)));
+  });
+  s.appendChild(el('line', { x1: rotW, y1: topo - 8, x2: rotW, y2: h - 14, class: 'axis' }));
+  alvo.appendChild(s);
+}
+
+/* Colunas verticais. itens: {rot, n} */
+function colunas(alvo, itens, base, cor) {
+  alvo.innerHTML = '';
+  const padL = 52, padB = 46, topo = 24, cw = 62, gap = 12;
+  const w = Math.max(560, padL + itens.length * (cw + gap) + 24), h = 250;
+  const alturaMax = h - topo - padB;
+  const max = Math.max(...itens.map(i => i.n), 1);
+  const s = svgBase(w, h);
+  for (let g = 0; g <= 4; g++) {
+    const y = topo + alturaMax - alturaMax * g / 4;
+    s.appendChild(el('line', { x1: padL, y1: y, x2: w - 16, y2: y, class: 'grid' }));
+    s.appendChild(el('text', { x: padL - 10, y: y + 4, class: 'tick', 'text-anchor': 'end' },
+      Math.round(max * g / 4)));
+  }
+  itens.forEach((it, i) => {
+    const x = padL + i * (cw + gap), bh = Math.max(2, alturaMax * it.n / max);
+    const r = el('rect', { x, y: topo + alturaMax - bh, width: cw, height: bh, rx: 4,
+      fill: cor || 'var(--s1)', class: 'bar' });
+    tip(r, `${it.rot}: ${it.n} de ${base} alunas (${pct(it.n, base)})`);
+    s.appendChild(r);
+    s.appendChild(el('text', { x: x + cw / 2, y: topo + alturaMax - bh - 7, class: 'bval',
+      'text-anchor': 'middle' }, it.n));
+    s.appendChild(el('text', { x: x + cw / 2, y: h - padB + 20, class: 'tick',
+      'text-anchor': 'middle' }, it.rot));
+  });
+  s.appendChild(el('line', { x1: padL, y1: topo + alturaMax, x2: w - 16, y2: topo + alturaMax, class: 'axis' }));
+  alvo.appendChild(s);
+}
+
+/* Produtividade: coluna + linha da mediana, para a horizontalidade saltar aos olhos */
+function produtividade(alvo, itens) {
+  alvo.innerHTML = '';
+  const validos = itens.filter(i => i.mediana != null);
+  if (validos.length < 2) { alvo.innerHTML = '<p class="empty">Recorte pequeno demais para comparar portes.</p>'; return; }
+  const padL = 82, padB = 52, topo = 26, cw = 78, gap = 26;
+  const w = Math.max(600, padL + validos.length * (cw + gap) + 30), h = 268;
+  const aMax = h - topo - padB;
+  const max = Math.max(...validos.map(i => i.mediana)) * 1.25;
+  const s = svgBase(w, h);
+  for (let g = 0; g <= 4; g++) {
+    const y = topo + aMax - aMax * g / 4;
+    s.appendChild(el('line', { x1: padL, y1: y, x2: w - 16, y2: y, class: 'grid' }));
+    s.appendChild(el('text', { x: padL - 10, y: y + 4, class: 'tick', 'text-anchor': 'end' },
+      'R$ ' + (max * g / 4 / 1000).toFixed(1).replace('.', ',') + 'k'));
+  }
+  const pontos = [];
+  validos.forEach((it, i) => {
+    const x = padL + i * (cw + gap), bh = aMax * it.mediana / max, y = topo + aMax - bh;
+    const r = el('rect', { x, y, width: cw, height: bh, rx: 4, fill: 'var(--s1)',
+      opacity: it.n < 10 ? .42 : 1, class: 'bar' });
+    tip(r, `${it.rot}: mediana ${brl(it.mediana)} por pessoa (${it.n} alunas com dado)`);
+    s.appendChild(r);
+    pontos.push([x + cw / 2, y]);
+    s.appendChild(el('text', { x: x + cw / 2, y: y - 9, class: 'bval', 'text-anchor': 'middle' },
+      'R$ ' + (it.mediana / 1000).toFixed(1).replace('.', ',') + 'k'));
+    s.appendChild(el('text', { x: x + cw / 2, y: h - padB + 20, class: 'tick',
+      'text-anchor': 'middle' }, it.rot));
+    s.appendChild(el('text', { x: x + cw / 2, y: h - padB + 35, class: 'tick',
+      'text-anchor': 'middle', opacity: .8 }, 'n=' + it.n));
+  });
+  s.appendChild(el('polyline', { points: pontos.map(p => p.join(',')).join(' '), fill: 'none',
+    stroke: 'var(--s2)', 'stroke-width': 2, 'stroke-linecap': 'round' }));
+  pontos.forEach(p => s.appendChild(el('circle', { cx: p[0], cy: p[1], r: 4.5, fill: 'var(--s2)',
+    stroke: 'var(--surface)', 'stroke-width': 2 })));
+  s.appendChild(el('line', { x1: padL, y1: topo + aMax, x2: w - 16, y2: topo + aMax, class: 'axis' }));
+  alvo.appendChild(s);
+  alvo.insertAdjacentHTML('beforeend',
+    '<p class="legend"><span><span class="dot" style="background:var(--s1)"></span>' +
+    'Mediana de faturamento por pessoa</span><span><span class="dot" style="background:var(--s2)"></span>' +
+    'Tendência entre portes</span><span>Barra clara = menos de 10 alunas no porte</span></p>');
+}
+
+/* Mapa de calor porte x faixa de faturamento */
+function heatmap(alvo, linhas, colunasRot, matriz, total) {
+  alvo.innerHTML = '<p class="eyebrow" style="margin-bottom:10px">Porte da equipe × faixa de faturamento</p>';
+  const rotW = 176, cw = 74, ch = 34, topo = 96;
+  const w = rotW + colunasRot.length * cw + 20, h = topo + linhas.length * ch + 14;
+  const max = Math.max(...matriz.flat(), 1);
+  const s = svgBase(w, h);
+  colunasRot.forEach((c, j) => {
+    const cx = rotW + j * cw + cw / 2, cy = topo - 14;
+    s.appendChild(el('text', { x: cx, y: cy, class: 'tick', 'text-anchor': 'start',
+      transform: `rotate(-42 ${cx} ${cy})` }, c));
+  });
+  linhas.forEach((r, i) => {
+    s.appendChild(el('text', { x: rotW - 12, y: topo + i * ch + ch / 2 + 4, class: 'blab',
+      'text-anchor': 'end' }, r));
+    colunasRot.forEach((c, j) => {
+      const v = matriz[i][j];
+      const g = el('rect', { x: rotW + j * cw + 1, y: topo + i * ch + 1, width: cw - 2, height: ch - 2,
+        rx: 3, fill: 'var(--s1)', opacity: v === 0 ? .05 : .12 + .82 * (v / max) });
+      tip(g, `${r} · ${c}: ${v} de ${total} alunas`);
+      s.appendChild(g);
+      if (v) s.appendChild(el('text', { x: rotW + j * cw + cw / 2, y: topo + i * ch + ch / 2 + 4,
+        class: 'bval', 'text-anchor': 'middle',
+        fill: v / max > .55 ? 'var(--surface)' : 'var(--ink-2)' }, v));
+    });
+  });
+  alvo.appendChild(s);
+}
+
+/* ---------- tabelas ---------- */
+function tabela(alvo, cols, linhas, opts = {}) {
+  alvo.innerHTML = '';
+  const thead = document.createElement('thead'), tr = document.createElement('tr');
+  cols.forEach(c => {
+    const th = document.createElement('th');
+    th.textContent = c.lab;
+    if (c.num) th.style.textAlign = 'right';
+    if (opts.ordenavel && c.k) {
+      th.setAttribute('role', 'button'); th.tabIndex = 0;
+      if (estado.ordenar === c.k) th.innerHTML = c.lab + '<span class="arw">' + (estado.desc ? '▼' : '▲') + '</span>';
+      const go = () => {
+        if (estado.ordenar === c.k) estado.desc = !estado.desc;
+        else { estado.ordenar = c.k; estado.desc = true; }
+        render();
+      };
+      th.addEventListener('click', go);
+      th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    }
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr); alvo.appendChild(thead);
+  const tb = document.createElement('tbody');
+  if (!linhas.length) {
+    const td = document.createElement('td');
+    td.colSpan = cols.length; td.className = 'empty'; td.textContent = 'Nenhuma aluna no recorte atual.';
+    const r = document.createElement('tr'); r.appendChild(td); tb.appendChild(r);
+  }
+  linhas.forEach(l => {
+    const r = document.createElement('tr');
+    cols.forEach(c => {
+      const td = document.createElement('td');
+      const v = c.render ? c.render(l) : l[c.k];
+      if (v instanceof Node) td.appendChild(v); else td.innerHTML = v == null ? '—' : v;
+      if (c.num) td.className = 'num';
+      if (c.wrap) td.className = 'wrapok';
+      r.appendChild(td);
+    });
+    tb.appendChild(r);
+  });
+  alvo.appendChild(tb);
+}
+
+/* ---------- render ---------- */
+const PORTES = ['sozinha (0 funcionarios)', '1-2', '3-5', '6-15', '16+'];
+const FAIXAS = ['ate R$ 5 mil', 'R$ 5-10 mil', 'R$ 10-20 mil', 'R$ 20-40 mil',
+                'R$ 40-80 mil', 'R$ 80-150 mil', 'acima de R$ 150 mil'];
+const CAMPO_DOR = { esp: 'dores_espontaneas', ind: 'dores_induzidas', all: 'dores' };
+const NOTA_PAINEL = {
+  esp: 'Perguntas em que a aluna escolhe o tema (desafios operacionais, gestão e liderança, pessoas). ' +
+       'É a leitura mais honesta: o formulário não sugere a resposta.',
+  ind: 'Perguntas dos pilares Flow, que nomeiam o tema antes de perguntar. Infla o que foi sugerido — ' +
+       'compare com o painel espontâneo para ver o efeito do formulário.',
+  all: 'As duas fontes somadas. Útil para volume total, ruim para ranking: mistura pergunta induzida ' +
+       'com espontânea.',
+};
+
+function render() {
+  const f = filtrar(), n = f.length;
+  $('#contagem').innerHTML = `<b>${n}</b> de ${META.n_total} alunas no recorte`;
+  $('#stamp').textContent = `${META.n_total} alunas · gerado em ${META.gerado_em}`;
+
+  /* KPIs */
+  const comFat = f.filter(a => a.fat_brl != null);
+  const soz = f.filter(a => a.equipe_n === 0).length;
+  const semProc = f.filter(a => a.processos_mapeados === 'nao').length;
+  const escuro = f.filter(a => a.fat_brl >= 30000 && a.processos_mapeados === 'nao').length;
+  const kpis = [
+    { v: n, k: 'Alunas no recorte', nota: `${comFat.length} com faturamento utilizável` },
+    { v: brl(mediana(comFat.map(a => a.fat_brl))), k: 'Faturamento mediano', nota: 'por mês, em reais' },
+    { v: num(mediana(f.map(a => a.equipe_total))), k: 'Equipe mediana', nota: 'pessoas, incluindo a dona' },
+    { v: f.filter(a => a.classe === 'A').length, k: 'Classe A', nota: 'score 60 ou mais' },
+    { v: pct(soz, n), k: 'Trabalham sozinhas', nota: soz + ' alunas sem funcionário' },
+    { v: pct(escuro, n), k: '≥ R$30k sem processo', nota: 'operam no escuro em escala' },
+  ];
+  $('#kpis').innerHTML = kpis.map(k =>
+    `<div class="kpi"><div class="v">${k.v}</div><div class="k">${k.k}</div><div class="n">${k.nota}</div></div>`
+  ).join('');
+
+  /* Dores */
+  const campo = CAMPO_DOR[estado.painel];
+  const comDor = f.filter(a => (a[campo] || []).length);
+  const cont = {};
+  Object.keys(META.definicoes_dor).forEach(c => cont[c] = 0);
+  comDor.forEach(a => new Set(a[campo]).forEach(c => cont[c] != null && cont[c]++));
+  const itensDor = Object.entries(cont).sort((a, b) => b[1] - a[1])
+    .map(([c, v]) => ({ rot: rotulo(c), n: v, cor: 'var(--s1)', dica: META.definicoes_dor[c] }));
+  $('#nota-dores').textContent = NOTA_PAINEL[estado.painel] +
+    ` Base deste painel: ${comDor.length} alunas com ao menos uma dor classificada.`;
+  barrasH($('#ch-dores'), itensDor, comDor.length);
+
+  /* Frentes do produto */
+  const fr = Object.entries(META.frentes_categorias).map(([k, cats]) => {
+    const alunas = cats.length
+      ? f.filter(a => (a.dores || []).some(d => cats.includes(d))).length
+      : f.filter(a => (a.temas || []).includes('duvida_tecnica_nicho')).length;
+    return { rot: META.rotulos_frente[k], n: alunas, cor: 'var(--s3)', hachura: !cats.length,
+             dica: cats.length ? 'alimentada por: ' + cats.map(rotulo).join(', ')
+                               : 'nenhuma categoria de dor alimenta esta frente' };
+  }).sort((a, b) => b.n - a.n);
+  barrasH($('#ch-frentes'), fr, n, { hachura: true, rotW: 250 });
+
+  /* Lacunas */
+  const semFrente = new Set(Object.keys(META.definicoes_dor));
+  Object.values(META.frentes_categorias).flat().forEach(c => semFrente.delete(c));
+  const cal = [];
+  semFrente.forEach(c => {
+    const q = f.filter(a => (a.dores || []).includes(c)).length;
+    cal.push({ cls: 'gap', h: 'Dor sem frente: ' + rotulo(c), big: pct(q, n),
+      p: META.definicoes_dor[c] + ' Nenhuma frente do sistema atende.' });
+  });
+  Object.entries(META.temas_latentes).forEach(([t, d]) => {
+    const q = f.filter(a => (a.temas || []).includes(t)).length;
+    cal.push({ cls: q >= n * 0.12 ? 'op' : 'warn', h: 'Funcionalidade candidata: ' + rotulo(t),
+      big: pct(q, n), p: d + ' Não está na taxonomia nem nas 7 frentes.' });
+  });
+  $('#lacunas').innerHTML = cal.sort((a, b) => (a.cls === 'gap' ? -1 : 1))
+    .map(c => `<div class="callout ${c.cls}"><h4>${c.h}</h4><span class="big">${c.big}</span>
+      <p>${c.p}</p></div>`).join('');
+
+  /* Produtividade */
+  const prod = PORTES.map(p => {
+    const g = f.filter(a => a.porte_equipe === p && a.fat_por_pessoa != null).map(a => a.fat_por_pessoa);
+    return { rot: p.replace(' (0 funcionarios)', ''), n: g.length, mediana: mediana(g) };
+  });
+  produtividade($('#ch-prod'), prod);
+  const vals = prod.filter(p => p.mediana != null).map(p => p.mediana);
+  $('#foot-prod').textContent = vals.length > 1
+    ? `Amplitude entre o maior e o menor porte: ${brl(Math.min(...vals))} a ${brl(Math.max(...vals))} ` +
+      `por pessoa. Na base completa, Kruskal-Wallis não encontra diferença entre os portes (p = 0,26): ` +
+      `a produtividade por cabeça é plana. É um corte transversal, não uma relação causal.`
+    : 'Recorte pequeno demais para comparar portes.';
+
+  /* Faturamento e mapa de calor */
+  colunas($('#ch-fat'), FAIXAS.map(x => ({
+    rot: x.replace('R$ ', '').replace('ate ', '≤').replace('acima de ', '>'),
+    n: f.filter(a => a.faixa_faturamento === x).length })), n, 'var(--s1)');
+  const mat = PORTES.map(p => FAIXAS.map(x =>
+    f.filter(a => a.porte_equipe === p && a.faixa_faturamento === x).length));
+  heatmap($('#ch-heat'), PORTES.map(p => p.replace(' (0 funcionarios)', ' (sem funcionário)')),
+    FAIXAS.map(x => x.replace('R$ ', '').replace('ate ', '≤').replace('acima de ', '>')), mat, n);
+
+  /* Divergencia */
+  const dv = REF.divergencia_resumo;
+  const totalDiv = dv.find(r => /NAO aparece/.test(r.metrica));
+  const baseDiv = dv.find(r => /leitura declarada/.test(r.metrica));
+  $('#nota-div').textContent = `Onde a dor que os dados apontam não está entre as que a aluna escreveu. ` +
+    `Na base completa: ${totalDiv ? totalDiv.valor : '—'} de ${baseDiv ? baseDiv.valor : '—'} alunas ` +
+    `divergem. Esta tabela não responde aos filtros — vem da base inteira.`;
+  tabela($('#tb-div'), [
+    { lab: 'Os dados apontam', render: r => rotulo(r.dor_inferida_1) },
+    { lab: 'Ela diz que é', render: r => rotulo(r.dor_declarada_1) },
+    { lab: 'Alunas', num: true, k: 'n_alunas' },
+    { lab: 'Também declara a inferida', num: true, k: 'aluna_declara_tambem_a_inferida' },
+    { lab: 'Leitura', wrap: true, render: r => r.leitura.startsWith('DIVERG')
+        ? '<b style="color:var(--crit)">divergência total</b>' : 'convergência parcial' },
+  ], REF.divergencia.slice(0, 14));
+
+  /* Portugal */
+  const pt = REF.portugal;
+  $('#pt-n').textContent = pt.length ? `${pt[0].Portugal} alunas` : '';
+  tabela($('#tb-pt'), [
+    { lab: 'Indicador', k: 'indicador', wrap: true },
+    { lab: 'Portugal', k: 'Portugal', num: true },
+    { lab: 'Resto da base', k: 'resto da base', num: true },
+    { lab: 'Como ler', k: 'base_do_contraste', wrap: true },
+  ], pt);
+  const ptN = A.filter(a => a.pais === 'Portugal');
+  const ptFat = mediana(ptN.map(a => a.fat_brl)), brFat = mediana(
+    A.filter(a => a.pais !== 'Portugal').map(a => a.fat_brl));
+  $('#pt-callouts').innerHTML = `
+    <div class="callout warn"><h4>Capacidade de pagar é menor, não maior</h4>
+      <span class="big">${brl(ptFat)}</span>
+      <p>Faturamento mensal mediano em Portugal, contra ${brl(brFat)} no resto da base — menos da
+         metade. Isso corta contra a tese de entrada por rentabilidade.</p></div>
+    <div class="callout op"><h4>Adoção de sistema é mesmo menor</h4>
+      <span class="big">${ptN.filter(a => a.usa_sistema_gestao).length} de ${ptN.length}</span>
+      <p>Usam sistema de gestão ou agenda, contra 21% no resto da base. A direção confirma a hipótese,
+         mas repousa sobre pouquíssimas alunas.</p></div>
+    <div class="callout gap"><h4>N insuficiente para tese de mercado</h4>
+      <span class="big">${ptN.length} alunas</span>
+      <p>Com sub-recortes de 3 a 6 pessoas, esta base não sustenta nem confirma uma decisão de expansão.
+         Serve para gerar hipótese e justificar uma pesquisa dedicada — não para dimensionar mercado.</p></div>`;
+
+  /* Ranking */
+  const ord = [...f].sort((a, b) => {
+    const x = a[estado.ordenar], y = b[estado.ordenar];
+    if (x == null) return 1; if (y == null) return -1;
+    const c = typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'pt');
+    return estado.desc ? -c : c;
+  });
+  $('#rank-n').textContent = `${ord.length} alunas · ${ord.filter(a => a.classe === 'A').length} classe A`;
+  const temNome = 'nome' in (A[0] || {});
+  tabela($('#tb-rank'), [
+    { lab: '#', render: (_, i) => '' , k: null, num: true, render: r => `<span class="mono" style="color:var(--ink-3)">${r.id_aluna}</span>` },
+    ...(temNome ? [{ lab: 'Aluna', k: 'nome', wrap: true,
+        render: r => `${r.nome || '—'}<br><span style="color:var(--ink-3);font-size:12px">${r.empresa || ''}</span>` }] : []),
+    { lab: 'Score', k: 'score_oportunidade', num: true,
+      render: r => r.score_oportunidade == null ? '—' : `<b>${r.score_oportunidade.toFixed(1)}</b>` },
+    { lab: 'Classe', k: 'classe', render: r => r.classe ? `<span class="pill ${r.classe}">${r.classe}</span>` : '—' },
+    { lab: 'Porta de entrada', k: 'produto_ancora', render: r => META.rotulos_frente[r.produto_ancora] || '—' },
+    { lab: 'Faturamento', k: 'fat_brl', num: true, render: r => brl(r.fat_brl) },
+    { lab: 'Equipe', k: 'equipe_total', num: true, render: r => num(r.equipe_total) },
+    { lab: 'País', k: 'pais' },
+    { lab: 'Gargalo nos dados', k: 'dor_inferida_1', wrap: true,
+      render: r => r.dor_inferida_1 ? `<b>${rotulo(r.dor_inferida_1)}</b><br>
+        <span style="color:var(--ink-3);font-size:12px">${r.justificativa_inferencia || ''}</span>`
+        : '<span style="color:var(--ink-3)">nenhuma regra disparou</span>' },
+  ], ord.slice(0, 250), { ordenavel: true });
+}
+
+$('#seg-painel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  estado.painel = b.dataset.v;
+  [...e.currentTarget.children].forEach(x => x.setAttribute('aria-pressed', x === b));
+  render();
+});
+montarFiltros();
+render();
+</script>

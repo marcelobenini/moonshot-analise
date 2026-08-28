@@ -93,6 +93,30 @@ A análise foi rodada com e sem o recorte. A ordem das 13 dores é **idêntica p
 
 **Consequência prática:** o recorte torna os números defensáveis ("estas são alunas de beleza") mas não os torna diferentes. Ninguém deve concluir que a análise anterior estava errada — ela estava apenas com o denominador mais largo.
 
-## 13. Dados pessoais
+## 13. O recorte de Portugal é hipótese, não dimensionamento
 
-As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes`.
+27 alunas. Os sub-recortes que sustentariam a tese de mercado têm de 2 a 6 pessoas: 3 usam sistema de gestão, 6 fazem tráfego pago, 2 são classe A. **Nenhum desses números suporta uma decisão de expansão** — por isso a tabela do relatório os mostra como "3 de 27", nunca como "11,1%".
+
+O que se pode afirmar: entre as 27 alunas portuguesas desta base, a adoção de sistema de gestão é menor e o faturamento mediano é menos da metade do resto. O que **não** se pode afirmar: que o mercado português de beleza seja atrasado em sistema, que seja rentável, ou que escale. Uma amostra de 27 pessoas autosselecionadas num programa brasileiro de mentoria não representa o mercado português.
+
+A classificação de país também tem erro possível: é deduzida de texto livre de localização e endereço. Nomes de rua ("Rua Ouvidor Portugal", "Avenida Álvaro Guimarães") são descartados antes da comparação e o CEP de 4 dígitos confirma Portugal, mas quem só escreveu o bairro sem cidade fica em Brasil por padrão.
+
+## 14. A cobertura das frentes mede dor declarada, não intenção de compra
+
+A tabela de frentes responde "quantas alunas citam uma dor que esta frente atende". Não responde "quantas contratariam". São coisas diferentes: 422 alunas citam dor de pessoas e processos, e isso não é um funil de 422 leads.
+
+O **bot de dúvidas do nicho** é o caso extremo: nenhuma das 13 categorias validadas o alimenta, então sua demanda foi medida por um tema latente construído depois (protocolo, vigilância sanitária, escolha de produto). Os 37 casos vêm de um padrão que **não passou pela sua validação** — é o número mais frágil do relatório.
+
+Os temas latentes em geral (metas/indicadores 139, dúvida técnica 37, precificação por procedimento 3) foram minerados do resíduo não coberto pela taxonomia. Servem para **propor** funcionalidade, não para dimensioná-la, e deliberadamente não entram no ranking de dores — misturá-los quebraria a comparabilidade com a rodada anterior.
+
+## 15. O BI mostra recortes, não amostras novas
+
+Os filtros do `bi_moonshot.html` recalculam sobre as mesmas 708 alunas. Filtrar não gera informação: reduz o N. A regra da célula pequena está no código (abaixo de 10 alunas o percentual vira contagem), mas ela protege contra ler mal um número — não contra o fato de que um recorte de 12 pessoas é frágil mesmo mostrando "%".
+
+As seções de **Portugal** e **Divergência** ignoram os filtros de propósito: são contrastes contra a base inteira e perderiam o sentido calculados sobre um subconjunto já filtrado.
+
+## 16. Dados pessoais
+
+As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes` — vale para o Excel, o JSON e o BI.
+
+O BI publicado leva nome e empresa (necessários para priorizar abordagem) mas **nunca e-mail, telefone ou endereço**. Ele é privado por padrão; ao compartilhar o link, você compartilha os nomes das 708 alunas.

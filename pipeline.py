@@ -21,7 +21,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import analise, cluster, score
+from moonshot import analise, bi, cluster, produto, score
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -157,8 +157,15 @@ def main():
     fat_tab, fat_stats, fat_prod = analise.tabela_faturamento(base, CONFIG['cortes_faturamento'])
 
     # ---- Etapas 4 e 5 ----------------------------------------------------
+    base = produto.marcar_temas_latentes(base)
     base = score.calcular_score(base)
     diag = score.diagnostico_individual(base, usar_nome=not args.sem_nomes)
+
+    # ---- frentes do produto e recorte geografico -------------------------
+    cob_frentes = produto.cobertura_frentes(base)
+    tab_lacunas = produto.lacunas(base)
+    tab_portugal = produto.recorte_pais(base, 'Portugal')
+    tab_paises = produto.maturidade_por_pais(base)
 
     # ---- Etapa 6 ---------------------------------------------------------
     rel_cluster, perfis, rotulos = cluster.avaliar(base, CONFIG['n_minimo_clustering'])
@@ -169,7 +176,7 @@ def main():
     ident = [] if args.sem_nomes else ['nome', 'email', 'telefone']
     cols_base = (['id_aluna', 'origem'] + ident + [
         'empresa', 'setor', 'nicho_grupo', 'nicho_fonte', 'vende_para_o_setor',
-        'localizacao', 'atua_fora_br',
+        'localizacao', 'pais', 'atua_fora_br',
         'faturamento', 'fat_valor_moeda_orig', 'fat_moeda', 'fat_brl', 'fat_regra',
         'fat_confianca', 'faixa_faturamento',
         'equipe', 'equipe_n', 'equipe_total', 'porte_equipe', 'equipe_regra',
@@ -184,11 +191,13 @@ def main():
         'eixo_capacidade_pagar', 'eixo_complexidade_operacional', 'eixo_aderencia_dor',
         'eixo_maturidade_digital', 'eixos_com_dado', 'score_oportunidade', 'classe',
         'frentes_aderentes', 'produto_ancora', 'motivo_sem_score']
+        + [f'tema_{t}' for t in ['metas_indicadores_decisao', 'duvida_tecnica_nicho',
+                                 'precificacao_de_procedimento']]
         + list(ESCALAS_PRO) + (['cluster'] if rotulos is not None else []))
     cols_base = [c for c in cols_base if c in base.columns]
 
     ranking_final = base[[c for c in ['id_aluna'] + ident +
-                          ['empresa', 'origem', 'nicho_grupo', 'score_oportunidade', 'classe',
+                          ['empresa', 'origem', 'nicho_grupo', 'pais', 'score_oportunidade', 'classe',
                            'produto_ancora', 'frentes_aderentes', 'fat_brl', 'equipe_total',
                            'eixo_capacidade_pagar', 'eixo_complexidade_operacional',
                            'eixo_aderencia_dor', 'eixo_maturidade_digital',
@@ -228,6 +237,10 @@ def main():
         'Produtividade_por_Porte': fat_prod,
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
+        'Frentes_Produto': cob_frentes,
+        'Lacunas_Funcionalidade': tab_lacunas,
+        'Portugal': tab_portugal,
+        'Maturidade_por_Pais': tab_paises,
         'Log_Deduplicacao': log_dedup,
         'Excluidas_Por_Nicho': fora,
     }
@@ -245,8 +258,26 @@ def main():
                 largura = min(52, max(12, int(q) + 2 if pd.notna(q) else 14))
                 ws.set_column(i, i, largura)
     print(f'-> {destino} ({len(abas)} abas)')
+
+    json_bi = bi.exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
+                          cob_frentes, tab_lacunas, tab_portugal, tab_paises, rel_cluster,
+                          os.path.join(args.saida, 'bi_dados.json'),
+                          com_nomes=not args.sem_nomes)
+    print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')
+
+    modelo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bi_template.html')
+    if os.path.exists(modelo):
+        with open(modelo, encoding='utf-8') as fh:
+            html = fh.read()
+        with open(json_bi, encoding='utf-8') as fh:
+            html = html.replace('/*__DADOS__*/', fh.read())
+        pagina = os.path.join(args.saida, 'bi_moonshot.html')
+        with open(pagina, 'w', encoding='utf-8') as fh:
+            fh.write(html)
+        print(f'-> {pagina} ({os.path.getsize(pagina)//1024} KB)')
     return base, evid, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_stats, \
-        fat_prod, diag, ranking_final, rel_cluster, eq_cruz, cortes_inf, log_dedup
+        fat_prod, diag, ranking_final, rel_cluster, eq_cruz, cortes_inf, log_dedup, \
+        cob_frentes, tab_lacunas, tab_portugal, tab_paises
 
 
 if __name__ == '__main__':

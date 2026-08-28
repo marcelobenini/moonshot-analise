@@ -1,4 +1,6 @@
 dados/
 scratch/
 *.xlsx
+bi_dados.json
+bi_moonshot.html
 __pycache__/

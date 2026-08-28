@@ -19,6 +19,7 @@ COMUM = {
         'empresa': 'Qual o nome da sua empresa?',
         'setor': 'Qual o seu setor de atuação?',
         'localizacao': 'Qual a sua localização e local de atuação?',
+        'endereco': 'Qual o seu endereço completo, com cep?',
         'equipe': 'Quantos funcionários você tem hoje? Em quais áreas eles atuam?',
         'faturamento': 'Qual os seu faturamento médio mensal?',
         'custo': 'Qual é o custo/despesa mensal da empresa?',
@@ -40,6 +41,7 @@ COMUM = {
         'empresa': 'Qual o nome da sua empresa?',
         'setor': 'Qual o nicho da sua empresa?',
         'localizacao': 'Qual a sua localização e local de atuação?',
+        'endereco': 'Qual o seu endereço completo, com cep?',
         'equipe': 'Quantos funcionários você tem hoje? Em quais áreas eles atuam?',
         'faturamento': 'Qual é o seu faturamento médio mensal?',
         'custo': 'Qual é o custo/despesa mensal da empresa?',
@@ -123,10 +125,40 @@ RX_SAUDE = (r'medicin|\bmedic|odonto|dentist|nutri|fisiotera|psicolog|enferm|cli
 RX_FORNECEDOR = (r'importo|importac|distribuidora|distribuicao|atacado|revenda|fabrica|'
                  r'fornecedor|tesouras e navalhas|macas ergonomicas|venda e distribuicao')
 
-RX_FORA_BR = (r'portugal|lisboa|porto\b|espanh|espana|madrid|barcelona|\beua\b|\busa\b|estados unidos|'
-              r'florida|orlando|boston|miami|new york|italia|japao|angola|suica|irlanda|dublin|'
-              r'londres|\buk\b|inglaterra|canada|australia|franca|paris|mexico|argentina|paraguai|'
-              r'dubai|alemanha|holanda|belgica|luxemburgo|chile|colombia|peru|bolivia')
+# Marcadores de pais. A ordem importa: uma mencao explicita ao pais vence a
+# cidade, e um marcador brasileiro vence a cidade estrangeira homonima
+# ("Braganca Paulista" nao e Braga, "Barreiro" pode ser bairro de BH).
+RX_PAIS_EXPLICITO = {
+    'Portugal': r'\bportugal\b',
+    'Espanha': r'\bespanha\b|\bespana\b|\bespanhola?\b',
+    'EUA': r'\beua\b|\busa\b|estados unidos|\bflorida\b|orlando|boston|miami|new york|'
+           r'massachusetts|new jersey|connecticut',
+    'Angola': r'\bangola\b|luanda',
+    'Reino Unido': r'\blondres\b|\bl ondon\b|inglaterra|reino unido|\buk\b',
+    'Suica': r'\bsuica\b|genebra|zurique',
+    'Irlanda': r'\birlanda\b|dublin',
+    'Italia': r'\bitalia\b|\bmilao\b|\broma\b(?!nia)',
+    'Japao': r'\bjapao\b|\btoquio\b|nagoya|hamamatsu',
+    'Outro exterior': r'\bcanada\b|australia|\bfranca\b|\bparis\b|\bmexico\b|argentina|paraguai|'
+                      r'\bdubai\b|alemanha|holanda|belgica|luxemburgo|\bchile\b|colombia|\bperu\b|bolivia',
+}
+# Cidades portuguesas. So valem quando nao ha marcador brasileiro na mesma resposta.
+RX_CIDADES_PT = (r'\blisboa\b|\bbraga\b|coimbra|\bfaro\b|algarve|cascais|\bsintra\b|\baveiro\b|'
+                 r'setubal|funchal|\bmadeira\b|\bacores\b|guimaraes|leiria|\bviseu\b|\balmada\b|'
+                 r'amadora|\boeiras\b|matosinhos|vila nova de gaia|\bloule\b|portimao|albufeira|'
+                 r'\bevora\b|figueira da foz|\bpovoa\b|odivelas|\bseixal\b|\bloures\b|\bmontijo\b|'
+                 r'sesimbra|ericeira|torres vedras|ponte de lima|penafiel|famalicao|\bmafra\b|'
+                 r'leca da palmeira|\barroios\b|casal de cambra|mem martins')
+# 'brasil' sozinho nao entra: quem mora em Lisboa e atende brasileiros cita o
+# pais sem morar nele. So marcador de LOCAL brasileiro veta.
+RX_BRASIL = (r'\bsp\b|\brj\b|\bmg\b|\brs\b|\bpr\b|\bsc\b|\bba\b|\bpe\b|\bce\b|\bgo\b|'
+             r'\bdf\b|\bpa\b|\bes\b(?!panha)|sao paulo|rio de janeiro|belo horizonte|porto alegre|'
+             r'curitiba|salvador|recife|fortaleza|brasilia|goiania|manaus|belem|campinas|santos|'
+             r'niteroi|guarulhos|osasco|paulista\b|sao bernardo|sbcampo|\bsbc\b|santo andre|'
+             r'sao caetano|diadema|maua\b|itapecerica|braganca|minas gerais|bahia|parana|santa catarina|'
+             r'rio grande do sul|pernambuco|ceara|goias|espirito santo|mato grosso|maranhao|'
+             r'paraiba|piaui|sergipe|alagoas|rondonia|roraima|amapa|tocantins|acre\b|amazonas')
+RX_FORA_BR = '|'.join(list(RX_PAIS_EXPLICITO.values()) + [RX_CIDADES_PT])
 
 RX_MATURIDADE = {
     'usa_sistema_gestao': r'trinks|belle\b|avec\b|salaovip|simples ?dental|iclinic|clinicorp|ninsaude|'
@@ -158,6 +190,33 @@ def _grupo_nicho(setor, produtos, empresa):
         if fontes:
             return grupo, '+'.join(fontes)
     return 'fora do escopo', None
+
+
+# Logradouro + o que vier ate a proxima virgula: "Rua Ouvidor Portugal 12" e
+# "Avenida Alavaro Guimaraes 570" sao enderecos brasileiros que casariam com
+# Portugal e Guimaraes se o nome da via nao fosse descartado antes.
+RX_LOGRADOURO = (r'\b(avenida|av|rua|travessa|tv|alameda|praca|praceta|estrada|rod|rodovia|largo)'
+                 r'\b\.?[^,;|]{0,45}')
+RX_CEP_PT = r'\b\d{4}-\d{3}\b'      # Portugal usa 4 digitos; Brasil, 5 (NNNNN-NNN).
+
+
+def _pais(texto):
+    """Deduz o pais de atuacao a partir de localizacao + endereco.
+
+    Precedencia: marcador de local brasileiro veta tudo > pais explicito >
+    CEP portugues > cidade portuguesa > Brasil.
+    """
+    if not texto or texto.strip(' |') == '':
+        return 'nao informado'
+    sem_via = re.sub(RX_LOGRADOURO, ' ', texto)
+    if re.search(RX_BRASIL, sem_via):
+        return 'Brasil'
+    for pais, rx in RX_PAIS_EXPLICITO.items():
+        if re.search(rx, sem_via):
+            return pais
+    if re.search(RX_CEP_PT, texto) or re.search(RX_CIDADES_PT, sem_via):
+        return 'Portugal'
+    return 'Brasil'
 
 
 def _sim_nao(valor):
@@ -217,8 +276,9 @@ def carregar(caminho, origem, ano_ref, fx, teto_plausivel):
     out['nicho_fonte'] = [t[1] for t in nicho]
     out['vende_para_o_setor'] = out[['setor', 'produtos', 'empresa']].fillna('') \
         .agg(' '.join, axis=1).map(norm).str.contains(RX_FORNECEDOR, regex=True)
-    out['atua_fora_br'] = out['localizacao'].fillna('').map(
-        lambda v: bool(re.search(RX_FORA_BR, norm(v))))
+    fonte_local = (out['localizacao'].fillna('') + ' | ' + out['endereco'].fillna('')).map(norm)
+    out['pais'] = fonte_local.map(_pais)
+    out['atua_fora_br'] = out['pais'] != 'Brasil' 
     out['processos_mapeados'] = out['processos'].map(_sim_nao)
     out['tem_orcamento_anual'] = out['orcamento'].map(_sim_nao)
 

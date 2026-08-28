@@ -41,13 +41,17 @@ def calcular_score(base):
     e_compl = d['equipe_total'].map(lambda v: _escada(v, ESCADA_COMPLEXIDADE))
     e_compl = [min(1.0, (v or 0) + .10) if m else v for v, m in zip(e_compl, d['multi_unidade'])]
 
-    # Aderencia: quantas das 4 frentes do produto a aluna nomeia como dor.
+    # Aderencia: quantas frentes do produto a aluna nomeia como dor.
+    # O divisor e o numero de frentes ALCANCAVEIS por dor declarada: uma frente
+    # sem categoria alimentadora (bot de duvidas) nunca pode ser atingida por
+    # aqui, e conta-la no denominador rebaixaria todo mundo por igual.
+    alcancaveis = sum(1 for cs in FRENTES_PRODUTO.values() if cs)
     frentes_por_aluna, e_ader = [], []
     for txt in d['dores_declaradas_todas'].fillna(''):
         cats = set(str(txt).split('; '))
         hit = [f for f, cs in FRENTES_PRODUTO.items() if cats & set(cs)]
         frentes_por_aluna.append(hit)
-        e_ader.append(len(hit) / 4 if txt else None)
+        e_ader.append(min(1.0, len(hit) / alcancaveis) if txt else None)
 
     sinais = ['usa_sistema_gestao', 'usa_crm', 'faz_trafego', 'usa_ia_automacao']
     pesos_sinal = {'usa_sistema_gestao': .35, 'faz_trafego': .35, 'usa_crm': .15,
