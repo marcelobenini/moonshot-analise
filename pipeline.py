@@ -113,6 +113,9 @@ def main():
     ap.add_argument('--eur-brl', type=float, default=CONFIG['fx']['EUR'])
     ap.add_argument('--sem-nomes', action='store_true',
                     help='omite nome/email/telefone das abas (versao para circular)')
+    ap.add_argument('--nichos', default='beleza/estetica,saude/clinica',
+                    help="grupos de nicho a manter, separados por virgula. "
+                         "'todos' desliga o filtro. Padrao: beleza/estetica,saude/clinica")
     args = ap.parse_args()
 
     CONFIG['fx']['USD'], CONFIG['fx']['EUR'] = args.usd_brl, args.eur_brl
@@ -127,6 +130,19 @@ def main():
                                CONFIG['teto_plausivel_brl'])
     print(f'Base unificada: {len(base)} respondentes unicos '
           f'({len(log_dedup[log_dedup.acao.str.startswith("removida")])} duplicatas removidas)')
+
+    # Filtro de nicho. Aplicado ANTES de qualquer analise para que todo percentual
+    # tenha como denominador a base filtrada, e nao a base inteira.
+    fora = base.loc[~base['nicho_grupo'].isin([n.strip() for n in args.nichos.split(',')]),
+                    ['id_aluna', 'origem', 'setor', 'produtos', 'nicho_grupo']]
+    if args.nichos.strip().lower() != 'todos':
+        base = base[base['nicho_grupo'].isin([n.strip() for n in args.nichos.split(',')])] \
+            .reset_index(drop=True)
+        print(f'Filtro de nicho ({args.nichos}): {len(base)} mantidas, {len(fora)} excluidas')
+        print('  ' + ' | '.join(f'{k}={v}' for k, v in
+                                base['nicho_grupo'].value_counts().items()))
+    else:
+        fora = fora.iloc[:0]
 
     # ---- Etapa 1 ---------------------------------------------------------
     base, evid = analise.classificar_base(base, CONFIG['max_categorias_por_resposta'])
@@ -152,7 +168,8 @@ def main():
     # ---- montagem das abas ----------------------------------------------
     ident = [] if args.sem_nomes else ['nome', 'email', 'telefone']
     cols_base = (['id_aluna', 'origem'] + ident + [
-        'empresa', 'setor', 'nicho_grupo', 'localizacao', 'atua_fora_br',
+        'empresa', 'setor', 'nicho_grupo', 'nicho_fonte', 'vende_para_o_setor',
+        'localizacao', 'atua_fora_br',
         'faturamento', 'fat_valor_moeda_orig', 'fat_moeda', 'fat_brl', 'fat_regra',
         'fat_confianca', 'faixa_faturamento',
         'equipe', 'equipe_n', 'equipe_total', 'porte_equipe', 'equipe_regra',
@@ -212,6 +229,7 @@ def main():
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
         'Log_Deduplicacao': log_dedup,
+        'Excluidas_Por_Nicho': fora,
     }
     if perfis is not None:
         abas['Clustering_Perfis'] = perfis

@@ -108,11 +108,21 @@ ESCALAS_PRO = {
 # --------------------------------------------------------------------------
 # Classificacoes auxiliares
 # --------------------------------------------------------------------------
-RX_BELEZA = (r'belez|estetic|salao|cabele|barbe|sobrance|cilio|lash|nail|unha|manicure|pedicur|'
-             r'micropigment|maquiag|makeup|make up|depila|\bspa\b|podolog|cosmet|tricolog|capilar|'
-             r'bronze|esmalteria|penteado|extensao de cilio|harmonizacao|\bhof\b|estetic')
-RX_SAUDE = (r'medicin|medic|odonto|dentist|nutri|fisiotera|psicolog|enferm|clinic|dermato|saude|'
-            r'farmac|veterin|biomedic|terapeut|quiroprax')
+RX_BELEZA = (r'belez|belleza|beauty|estetic|estetic|salao|cabele|cabelo|barbe|sobrance|cilio|pestana|'
+             r'lash|brow|nail|unha|manicure|pedicur|esmalt|micropigment|maquiag|makeup|make up|'
+             r'depila|\bspa\b|podolog|cosmet|tricolog|capilar|bronze|penteado|mega hair|mechas|'
+             r'harmonizacao|\bhof\b|botox|preenchimento|bioestimulador|rejuvenesc|limpeza de pele|'
+             r'drenagem|massage|massoterap|criomodelagem|criolipo|piercing|autocuidado|'
+             r'remocao de tatuagem|despigmenta|lipo ?enzimatica|peeling|laser')
+RX_SAUDE = (r'medicin|\bmedic|odonto|dentist|nutri|fisiotera|psicolog|enferm|clinic|dermato|saude|'
+            r'farmac|veterin|biomedic|terapeut|quiroprax|gastroenterolog|endocrinolog|'
+            r'ginecolog|obstetr|pediatr|fonoaudiolog|acupuntur|implante|protese')
+# Quem vende PARA o setor (macas, tesouras, cosmeticos no atacado) tem operacao
+# diferente de quem atende cliente final. Vira FLAG, nao grupo: salao que tambem
+# revende produto continua sendo salao, e uma regra de grupo o classificaria errado.
+RX_FORNECEDOR = (r'importo|importac|distribuidora|distribuicao|atacado|revenda|fabrica|'
+                 r'fornecedor|tesouras e navalhas|macas ergonomicas|venda e distribuicao')
+
 RX_FORA_BR = (r'portugal|lisboa|porto\b|espanh|espana|madrid|barcelona|\beua\b|\busa\b|estados unidos|'
               r'florida|orlando|boston|miami|new york|italia|japao|angola|suica|irlanda|dublin|'
               r'londres|\buk\b|inglaterra|canada|australia|franca|paris|mexico|argentina|paraguai|'
@@ -130,18 +140,24 @@ RX_MATURIDADE = {
 }
 
 
-def _grupo_nicho(setor):
-    n = norm(setor)
-    if not tem_conteudo(setor):
-        return 'nao informado'
-    if re.search(RX_BELEZA, n):
-        return 'beleza'
-    if re.search(RX_SAUDE, n):
-        return 'saude/clinica'
-    if re.search(r'^(proprietari|dona|ceo|socia|socio|gestao|gerente|founder|diretor|todos|'
-                 r'atualmente estou|de tudo)', n):
-        return 'respondeu cargo, nao setor'
-    return 'outro'
+def _grupo_nicho(setor, produtos, empresa):
+    """Classifica o nicho olhando setor, produtos/servicos e nome da empresa.
+
+    Olhar so o campo de setor descarta quem respondeu o cargo ("proprietaria",
+    "faco tudo") ou escreveu algo atipico ("Cabelos", "Beauty") mesmo quando os
+    produtos declarados sao inequivocamente de beleza. Devolve (grupo, fonte).
+    """
+    campos = [('setor', setor), ('produtos', produtos), ('empresa', empresa)]
+    disponiveis = [(f, norm(v)) for f, v in campos if tem_conteudo(v)]
+    if not disponiveis:
+        return 'nao informado', None
+    junto = ' | '.join(t for _, t in disponiveis)
+
+    for rx, grupo in ((RX_BELEZA, 'beleza/estetica'), (RX_SAUDE, 'saude/clinica')):
+        fontes = [f for f, t in disponiveis if re.search(rx, t)]
+        if fontes:
+            return grupo, '+'.join(fontes)
+    return 'fora do escopo', None
 
 
 def _sim_nao(valor):
@@ -195,7 +211,12 @@ def carregar(caminho, origem, ano_ref, fx, teto_plausivel):
     out['anos_operacao'] = [t[1] for t in ano]
 
     # --- classificacoes ----------------------------------------------------
-    out['nicho_grupo'] = out['setor'].map(_grupo_nicho)
+    nicho = [_grupo_nicho(s, p, e) for s, p, e in
+             zip(out['setor'], out['produtos'], out['empresa'])]
+    out['nicho_grupo'] = [t[0] for t in nicho]
+    out['nicho_fonte'] = [t[1] for t in nicho]
+    out['vende_para_o_setor'] = out[['setor', 'produtos', 'empresa']].fillna('') \
+        .agg(' '.join, axis=1).map(norm).str.contains(RX_FORNECEDOR, regex=True)
     out['atua_fora_br'] = out['localizacao'].fillna('').map(
         lambda v: bool(re.search(RX_FORA_BR, norm(v))))
     out['processos_mapeados'] = out['processos'].map(_sim_nao)
