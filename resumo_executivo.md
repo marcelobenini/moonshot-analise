@@ -189,6 +189,54 @@ Entre as 109 classe A, a porta de entrada mais comum é **controle financeiro (3
 
 ---
 
+## 6c. Realidade × inferência — o cruzamento com a planilha dos consultores
+
+**415 das 708 alunas (58,6%)** foram casadas com a planilha de acompanhamento: 458 de 554 nomes (82,7%), sendo 407 por nome exato, 32 por primeiro+último e 19 por sobreposição de tokens. O método de cada casamento está na aba `Consultoria_Casamento`.
+
+### O achado acionável: quem está saindo é a aluna pequena
+
+Taxa de alunas sem contato ou pedindo saída, entre as 305 com relato:
+
+| Recorte | Taxa de risco |
+|---|---|
+| Até R$ 5 mil/mês | **41,4%** (12 de 29) |
+| R$ 5–10 mil | 30,4% (14 de 46) |
+| R$ 10–20 mil | 28,8% (19 de 66) |
+| R$ 20–40 mil | 21,2% (14 de 66) |
+| R$ 40–80 mil | 15,2% (7 de 46) |
+| R$ 80–150 mil | **9,5%** (2 de 21) |
+
+O mesmo gradiente aparece por porte (**32,9% sozinhas** contra 17,4% em equipes de 6–15) e por classe (**10,9% na classe A** contra 29,0% na B).
+
+Isso tem duas consequências diretas. A fila de abordagem por score já privilegia quem tem menor risco de sair — os dois critérios apontam para o mesmo lugar. E **a aluna pequena precisa de um produto diferente, não de mais consultoria**: ela sai antes de chegar ao resultado, e 5 consultorias medianas não a seguraram (a mediana de encontros é igual em todos os estados de engajamento).
+
+### Engajamento relatado (305 alunas com relato)
+
+| Estado | Alunas | Fatur. mediano |
+|---|---|---|
+| Relato sem sinal claro | 118 | R$ 25.000 |
+| Engajada | 85 | R$ 15.000 |
+| Risco de saída | 42 | R$ 10.000 |
+| Sem contato | 33 | R$ 15.000 |
+| Oscilante | 14 | R$ 29.500 |
+| Renovou ou fez upsell | 13 | R$ 30.000 |
+
+**Quem renovou fatura o dobro de quem está em risco.** 13 renovações/upsell é o piso do que já converteu — e são exatamente o perfil que o score aponta.
+
+### O faturamento do consultor é menos "atualizado" do que parece
+
+Das 320 alunas com valor nos dois lugares, **143 (44,7%) têm valor idêntico ao que a aluna declarou no formulário.** Nesses casos não dá para distinguir confirmação de cópia, e eles não informam evolução nenhuma.
+
+Nas 177 que foram efetivamente atualizadas: 110 subiram, 67 caíram, mediana de R$ 17.500 para R$ 20.000. Dezessete dobraram ou mais; doze caíram à metade ou menos.
+
+Se a intenção é medir evolução de faturamento, **o campo precisa virar histórico com data**, não um número que se sobrescreve. Do jeito atual, quase metade da base não permite comparação.
+
+### Uma hipótese minha que a planilha derrubou
+
+Testei se a divergência entre dor declarada e inferida prediria desengajamento — a ideia de que quem não sabe qual é o próprio problema não executa o plano. **Não se sustenta:** χ² p = 0,19, e a direção é até inversa (20,0% de risco entre as divergentes contra 27,4% entre as convergentes). Registro porque a hipótese era boa e não passou.
+
+---
+
 ## 7. Portugal — a hipótese não se sustenta como está
 
 27 alunas atuam em Portugal (identificadas por localização e endereço, com nome de rua descartado e CEP de 4 dígitos como confirmação). O contraste, em números absolutos porque os sub-recortes são pequenos:

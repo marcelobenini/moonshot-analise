@@ -1,55 +1,62 @@
 <title>Radar Moonshot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=Jost:wght@400;500;600;700&display=swap">
 <style>
 :root{
   color-scheme:light;
-  --ground:#faf9f7; --surface:#ffffff; --panel:#f3f1ee; --panel-2:#ebe8e4;
-  --ink:#141317; --ink-2:#5a565e; --ink-3:#8a8590;
-  --line:#e3dfdb; --line-strong:#cbc5c0;
-  --accent:#4a3aa7; --accent-soft:#eceafa; --accent-ink:#ffffff;
-  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
-  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
-  --shadow:0 1px 2px rgba(20,19,23,.06),0 8px 24px -12px rgba(20,19,23,.14);
+  --ground:#fdf7f9; --surface:#fffafb; --panel:#faeef2; --panel-2:#f4e2e8;
+  --ink:#2a1a22; --ink-2:#6b5560; --ink-3:#9c8790;
+  --line:#f0dfe5; --line-strong:#dcc3cd;
+  --accent:#c2185b; --accent-soft:#fce7ef; --accent-ink:#fffafb;
+  --s1:#c2185b; --s2:#d98324; --s3:#1565c0;
+  --good:#0b8a5a; --warn:#c98500; --crit:#c62828;
+  --shadow:0 1px 2px rgba(120,40,70,.05),0 10px 30px -14px rgba(120,40,70,.20);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --ground:#17161a; --surface:#1e1d22; --panel:#25242a; --panel-2:#2e2d34;
-    --ink:#f5f4f2; --ink-2:#b3aeb8; --ink-3:#8a8590;
-    --line:#312f37; --line-strong:#443f4c;
-    --accent:#9085e9; --accent-soft:#292440; --accent-ink:#17161a;
-    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+    --ground:#171015; --surface:#1c1418; --panel:#261a20; --panel-2:#31222a;
+    --ink:#f9eff3; --ink-2:#c9b2bb; --ink-3:#9b838d;
+    --line:#38262e; --line-strong:#4d3540;
+    --accent:#f48fb1; --accent-soft:#33202a; --accent-ink:#1c1418;
+    --s1:#e0507f; --s2:#c08a20; --s3:#4b91e8;
+    --good:#3aab7e; --warn:#d69a2a; --crit:#e06a6a;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ground:#17161a; --surface:#1e1d22; --panel:#25242a; --panel-2:#2e2d34;
-  --ink:#f5f4f2; --ink-2:#b3aeb8; --ink-3:#8a8590;
-  --line:#312f37; --line-strong:#443f4c;
-  --accent:#9085e9; --accent-soft:#292440; --accent-ink:#17161a;
-  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  --ground:#171015; --surface:#1c1418; --panel:#261a20; --panel-2:#31222a;
+  --ink:#f9eff3; --ink-2:#c9b2bb; --ink-3:#9b838d;
+  --line:#38262e; --line-strong:#4d3540;
+  --accent:#f48fb1; --accent-soft:#33202a; --accent-ink:#1c1418;
+  --s1:#e0507f; --s2:#c08a20; --s3:#4b91e8;
+  --good:#3aab7e; --warn:#d69a2a; --crit:#e06a6a;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--ground); color:var(--ink);
-  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  font-family:Jost,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased;
 }
 .wrap{max-width:1180px; margin:0 auto; padding:0 24px 96px}
 h1,h2,h3{font-family:Fraunces,Georgia,"Times New Roman",serif; font-weight:600; text-wrap:balance; margin:0}
+h1{font-variation-settings:"opsz" 120}
 .mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-variant-numeric:tabular-nums}
 .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.13em;
   text-transform:uppercase; color:var(--ink-3); font-weight:500}
 
 /* ---------- topo ---------- */
-header.top{border-bottom:1px solid var(--line); background:var(--surface); margin-bottom:28px}
+header.top{border-bottom:1px solid var(--line); background:var(--surface); margin-bottom:28px;
+  position:relative}
+header.top::before{content:""; position:absolute; inset:0 0 auto; height:3px;
+  background:linear-gradient(90deg,var(--s1),#e8709e 45%,var(--s2))}
 .top-inner{max-width:1180px; margin:0 auto; padding:26px 24px 0}
 .title-row{display:flex; flex-wrap:wrap; align-items:baseline; gap:14px 18px; margin-bottom:4px}
-h1{font-size:clamp(26px,3.4vw,36px); letter-spacing:-.015em}
+h1{font-size:clamp(28px,3.6vw,38px); letter-spacing:-.02em}
+h1 em{font-style:italic; color:var(--accent); font-weight:500}
 .sub{color:var(--ink-2); font-size:14px; max-width:64ch; margin:6px 0 20px}
 .filters{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-end; padding-bottom:18px}
 .f{display:flex; flex-direction:column; gap:5px}
@@ -69,8 +76,11 @@ button.reset:hover{color:var(--ink); border-color:var(--ink-3)}
 /* ---------- KPIs ---------- */
 .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:12px; margin-bottom:32px}
 .kpi{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:14px 16px}
+.kpi{position:relative; overflow:hidden}
+.kpi::after{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent);
+  opacity:.55}
 .kpi .v{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
-  font-size:25px; font-weight:600; letter-spacing:-.02em; line-height:1.15}
+  font-size:25px; font-weight:600; letter-spacing:-.02em; line-height:1.15; color:var(--accent)}
 .kpi .k{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.11em;
   text-transform:uppercase; color:var(--ink-3); margin-top:5px}
 .kpi .n{font-size:11.5px; color:var(--ink-3); margin-top:3px}
@@ -89,7 +99,7 @@ h2{font-size:20px; letter-spacing:-.01em}
 /* ---------- gráficos ---------- */
 .chart{width:100%; overflow-x:auto}
 svg{display:block; max-width:100%}
-svg text{font-family:"IBM Plex Sans",sans-serif}
+svg text{font-family:Jost,sans-serif}
 .tick{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-3); font-variant-numeric:tabular-nums}
 .blab{font-size:12.5px; fill:var(--ink)}
 .bval{font-family:"IBM Plex Mono",monospace; font-size:11.5px; fill:var(--ink-2); font-variant-numeric:tabular-nums}
@@ -115,7 +125,7 @@ td.wrapok{white-space:normal; min-width:210px}
   font-size:10.5px; font-weight:600; letter-spacing:.06em; padding:2px 8px; border-radius:999px;
   border:1px solid transparent}
 .pill.A{background:color-mix(in srgb,var(--good) 15%,transparent); color:var(--good); border-color:color-mix(in srgb,var(--good) 40%,transparent)}
-.pill.B{background:color-mix(in srgb,var(--s1) 14%,transparent); color:var(--s1); border-color:color-mix(in srgb,var(--s1) 38%,transparent)}
+.pill.B{background:color-mix(in srgb,var(--s3) 14%,transparent); color:var(--s3); border-color:color-mix(in srgb,var(--s3) 38%,transparent)}
 .pill.C{background:var(--panel-2); color:var(--ink-2); border-color:var(--line-strong)}
 .dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex:none}
 
@@ -126,7 +136,7 @@ td.wrapok{white-space:normal; min-width:210px}
 .callout.gap{border-left-color:var(--crit)}
 .callout.op{border-left-color:var(--good)}
 .callout.warn{border-left-color:var(--warn)}
-.callout h4{margin:0 0 5px; font-size:13px; font-family:"IBM Plex Sans",sans-serif; font-weight:700}
+.callout h4{margin:0 0 5px; font-size:13.5px; font-family:Jost,sans-serif; font-weight:600}
 .callout p{margin:0; font-size:12.5px; color:var(--ink-2); line-height:1.5}
 .callout .big{font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:600; color:var(--ink);
   display:block; margin-bottom:2px; font-variant-numeric:tabular-nums}
@@ -138,7 +148,7 @@ td.wrapok{white-space:normal; min-width:210px}
 .linhas{display:grid; grid-template-columns:repeat(auto-fit,minmax(224px,1fr)); gap:12px; margin:20px 0 0}
 .linha{border:1px solid var(--line); border-radius:11px; padding:15px 16px; background:var(--panel)}
 .linha .top{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
-.linha h4{margin:0; font-size:14px; font-family:"IBM Plex Sans",sans-serif; font-weight:700}
+.linha h4{margin:0; font-size:14.5px; font-family:Jost,sans-serif; font-weight:600}
 .linha .pool{font-family:"IBM Plex Mono",monospace; font-size:27px; font-weight:600;
   letter-spacing:-.02em; font-variant-numeric:tabular-nums; margin:6px 0 2px}
 .linha .meta{font-size:12px; color:var(--ink-2); line-height:1.7}
@@ -170,7 +180,7 @@ td.wrapok{white-space:normal; min-width:210px}
 <header class="top">
   <div class="top-inner">
     <div class="title-row">
-      <h1>Radar Moonshot</h1>
+      <h1>Radar <em>Moonshot</em></h1>
       <span class="eyebrow" id="stamp"></span>
     </div>
     <p class="sub">Dores declaradas, gargalos inferidos e prioridade de abordagem das alunas de beleza,
@@ -238,6 +248,36 @@ td.wrapok{white-space:normal; min-width:210px}
     <h3 style="font-size:16px; margin:30px 0 0">Já dentro do ecossistema Nabeauty</h3>
     <p class="sec-note" id="nota-nb"></p>
     <div class="tblwrap"><table id="tb-nb"></table></div>
+  </section>
+
+  <section id="sec-cons">
+    <div class="sec-head">
+      <h2>Realidade × inferência</h2>
+      <span class="eyebrow" id="cons-n"></span>
+    </div>
+    <p class="sec-note">Cruzamento com a planilha que os consultores atualizam. Nomes casados por
+      comparação textual, não por cadastro — o método de cada casamento está na aba
+      <code>Consultoria_Casamento</code> do Excel.</p>
+
+    <div class="callouts" id="cons-alerta"></div>
+
+    <h3 style="font-size:16px; margin:26px 0 0">Engajamento relatado pelo consultor</h3>
+    <p class="sec-note">Estado lido do texto livre da coluna "situação da aluna", com o vocabulário
+      que os próprios consultores usam.</p>
+    <div class="chart" id="ch-engaj"></div>
+
+    <h3 style="font-size:16px; margin:28px 0 0">Quem está saindo</h3>
+    <p class="sec-note" id="nota-risco"></p>
+    <div class="chart" id="ch-risco"></div>
+
+    <h3 style="font-size:16px; margin:28px 0 0">Faturamento: formulário × consultor</h3>
+    <p class="sec-note" id="nota-fat"></p>
+    <div class="tblwrap"><table id="tb-confronto"></table></div>
+
+    <h3 style="font-size:16px; margin:28px 0 0">Alunas em risco, por consultor</h3>
+    <p class="sec-note">Sem contato ou pedindo saída. Ordenado por score: as de cima são as que
+      custam mais caro perder.</p>
+    <div class="tblwrap" style="max-height:460px; overflow-y:auto"><table id="tb-risco"></table></div>
   </section>
 
   <section id="sec-frentes">
@@ -318,6 +358,9 @@ const FILTROS = [
   { id: 'porte', lab: 'Porte', campo: 'porte_equipe' },
   { id: 'faixa', lab: 'Faturamento', campo: 'faixa_faturamento' },
   { id: 'origem', lab: 'Formulário', campo: 'origem' },
+  { id: 'consultor', lab: 'Consultor', campo: 'consultor' },
+  { id: 'engajamento', lab: 'Engajamento', campo: 'engajamento',
+    rot: v => (META.rotulos_engajamento || {})[v] || v },
 ];
 const estado = { painel: 'esp', ordenar: 'score_oportunidade', desc: true };
 FILTROS.forEach(f => estado[f.id] = '');
@@ -429,6 +472,40 @@ function colunas(alvo, itens, base, cor) {
   });
   s.appendChild(el('line', { x1: padL, y1: topo + alturaMax, x2: w - 16, y2: topo + alturaMax, class: 'axis' }));
   alvo.appendChild(s);
+}
+
+/* Barras de TAXA: o eixo vai a 100%, entao o comprimento significa proporcao e
+   nao volume. Usar contagem aqui inverteria a leitura — a faixa com mais alunas
+   pareceria a de maior risco. */
+function barrasTaxa(alvo, itens, opts = {}) {
+  alvo.innerHTML = '';
+  if (!itens.length) { alvo.innerHTML = '<p class="empty">Nenhum recorte com dados suficientes.</p>'; return; }
+  const rotW = opts.rotW || 150, padR = 150, alt = 26, gap = 8, topo = 26;
+  const w = Math.max(640, rotW + padR + 330), larg = w - rotW - padR;
+  const h = topo + itens.length * (alt + gap) + 14;
+  const max = Math.max(50, Math.ceil(Math.max(...itens.map(i => i.taxa)) / 10) * 10);
+  const s = svgBase(w, h);
+  for (let g = 0; g <= 5; g++) {
+    const x = rotW + larg * g / 5;
+    s.appendChild(el('line', { x1: x, y1: topo - 8, x2: x, y2: h - 16, class: 'grid' }));
+    s.appendChild(el('text', { x, y: topo - 14, class: 'tick', 'text-anchor': 'middle' },
+      Math.round(max * g / 5) + '%'));
+  }
+  itens.forEach((it, i) => {
+    const y = topo + i * (alt + gap), bw = Math.max(2, larg * it.taxa / max);
+    s.appendChild(el('text', { x: rotW - 12, y: y + alt / 2 + 4, class: 'blab',
+      'text-anchor': 'end' }, it.rot));
+    const r = el('rect', { x: rotW, y, width: bw, height: alt, rx: 4,
+      fill: opts.cor || 'var(--crit)', class: 'bar', opacity: it.n < 20 ? .6 : 1 });
+    tip(r, `${it.rot}: ${it.risco} de ${it.n} alunas (${it.taxa.toFixed(1)}%)`);
+    s.appendChild(r);
+    s.appendChild(el('text', { x: rotW + bw + 9, y: y + alt / 2 + 4, class: 'bval' },
+      `${it.taxa.toFixed(0)}%  ·  ${it.risco} de ${it.n}`));
+  });
+  s.appendChild(el('line', { x1: rotW, y1: topo - 8, x2: rotW, y2: h - 16, class: 'axis' }));
+  alvo.appendChild(s);
+  if (opts.nota) alvo.insertAdjacentHTML('beforeend',
+    `<p class="legend"><span>${opts.nota}</span></p>`);
 }
 
 /* Barras empilhadas: confirmada | crua | latente, com 2px de respiro entre segmentos */
@@ -637,6 +714,7 @@ function render() {
   barrasH($('#ch-dores'), itensDor, comDor.length);
 
   renderOportunidades(f);
+  renderConsultoria(f);
 
   /* Frentes do produto */
   const fr = Object.entries(META.frentes_categorias).map(([k, cats]) => {
@@ -899,6 +977,115 @@ function renderOportunidades(f) {
     { lab: 'Classe', render: r => r.classe ? `<span class="pill ${r.classe}">${r.classe}</span>` : '—' },
     { lab: 'Porta de entrada', render: r => META.rotulos_frente[r.produto_ancora] || '—' },
   ], nb.sort((a, b) => (b.fat_brl || 0) - (a.fat_brl || 0)));
+}
+
+/* ---------- Realidade x inferência ---------- */
+const COR_ENGAJ = {
+  ganho: 'var(--good)', engajada: 'var(--s1)', neutro: 'var(--ink-3)',
+  oscilante: 'var(--s2)', sem_contato: 'var(--s3)', risco_saida: 'var(--crit)',
+};
+
+function renderConsultoria(f) {
+  const com = f.filter(a => a.tem_acompanhamento);
+  const comRelato = com.filter(a => a.engajamento);
+  $('#cons-n').textContent = `${com.length} das ${f.length} do recorte têm acompanhamento`;
+
+  if (!comRelato.length) {
+    ['#ch-engaj', '#ch-risco'].forEach(s => $(s).innerHTML =
+      '<p class="empty">Nenhuma aluna com relato de consultor no recorte atual.</p>');
+    $('#cons-alerta').innerHTML = ''; $('#nota-risco').textContent = '';
+    tabela($('#tb-confronto'), [{ lab: '—' }], []);
+    tabela($('#tb-risco'), [{ lab: '—' }], []);
+    return;
+  }
+
+  /* alerta de qualidade do dado + risco */
+  const comAmbos = com.filter(a => a.fat_brl != null && a.fat_mes_consultor > 0);
+  const iguais = comAmbos.filter(a => a.fat_confirmado_igual).length;
+  const emRisco = comRelato.filter(a => a.em_risco).length;
+  const ganho = comRelato.filter(a => a.engajamento === 'ganho').length;
+  $('#cons-alerta').innerHTML = `
+    <div class="callout gap"><h4>Em risco agora</h4><span class="big">${pct(emRisco, comRelato.length)}</span>
+      <p>${emRisco} de ${comRelato.length} alunas com relato estão sem contato ou pedindo saída.</p></div>
+    <div class="callout op"><h4>Renovaram ou subiram de plano</h4><span class="big">${ganho}</span>
+      <p>Relato menciona renovação, Elite ou upsell. É o piso do que já se converteu.</p></div>
+    <div class="callout warn"><h4>Faturamento repetido do formulário</h4>
+      <span class="big">${comAmbos.length ? pct(iguais, comAmbos.length) : '—'}</span>
+      <p>${iguais} de ${comAmbos.length} valores do consultor são idênticos ao que a aluna declarou.
+         Não dá para saber se confirmou ou se copiou.</p></div>`;
+
+  /* engajamento */
+  const ordemE = ['ganho', 'engajada', 'neutro', 'oscilante', 'sem_contato', 'risco_saida'];
+  const itensE = ordemE.map(k => ({
+    rot: (META.rotulos_engajamento || {})[k] || k,
+    n: comRelato.filter(a => a.engajamento === k).length,
+    cor: COR_ENGAJ[k],
+    dica: 'faturamento mediano ' + brl(mediana(
+      comRelato.filter(a => a.engajamento === k).map(a => a.fat_mes_consultor))),
+  })).filter(x => x.n).sort((a, b) => b.n - a.n);
+  barrasH($('#ch-engaj'), itensE, comRelato.length, { rotW: 190 });
+
+  /* risco por faixa de faturamento — o corte mais forte */
+  const faixas = FAIXAS.filter(x => comRelato.some(a => a.faixa_faturamento === x));
+  const itensR = faixas.map(x => {
+    const g = comRelato.filter(a => a.faixa_faturamento === x);
+    const r = g.filter(a => a.em_risco).length;
+    return { rot: x.replace('R$ ', '').replace('ate ', '≤').replace('acima de ', '>'),
+             n: g.length, risco: r, taxa: g.length ? 100 * r / g.length : 0 };
+  }).filter(x => x.n >= 10);
+  if (itensR.length) {
+    barrasTaxa($('#ch-risco'), itensR, { rotW: 130,
+      nota: 'Barra mais clara = menos de 20 alunas na faixa' });
+    $('#nota-risco').innerHTML = `<b>Taxa</b> de alunas em risco dentro de cada faixa — não ` +
+      `contagem, que só mostraria onde há mais gente. Só faixas com 10 ou mais alunas. ` +
+      `A taxa cai conforme a aluna cresce, e o mesmo vale por classe: <b>10,9% na classe A ` +
+      `contra 29,0% na B</b>, e <b>32,9% entre as que trabalham sozinhas</b> contra 17,4% ` +
+      `nas equipes de 6 a 15.`;
+  } else {
+    $('#ch-risco').innerHTML = '<p class="empty">Nenhuma faixa com 10 ou mais alunas no recorte.</p>';
+    $('#nota-risco').textContent = '';
+  }
+
+  /* confronto de faturamento */
+  const mudou = comAmbos.filter(a => !a.fat_confirmado_igual);
+  const subiu = mudou.filter(a => a.fat_delta > 0).length;
+  const caiu = mudou.filter(a => a.fat_delta < 0).length;
+  $('#nota-fat').innerHTML = `Só as linhas em que o consultor escreveu um valor <b>diferente</b> ` +
+    `informam evolução. As idênticas podem ser confirmação ou cópia, e por isso ficam separadas.`;
+  tabela($('#tb-confronto'), [
+    { lab: 'Item', k: 'item', wrap: true },
+    { lab: 'Alunas', num: true, k: 'v' },
+    { lab: 'Leitura', k: 'nota', wrap: true },
+  ], [
+    { item: 'Com os dois valores disponíveis', v: comAmbos.length, nota: '' },
+    { item: 'Valor idêntico ao formulário', v: iguais, nota: 'não informa evolução' },
+    { item: 'Valor efetivamente atualizado', v: mudou.length, nota: 'única parte que informa' },
+    { item: '— subiu', v: subiu, nota: mudou.length ? pct(subiu, mudou.length) + ' dos atualizados' : '' },
+    { item: '— caiu', v: caiu, nota: mudou.length ? pct(caiu, mudou.length) + ' dos atualizados' : '' },
+    { item: 'Mediana no formulário (onde mudou)', v: brl(mediana(mudou.map(a => a.fat_brl))), nota: 'R$/mês' },
+    { item: 'Mediana no consultor (onde mudou)', v: brl(mediana(mudou.map(a => a.fat_mes_consultor))), nota: 'R$/mês' },
+    { item: 'Dobraram ou mais', v: mudou.filter(a => a.fat_razao >= 2).length, nota: '' },
+    { item: 'Caíram à metade ou menos', v: mudou.filter(a => a.fat_razao <= 0.5).length, nota: '' },
+  ]);
+
+  /* lista de risco */
+  const risco = comRelato.filter(a => a.em_risco)
+    .sort((a, b) => (b.score_oportunidade || 0) - (a.score_oportunidade || 0));
+  tabela($('#tb-risco'), [
+    { lab: 'ID', render: r => `<span class="mono" style="color:var(--ink-3)">${r.id_aluna}</span>` },
+    ...(('nome' in (A[0] || {})) ? [{ lab: 'Aluna', wrap: true,
+        render: r => `${r.nome || '—'}<br><span style="color:var(--ink-3);font-size:12px">${r.empresa || ''}</span>` }] : []),
+    { lab: 'Consultor', k: 'consultor' },
+    { lab: 'Estado', render: r => `<span class="pill" style="color:${COR_ENGAJ[r.engajamento]};
+        border-color:${COR_ENGAJ[r.engajamento]};background:transparent">${
+        (META.rotulos_engajamento || {})[r.engajamento] || r.engajamento}</span>` },
+    { lab: 'Score', num: true, render: r => r.score_oportunidade == null ? '—' : r.score_oportunidade.toFixed(1) },
+    { lab: 'Faturamento', num: true, render: r => brl(r.fat_mes_consultor ?? r.fat_brl) },
+    { lab: 'Consultorias', num: true, render: r => num(r.consultorias_feitas) },
+    { lab: 'Relato do consultor', wrap: true,
+      render: r => r.situacao ? `<span style="font-size:12.5px">${
+        String(r.situacao).slice(0, 190).replace(/</g, '&lt;')}${String(r.situacao).length > 190 ? '…' : ''}</span>` : '—' },
+  ], risco.slice(0, 120));
 }
 
 $('#seg-painel').addEventListener('click', e => {

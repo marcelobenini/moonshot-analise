@@ -143,8 +143,36 @@ O cruzamento induzida × espontânea é dado real: as duas perguntas existem, fo
 
 Há um efeito de instrumento embutido: as perguntas induzidas dos pilares Flow cobrem fidelização, conteúdo e vendas de forma muito mais direta do que cobrem retenção de equipe. Parte da alta latência dessas categorias vem de a pergunta existir, não de a aluna ser indiferente a elas. A comparação entre categorias é sólida em direção, frágil em magnitude.
 
-## 20. Dados pessoais
+## 20. O casamento de nomes é textual, não cadastral
+
+458 de 554 registros da planilha de consultoria casaram com a base do estudo (82,7%), e sobraram **96 nomes sem correspondência**. As causas prováveis se misturam e não dá para separá-las: aluna que não respondeu o formulário, grafia muito diferente, apelido, ou nome de sócia no lugar do nome da titular.
+
+Dos que casaram, 407 foram por nome exato normalizado (seguro), 32 por primeiro+último nome (razoável, e único quando o par é único na base) e **19 por sobreposição de tokens acima de 0,62** — esses últimos são os que podem estar errados. Todos estão listados com o método na aba `Consultoria_Casamento`; audite os 19 antes de agir sobre eles individualmente.
+
+Também houve deduplicação: uma aluna aparece em mais de uma aba quando o consultor mudou ou quando há relatório consolidado. Ficou o registro mais informativo, o que significa que **relatos anteriores do mesmo caso foram descartados** — o histórico existe na planilha original e não neste relatório.
+
+## 21. O engajamento é lido de texto livre, com o vocabulário do consultor
+
+Não existe campo estruturado de engajamento. O estado (engajada, oscilante, sem contato, risco de saída, renovou) é inferido por padrão textual sobre a coluna "situação da aluna". Três consequências:
+
+- **178 alunas com acompanhamento não têm relato nenhum** e ficam fora de toda a análise de engajamento. A base efetiva é 305, não 415.
+- **118 caem em "relato sem sinal claro"** — o texto existe mas não casa com nenhum padrão. É o maior grupo, e ele pode conter tanto engajadas quanto em risco.
+- A régua é do consultor, não minha: "engajada" para um pode ser "oscilante" para outro, e não há calibração entre as 13 abas.
+
+A classificação foi validada apenas por leitura de amostra. Não medi precisão por categoria.
+
+## 22. O confronto de faturamento tem um problema de origem
+
+44,7% dos valores do consultor são idênticos ao do formulário. A leitura conservadora é que **esses 143 casos não informam nada** — podem ser confirmação genuína ou o número copiado sem verificação. Todas as conclusões sobre evolução de faturamento usam só as 177 que mudaram, o que reduz a base e pode enviesar: é plausível que o consultor atualize justamente quando houve mudança notável, o que inflaria a magnitude média da variação.
+
+Além disso, os dois números não têm a mesma data. O formulário foi respondido na entrada; a planilha é atualizada em momentos variados e sem carimbo de data por campo. **Não é uma série temporal, é uma comparação entre dois instantes desconhecidos.**
+
+## 23. Um teste que falhou, registrado
+
+A hipótese de que a divergência entre dor declarada e inferida prediria desengajamento **foi testada e rejeitada** (χ² p = 0,19; 20,0% de risco entre divergentes contra 27,4% entre convergentes — direção inversa à esperada). Não use essa relação em nenhuma argumentação: ela não está nos dados.
+
+## 24. Dados pessoais
 
 As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes` — vale para o Excel, o JSON e o BI.
 
-O BI publicado leva nome e empresa (necessários para priorizar abordagem) mas **nunca e-mail, telefone ou endereço**. Ele é privado por padrão; ao compartilhar o link, você compartilha os nomes das 708 alunas.
+O BI publicado leva nome e empresa (necessários para priorizar abordagem) mas **nunca e-mail, telefone ou endereço**. Ele agora inclui também **o relato livre do consultor sobre cada aluna em risco** — texto que descreve inadimplência, insatisfação e conflitos de sociedade. É material sensível sobre pessoas identificadas: pense duas vezes antes de compartilhar o link fora do time comercial. Ele é privado por padrão; ao compartilhar o link, você compartilha os nomes das 708 alunas.

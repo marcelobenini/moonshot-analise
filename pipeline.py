@@ -21,7 +21,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import analise, bi, cluster, oportunidade, produto, score
+from moonshot import analise, bi, cluster, consultoria, oportunidade, produto, score
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -108,6 +108,8 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--pro', default='dados/moonshot_pro.xlsx')
     ap.add_argument('--club', default='dados/moonshot_club.xlsx')
+    ap.add_argument('--consultorias', default='dados/controle_consultorias.xlsx',
+                    help='planilha de acompanhamento dos consultores; opcional')
     ap.add_argument('--saida', default='.')
     ap.add_argument('--usd-brl', type=float, default=CONFIG['fx']['USD'])
     ap.add_argument('--eur-brl', type=float, default=CONFIG['fx']['EUR'])
@@ -144,6 +146,20 @@ def main():
     else:
         fora = fora.iloc[:0]
 
+    # ---- acompanhamento dos consultores (dado real, atualizado a mao) -----
+    tab_engaj = tab_risco = tab_confronto = log_casamento = pd.DataFrame()
+    if args.consultorias and os.path.exists(args.consultorias):
+        base, _reg, log_casamento = consultoria.integrar(base, args.consultorias)
+        print(f'Consultorias: {int(base["tem_acompanhamento"].sum())} alunas com acompanhamento '
+              f'({log_casamento["id_aluna"].notna().sum()} de {len(log_casamento)} nomes casaram)')
+    else:
+        for c in ('tem_acompanhamento', 'em_risco', 'fat_confirmado_igual'):
+            base[c] = False
+        for c in ('consultor', 'engajamento', 'situacao', 'fat_mes_consultor', 'fat_delta',
+                  'fat_razao', 'consultorias_feitas', 'resultado_relatado', 'programa',
+                  'metodo_casamento'):
+            base[c] = None
+
     # ---- Etapa 1 ---------------------------------------------------------
     base, evid = analise.classificar_base(base, CONFIG['max_categorias_por_resposta'])
     rank = analise.ranking_dores(base, evid)
@@ -160,6 +176,11 @@ def main():
     base = produto.marcar_temas_latentes(base)
     base = score.calcular_score(base)
     diag = score.diagnostico_individual(base, usar_nome=not args.sem_nomes)
+
+    if 'engajamento' in base.columns and base['engajamento'].notna().any():
+        tab_engaj = consultoria.tabela_engajamento(base)
+        tab_risco = consultoria.risco_por_perfil(base)
+        tab_confronto = consultoria.confronto_faturamento(base)
 
     # ---- oportunidade por linha de negocio do grupo NB --------------------
     base = oportunidade.marcar_sinais(base)
@@ -185,6 +206,10 @@ def main():
     cols_base = (['id_aluna', 'origem'] + ident + [
         'empresa', 'setor', 'nicho_grupo', 'nicho_fonte', 'vende_para_o_setor',
         'localizacao', 'pais', 'uf', 'atua_fora_br',
+        'tem_acompanhamento', 'consultor', 'programa', 'engajamento', 'em_risco',
+        'resultado_relatado', 'consultorias_feitas', 'situacao', 'potenciais',
+        'fat_mes_consultor', 'fat_delta', 'fat_razao', 'fat_confirmado_igual',
+        'metodo_casamento',
         'faturamento', 'fat_valor_moeda_orig', 'fat_moeda', 'fat_brl', 'fat_regra',
         'fat_confianca', 'faixa_faturamento',
         'equipe', 'equipe_n', 'equipe_total', 'porte_equipe', 'equipe_regra',
@@ -247,6 +272,10 @@ def main():
         'Produtividade_por_Porte': fat_prod,
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
+        'Consultoria_Engajamento': tab_engaj,
+        'Consultoria_Risco': tab_risco,
+        'Consultoria_Faturamento': tab_confronto,
+        'Consultoria_Casamento': log_casamento,
         'Matriz_Urgencia': mat_urgencia,
         'Oportunidade_Linhas': pools,
         'Venda_Cruzada': sobrep,
@@ -281,7 +310,9 @@ def main():
                           com_nomes=not args.sem_nomes,
                           extras={'matriz_urgencia': mat_urgencia, 'pools_linhas': pools,
                                   'venda_cruzada': sobrep, 'pares_linhas': pares,
-                                  'geografia': geo, 'nabeauty': tab_nb})
+                                  'geografia': geo, 'nabeauty': tab_nb,
+                                  'engajamento': tab_engaj, 'risco': tab_risco,
+                                  'confronto_faturamento': tab_confronto})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')
 
     modelo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bi_template.html')

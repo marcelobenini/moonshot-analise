@@ -49,16 +49,23 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
               'faixa_faturamento', 'anos_operacao', 'dor_declarada_1', 'dor_inferida_1',
               'justificativa_inferencia', 'processos_mapeados', 'usa_sistema_gestao',
               'faz_trafego', 'usa_crm', 'usa_ia_automacao', 'fat_por_pessoa',
+              'tem_acompanhamento', 'consultor', 'programa', 'engajamento', 'em_risco',
+              'resultado_relatado', 'consultorias_feitas', 'fat_mes_consultor', 'fat_delta',
+              'fat_razao', 'fat_confirmado_igual',
               'sinal_quer_aprender', 'sinal_expansao', 'sinal_produto', 'ja_vende_produto',
               'ja_da_curso', 'e_nabeauty', 'dor_de_conhecimento', 'dor_de_execucao',
               'eixo_capacidade_pagar', 'eixo_complexidade_operacional',
               'eixo_aderencia_dor', 'eixo_maturidade_digital']
     if com_nomes:
-        campos = ['nome', 'empresa'] + campos
+        # 'situacao' e o relato livre do consultor: cita nomes proprios com
+        # frequencia ("Priscila comecou a...", "Thiago e Meire ainda nao..."),
+        # entao acompanha a identificacao em vez de ser sempre exportado.
+        campos = ['nome', 'empresa', 'situacao'] + campos
     d = base[[c for c in campos if c in base.columns]].copy()
     linhas = _registros(d)
 
     # Listas por aluna: permitem recontar dores e frentes sob qualquer filtro.
+    from .consultoria import ROTULO_ENGAJAMENTO
     from .oportunidade import LINHAS, QUADRANTES
     marcas = {k: LINHAS[k][1](base).fillna(False).reset_index(drop=True) for k in LINHAS}
     dores_ind, dores_esp = _dores_por_enquadramento(base)
@@ -86,6 +93,7 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
             'temas_latentes': {k: v[0] for k, v in TEMAS_LATENTES.items()},
             'linhas_nb': {k: {'rotulo': v[0], 'regra': v[2]} for k, v in LINHAS.items()},
             'quadrantes': {k: {'rotulo': v[0], 'definicao': v[1]} for k, v in QUADRANTES.items()},
+            'rotulos_engajamento': ROTULO_ENGAJAMENTO,
         },
         'alunas': linhas,
         'referencia': {
