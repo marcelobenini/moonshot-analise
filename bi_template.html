@@ -134,6 +134,31 @@ td.wrapok{white-space:normal; min-width:210px}
 .legend span{display:inline-flex; align-items:center; gap:6px}
 .foot{color:var(--ink-3); font-size:12px; margin-top:14px; line-height:1.6}
 .empty{padding:34px 0; text-align:center; color:var(--ink-3); font-size:13.5px}
+/* ---------- oportunidades ---------- */
+.linhas{display:grid; grid-template-columns:repeat(auto-fit,minmax(224px,1fr)); gap:12px; margin:20px 0 0}
+.linha{border:1px solid var(--line); border-radius:11px; padding:15px 16px; background:var(--panel)}
+.linha .top{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.linha h4{margin:0; font-size:14px; font-family:"IBM Plex Sans",sans-serif; font-weight:700}
+.linha .pool{font-family:"IBM Plex Mono",monospace; font-size:27px; font-weight:600;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; margin:6px 0 2px}
+.linha .meta{font-size:12px; color:var(--ink-2); line-height:1.7}
+.linha .meta b{font-family:"IBM Plex Mono",monospace; color:var(--ink)}
+.linha .regra{font-size:11.5px; color:var(--ink-3); margin-top:9px; padding-top:9px;
+  border-top:1px dashed var(--line-strong); line-height:1.5}
+.calc{margin-top:20px; border:1px solid var(--line-strong); border-radius:11px; overflow:hidden}
+.calc-head{background:var(--accent-soft); padding:12px 16px; border-bottom:1px solid var(--line-strong)}
+.calc-head strong{font-size:13.5px}
+.calc-head p{margin:4px 0 0; font-size:12.5px; color:var(--ink-2)}
+.calc table{font-size:13px}
+.calc input{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  width:96px; text-align:right; padding:5px 8px; border:1px solid var(--line-strong);
+  border-radius:6px; background:var(--surface); color:var(--ink); font-size:13px}
+.calc input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.calc tfoot td{font-weight:700; background:var(--panel); border-top:2px solid var(--line-strong)}
+.quad-legend{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px; margin:16px 0 4px}
+.quad{border-left:3px solid var(--line-strong); padding:8px 12px; background:var(--panel); border-radius:0 7px 7px 0}
+.quad b{font-size:12.5px; display:block; margin-bottom:2px}
+.quad span{font-size:12px; color:var(--ink-2); line-height:1.5}
 @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 @media (max-width:640px){
   .wrap,.top-inner{padding-left:16px; padding-right:16px}
@@ -170,6 +195,49 @@ td.wrapok{white-space:normal; min-width:210px}
     <div class="chart" id="ch-dores"></div>
     <p class="foot">Contagem por número de alunas que citaram, não por número de menções: quem repete a
       mesma dor três vezes conta uma. Passe o cursor na barra para ver a definição da categoria.</p>
+  </section>
+
+  <section id="sec-oport">
+    <div class="sec-head">
+      <h2>Oportunidades</h2>
+      <span class="eyebrow">induzida × espontânea</span>
+    </div>
+    <p class="sec-note">Cruzando os dois enquadramentos, cada dor cai num de três estados. O estado
+      muda o que vende e como: dor crua fecha com diagnóstico, interesse latente só existe depois de
+      conteúdo que o desperte.</p>
+    <div class="quad-legend" id="quad-legend"></div>
+    <div class="chart" id="ch-urgencia"></div>
+    <p class="foot">Ordenado por quantas alunas citam a dor de algum modo. A porcentagem à direita é a
+      fatia latente — quanto da menção só existe porque a pergunta sugeriu o tema.</p>
+
+    <h3 style="font-size:16px; margin:30px 0 0">Bolsões por linha de negócio do grupo NB</h3>
+    <p class="sec-note">O formulário <b>nunca perguntou</b> sobre curso, clínica, franquia ou produto.
+      Cada bolsão abaixo é qualificado por sinais indiretos, e a regra está escrita no próprio cartão
+      para você contestar. Não é demanda declarada — é público elegível.</p>
+    <div class="linhas" id="linhas-nb"></div>
+
+    <div class="calc">
+      <div class="calc-head">
+        <strong>Receita potencial — você fornece o preço, a base fornece o público</strong>
+        <p>Não invento ticket nem taxa de conversão. Preencha os dois e a conta é feita sobre o
+          recorte filtrado no topo da página.</p>
+      </div>
+      <div class="tblwrap"><table id="tb-calc"></table></div>
+    </div>
+
+    <h3 style="font-size:16px; margin:30px 0 0">Venda cruzada</h3>
+    <p class="sec-note">Quantas linhas de negócio cada aluna qualifica ao mesmo tempo.</p>
+    <div class="chart" id="ch-cruzada"></div>
+    <div class="tblwrap" style="margin-top:16px"><table id="tb-pares"></table></div>
+
+    <h3 style="font-size:16px; margin:30px 0 0">Onde o presencial fecha a conta</h3>
+    <p class="sec-note">Curso presencial e clínica dependem de massa local. UF deduzida de localização
+      e endereço; quem não deu cidade nem sigla fica de fora.</p>
+    <div class="tblwrap"><table id="tb-geo"></table></div>
+
+    <h3 style="font-size:16px; margin:30px 0 0">Já dentro do ecossistema Nabeauty</h3>
+    <p class="sec-note" id="nota-nb"></p>
+    <div class="tblwrap"><table id="tb-nb"></table></div>
   </section>
 
   <section id="sec-frentes">
@@ -363,6 +431,48 @@ function colunas(alvo, itens, base, cor) {
   alvo.appendChild(s);
 }
 
+/* Barras empilhadas: confirmada | crua | latente, com 2px de respiro entre segmentos */
+function empilhada(alvo, itens, series) {
+  alvo.innerHTML = '';
+  if (!itens.length) { alvo.innerHTML = '<p class="empty">Nenhuma aluna no recorte atual.</p>'; return; }
+  const rotW = 210, padR = 104, alt = 26, gap = 8, topo = 26;
+  const w = Math.max(660, rotW + padR + 360), larg = w - rotW - padR;
+  const h = topo + itens.length * (alt + gap) + 14;
+  const max = Math.max(...itens.map(i => series.reduce((s, k) => s + i[k.k], 0)), 1);
+  const s = svgBase(w, h);
+  for (let g = 0; g <= 4; g++) {
+    const x = rotW + larg * g / 4;
+    s.appendChild(el('line', { x1: x, y1: topo - 8, x2: x, y2: h - 16, class: 'grid' }));
+    s.appendChild(el('text', { x, y: topo - 14, class: 'tick', 'text-anchor': 'middle' },
+      Math.round(max * g / 4)));
+  }
+  itens.forEach((it, i) => {
+    const y = topo + i * (alt + gap);
+    const total = series.reduce((a, k) => a + it[k.k], 0);
+    s.appendChild(el('text', { x: rotW - 12, y: y + alt / 2 + 4, class: 'blab',
+      'text-anchor': 'end' }, it.rot));
+    let x = rotW;
+    series.forEach(k => {
+      const v = it[k.k];
+      if (!v) return;
+      const bw = larg * v / max;
+      const r = el('rect', { x, y, width: Math.max(1, bw - 2), height: alt, rx: 3, fill: k.cor,
+        class: 'bar' });
+      tip(r, `${it.rot} — ${k.rot}: ${v} alunas`);
+      s.appendChild(r);
+      if (bw > 30) s.appendChild(el('text', { x: x + bw / 2 - 1, y: y + alt / 2 + 4, class: 'bval',
+        'text-anchor': 'middle', fill: 'var(--surface)', 'font-weight': 600 }, v));
+      x += bw;
+    });
+    s.appendChild(el('text', { x: rotW + larg * total / max + 9, y: y + alt / 2 + 4, class: 'bval' },
+      it.pctLatente + '% latente'));
+  });
+  s.appendChild(el('line', { x1: rotW, y1: topo - 8, x2: rotW, y2: h - 16, class: 'axis' }));
+  alvo.appendChild(s);
+  alvo.insertAdjacentHTML('beforeend', '<p class="legend">' + series.map(k =>
+    `<span><span class="dot" style="background:${k.cor}"></span>${k.rot}</span>`).join('') + '</p>');
+}
+
 /* Produtividade: coluna + linha da mediana, para a horizontalidade saltar aos olhos */
 function produtividade(alvo, itens) {
   alvo.innerHTML = '';
@@ -526,6 +636,8 @@ function render() {
     ` Base deste painel: ${comDor.length} alunas com ao menos uma dor classificada.`;
   barrasH($('#ch-dores'), itensDor, comDor.length);
 
+  renderOportunidades(f);
+
   /* Frentes do produto */
   const fr = Object.entries(META.frentes_categorias).map(([k, cats]) => {
     const alunas = cats.length
@@ -644,6 +756,149 @@ function render() {
         <span style="color:var(--ink-3);font-size:12px">${r.justificativa_inferencia || ''}</span>`
         : '<span style="color:var(--ink-3)">nenhuma regra disparou</span>' },
   ], ord.slice(0, 250), { ordenavel: true });
+}
+
+/* ---------- Oportunidades ---------- */
+const SERIES_Q = [
+  { k: 'confirmada', rot: 'Dor confirmada', cor: 'var(--s1)' },
+  { k: 'crua', rot: 'Dor crua (só espontânea)', cor: 'var(--s2)' },
+  { k: 'latente', rot: 'Interesse latente (só induzida)', cor: 'var(--s3)' },
+];
+/* Premissas comerciais do usuário. Ficam vazias de propósito: o BI não inventa
+   ticket nem taxa de conversão. */
+const premissas = {};
+Object.keys(META.linhas_nb).forEach(k => premissas[k] = { ticket: '', conv: '' });
+
+function renderOportunidades(f) {
+  const n = f.length;
+
+  $('#quad-legend').innerHTML = ['confirmada', 'crua', 'latente'].map((q, i) =>
+    `<div class="quad" style="border-left-color:${SERIES_Q[i].cor}">
+       <b>${META.quadrantes[q].rotulo}</b><span>${META.quadrantes[q].definicao}</span></div>`).join('');
+
+  /* matriz de urgência, recontada sob o filtro */
+  const itens = Object.keys(META.definicoes_dor).map(cat => {
+    let conf = 0, crua = 0, lat = 0;
+    f.forEach(a => {
+      const e = (a.dores_espontaneas || []).includes(cat);
+      const i = (a.dores_induzidas || []).includes(cat);
+      if (e && i) conf++; else if (e) crua++; else if (i) lat++;
+    });
+    const cita = conf + crua + lat;
+    return { rot: rotulo(cat), confirmada: conf, crua, latente: lat, cita,
+             pctLatente: cita ? Math.round(100 * lat / cita) : 0 };
+  }).filter(x => x.cita > 0).sort((a, b) => b.cita - a.cita);
+  empilhada($('#ch-urgencia'), itens, SERIES_Q);
+
+  /* bolsões por linha de negócio */
+  const pools = {};
+  Object.keys(META.linhas_nb).forEach(k => {
+    const d = f.filter(a => (a.linhas_nb || []).includes(k));
+    pools[k] = d;
+  });
+  $('#linhas-nb').innerHTML = Object.entries(META.linhas_nb)
+    .sort((a, b) => pools[b[0]].length - pools[a[0]].length)
+    .map(([k, meta]) => {
+      const d = pools[k], q = d.length;
+      const fat = mediana(d.map(a => a.fat_brl));
+      const sp = d.filter(a => a.uf === 'SP').length;
+      return `<div class="linha"><div class="top"><h4>${meta.rotulo}</h4></div>
+        <div class="pool">${q}</div>
+        <div class="meta">${pct(q, n)} do recorte<br>
+          Faturamento mediano <b>${brl(fat)}</b><br>
+          Classe A: <b>${d.filter(a => a.classe === 'A').length}</b> · em SP: <b>${sp}</b></div>
+        <div class="regra"><b>Qualifica quem tem:</b> ${meta.regra}</div></div>`;
+    }).join('');
+
+  /* calculadora de receita */
+  const linhasCalc = Object.entries(META.linhas_nb).map(([k, meta]) => {
+    const q = pools[k].length;
+    const t = parseFloat(premissas[k].ticket) || 0, c = parseFloat(premissas[k].conv) || 0;
+    return { k, rot: meta.rotulo, pool: q, receita: q * (c / 100) * t };
+  });
+  const total = linhasCalc.reduce((s, l) => s + l.receita, 0);
+  const algum = linhasCalc.some(l => l.receita > 0);
+  $('#tb-calc').innerHTML =
+    `<thead><tr><th>Linha de negócio</th><th style="text-align:right">Público elegível</th>
+      <th style="text-align:right">Ticket médio (R$)</th><th style="text-align:right">Conversão (%)</th>
+      <th style="text-align:right">Receita potencial</th></tr></thead>
+     <tbody>${linhasCalc.map(l => `<tr>
+       <td>${l.rot}</td><td class="num">${l.pool}</td>
+       <td class="num"><input data-k="${l.k}" data-f="ticket" inputmode="decimal"
+         placeholder="—" value="${premissas[l.k].ticket}" aria-label="Ticket de ${l.rot}"></td>
+       <td class="num"><input data-k="${l.k}" data-f="conv" inputmode="decimal"
+         placeholder="—" value="${premissas[l.k].conv}" aria-label="Conversão de ${l.rot}"></td>
+       <td class="num">${l.receita ? brl(l.receita) : '<span style="color:var(--ink-3)">defina ticket e conversão</span>'}</td>
+       </tr>`).join('')}</tbody>
+     <tfoot><tr><td colspan="4">Total sobre o recorte atual (${n} alunas)</td>
+       <td class="num">${algum ? brl(total) : '—'}</td></tr></tfoot>`;
+  $('#tb-calc').querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      premissas[e.target.dataset.k][e.target.dataset.f] = e.target.value;
+      const ativo = e.target.dataset.k + '|' + e.target.dataset.f;
+      const pos = e.target.selectionStart;
+      renderOportunidades(filtrar());
+      const volta = $('#tb-calc').querySelector(
+        `input[data-k="${e.target.dataset.k}"][data-f="${e.target.dataset.f}"]`);
+      if (volta) { volta.focus(); try { volta.setSelectionRange(pos, pos); } catch (_) {} }
+    });
+  });
+
+  /* venda cruzada */
+  const quantas = [0, 1, 2, 3, 4].map(q => ({
+    rot: q === 0 ? 'nenhuma' : q + (q === 1 ? ' linha' : ' linhas'),
+    n: f.filter(a => (a.linhas_nb || []).length === q).length }));
+  colunas($('#ch-cruzada'), quantas, n, 'var(--s1)');
+  const chaves = Object.keys(META.linhas_nb), pares = [];
+  for (let i = 0; i < chaves.length; i++)
+    for (let j = i + 1; j < chaves.length; j++) {
+      const q = f.filter(a => (a.linhas_nb || []).includes(chaves[i]) &&
+                              (a.linhas_nb || []).includes(chaves[j])).length;
+      pares.push({ par: `${META.linhas_nb[chaves[i]].rotulo} + ${META.linhas_nb[chaves[j]].rotulo}`,
+                   n: q });
+    }
+  tabela($('#tb-pares'), [
+    { lab: 'Combinação', k: 'par', wrap: true },
+    { lab: 'Alunas que qualificam para as duas', num: true, render: r => r.n },
+    { lab: 'Do recorte', num: true, render: r => pct(r.n, n) },
+  ], pares.sort((a, b) => b.n - a.n));
+
+  /* geografia */
+  const porUF = {};
+  f.filter(a => a.uf).forEach(a => {
+    (porUF[a.uf] = porUF[a.uf] || { uf: a.uf, alunas: 0, curso: 0, clinica: 0, produtos: 0, fat: [] });
+    porUF[a.uf].alunas++;
+    (a.linhas_nb || []).forEach(l => { if (porUF[a.uf][l] != null) porUF[a.uf][l]++; });
+    if (a.fat_brl != null) porUF[a.uf].fat.push(a.fat_brl);
+  });
+  const geo = Object.values(porUF).sort((a, b) => b.alunas - a.alunas);
+  tabela($('#tb-geo'), [
+    { lab: 'UF', k: 'uf' },
+    { lab: 'Alunas', num: true, render: r => r.alunas },
+    { lab: 'Faturamento mediano', num: true, render: r => brl(mediana(r.fat)) },
+    { lab: 'Pool curso', num: true, render: r => r.curso },
+    { lab: 'Pool clínica', num: true, render: r => r.clinica },
+    { lab: 'Pool produtos', num: true, render: r => r.produtos },
+    { lab: 'Turma presencial fecha?', wrap: true, render: r => r.alunas >= 10
+        ? '<b style="color:var(--good)">sim — ' + r.alunas + ' alunas</b>'
+        : '<span style="color:var(--ink-3)">não — ' + r.alunas + ' alunas</span>' },
+  ], geo);
+
+  /* Nabeauty */
+  const nb = f.filter(a => a.e_nabeauty);
+  $('#nota-nb').innerHTML = `${nb.length} alunas do recorte já aparecem ligadas à Nabeauty — ` +
+    `franqueadas, sócias ou gestoras. Não são aquisição, são expansão de conta: já compraram uma vez. ` +
+    `<b>Identificadas por menção a "Nabeauty" no setor, empresa ou produtos</b>, então pode haver ` +
+    `homônimo e pode faltar quem não citou a marca.`;
+  tabela($('#tb-nb'), [
+    { lab: 'ID', render: r => `<span class="mono" style="color:var(--ink-3)">${r.id_aluna}</span>` },
+    ...(('nome' in (A[0] || {})) ? [{ lab: 'Empresa', k: 'empresa', wrap: true }] : []),
+    { lab: 'UF', k: 'uf' },
+    { lab: 'Faturamento', num: true, render: r => brl(r.fat_brl) },
+    { lab: 'Equipe', num: true, render: r => num(r.equipe_total) },
+    { lab: 'Classe', render: r => r.classe ? `<span class="pill ${r.classe}">${r.classe}</span>` : '—' },
+    { lab: 'Porta de entrada', render: r => META.rotulos_frente[r.produto_ancora] || '—' },
+  ], nb.sort((a, b) => (b.fat_brl || 0) - (a.fat_brl || 0)));
 }
 
 $('#seg-painel').addEventListener('click', e => {

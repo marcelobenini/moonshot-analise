@@ -36,7 +36,7 @@ def _registros(df):
 
 def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
              cob_frentes, tab_lacunas, tab_portugal, tab_paises, rel_cluster,
-             destino, com_nomes=True):
+             destino, com_nomes=True, extras=None):
     """Grava o JSON que alimenta o BI.
 
     Exporta a base linha a linha, nao so os agregados: os filtros do BI
@@ -44,11 +44,13 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
     pronta eles seriam decorativos. Os agregados vao junto so como referencia
     (o estado sem filtro), para conferir contra o Excel.
     """
-    campos = ['id_aluna', 'origem', 'pais', 'nicho_grupo', 'classe', 'score_oportunidade',
+    campos = ['id_aluna', 'origem', 'pais', 'uf', 'nicho_grupo', 'classe', 'score_oportunidade',
               'produto_ancora', 'fat_brl', 'equipe_n', 'equipe_total', 'porte_equipe',
               'faixa_faturamento', 'anos_operacao', 'dor_declarada_1', 'dor_inferida_1',
               'justificativa_inferencia', 'processos_mapeados', 'usa_sistema_gestao',
               'faz_trafego', 'usa_crm', 'usa_ia_automacao', 'fat_por_pessoa',
+              'sinal_quer_aprender', 'sinal_expansao', 'sinal_produto', 'ja_vende_produto',
+              'ja_da_curso', 'e_nabeauty', 'dor_de_conhecimento', 'dor_de_execucao',
               'eixo_capacidade_pagar', 'eixo_complexidade_operacional',
               'eixo_aderencia_dor', 'eixo_maturidade_digital']
     if com_nomes:
@@ -57,6 +59,8 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
     linhas = _registros(d)
 
     # Listas por aluna: permitem recontar dores e frentes sob qualquer filtro.
+    from .oportunidade import LINHAS, QUADRANTES
+    marcas = {k: LINHAS[k][1](base).fillna(False).reset_index(drop=True) for k in LINHAS}
     dores_ind, dores_esp = _dores_por_enquadramento(base)
     for i, (_, r) in enumerate(base.iterrows()):
         linhas[i]['dores'] = [c for c in str(r['dores_declaradas_todas'] or '').split('; ') if c]
@@ -65,6 +69,9 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
         linhas[i]['frentes'] = [f for f in str(r['frentes_aderentes'] or '').split('; ') if f]
         linhas[i]['temas'] = [t.replace('tema_', '') for t in base.columns
                               if t.startswith('tema_') and bool(r[t])]
+        # Linhas de negocio para as quais a aluna qualifica, para o BI recontar
+        # os bolsoes sob filtro sem reimplementar as regras no cliente.
+        linhas[i]['linhas_nb'] = [k for k, m in marcas.items() if bool(m.iloc[i])]
 
     dados = {
         'meta': {
@@ -77,6 +84,8 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
             'rotulos_frente': FRENTES_ROTULO,
             'frentes_categorias': {k: v for k, v in FRENTES_PRODUTO.items()},
             'temas_latentes': {k: v[0] for k, v in TEMAS_LATENTES.items()},
+            'linhas_nb': {k: {'rotulo': v[0], 'regra': v[2]} for k, v in LINHAS.items()},
+            'quadrantes': {k: {'rotulo': v[0], 'definicao': v[1]} for k, v in QUADRANTES.items()},
         },
         'alunas': linhas,
         'referencia': {
@@ -93,6 +102,8 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
             'clustering': _registros(rel_cluster),
         },
     }
+    for nome, tabela in (extras or {}).items():
+        dados['referencia'][nome] = _registros(tabela)
     with open(destino, 'w', encoding='utf-8') as fh:
         json.dump(dados, fh, ensure_ascii=False, separators=(',', ':'))
     return destino

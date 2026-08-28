@@ -21,7 +21,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import analise, bi, cluster, produto, score
+from moonshot import analise, bi, cluster, oportunidade, produto, score
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -161,6 +161,14 @@ def main():
     base = score.calcular_score(base)
     diag = score.diagnostico_individual(base, usar_nome=not args.sem_nomes)
 
+    # ---- oportunidade por linha de negocio do grupo NB --------------------
+    base = oportunidade.marcar_sinais(base)
+    mat_urgencia = oportunidade.matriz_urgencia(base)
+    pools = oportunidade.pools_por_linha(base)
+    sobrep, pares = oportunidade.sobreposicao_linhas(base)
+    geo = oportunidade.geografia(base)
+    tab_nb = oportunidade.nabeauty(base)
+
     # ---- frentes do produto e recorte geografico -------------------------
     cob_frentes = produto.cobertura_frentes(base)
     tab_lacunas = produto.lacunas(base)
@@ -176,7 +184,7 @@ def main():
     ident = [] if args.sem_nomes else ['nome', 'email', 'telefone']
     cols_base = (['id_aluna', 'origem'] + ident + [
         'empresa', 'setor', 'nicho_grupo', 'nicho_fonte', 'vende_para_o_setor',
-        'localizacao', 'pais', 'atua_fora_br',
+        'localizacao', 'pais', 'uf', 'atua_fora_br',
         'faturamento', 'fat_valor_moeda_orig', 'fat_moeda', 'fat_brl', 'fat_regra',
         'fat_confianca', 'faixa_faturamento',
         'equipe', 'equipe_n', 'equipe_total', 'porte_equipe', 'equipe_regra',
@@ -193,6 +201,8 @@ def main():
         'frentes_aderentes', 'produto_ancora', 'motivo_sem_score']
         + [f'tema_{t}' for t in ['metas_indicadores_decisao', 'duvida_tecnica_nicho',
                                  'precificacao_de_procedimento']]
+        + ['sinal_quer_aprender', 'sinal_expansao', 'sinal_produto', 'ja_vende_produto',
+           'ja_da_curso', 'e_nabeauty', 'dor_de_conhecimento', 'dor_de_execucao']
         + list(ESCALAS_PRO) + (['cluster'] if rotulos is not None else []))
     cols_base = [c for c in cols_base if c in base.columns]
 
@@ -237,6 +247,12 @@ def main():
         'Produtividade_por_Porte': fat_prod,
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
+        'Matriz_Urgencia': mat_urgencia,
+        'Oportunidade_Linhas': pools,
+        'Venda_Cruzada': sobrep,
+        'Venda_Cruzada_Pares': pares,
+        'Geografia_UF': geo,
+        'Ecossistema_Nabeauty': tab_nb,
         'Frentes_Produto': cob_frentes,
         'Lacunas_Funcionalidade': tab_lacunas,
         'Portugal': tab_portugal,
@@ -262,7 +278,10 @@ def main():
     json_bi = bi.exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
                           cob_frentes, tab_lacunas, tab_portugal, tab_paises, rel_cluster,
                           os.path.join(args.saida, 'bi_dados.json'),
-                          com_nomes=not args.sem_nomes)
+                          com_nomes=not args.sem_nomes,
+                          extras={'matriz_urgencia': mat_urgencia, 'pools_linhas': pools,
+                                  'venda_cruzada': sobrep, 'pares_linhas': pares,
+                                  'geografia': geo, 'nabeauty': tab_nb})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')
 
     modelo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bi_template.html')

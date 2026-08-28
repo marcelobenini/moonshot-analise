@@ -199,6 +199,39 @@ RX_LOGRADOURO = (r'\b(avenida|av|rua|travessa|tv|alameda|praca|praceta|estrada|r
                  r'\b\.?[^,;|]{0,45}')
 RX_CEP_PT = r'\b\d{4}-\d{3}\b'      # Portugal usa 4 digitos; Brasil, 5 (NNNNN-NNN).
 
+# UF brasileira: primeiro pela cidade nomeada, depois pela sigla solta no fim do
+# endereco. Curso presencial e clinica dependem de massa local, entao a
+# geografia deixa de ser detalhe e vira criterio.
+UF_SIGLAS = {'ac', 'al', 'ap', 'am', 'ba', 'ce', 'df', 'es', 'go', 'ma', 'mt', 'ms', 'mg',
+             'pa', 'pb', 'pr', 'pe', 'pi', 'rj', 'rn', 'rs', 'ro', 'rr', 'sc', 'sp', 'se', 'to'}
+UF_CIDADES = {
+    'sao paulo': 'SP', 'campinas': 'SP', 'santos': 'SP', 'guarulhos': 'SP', 'osasco': 'SP',
+    'sao bernardo': 'SP', 'santo andre': 'SP', 'ribeirao preto': 'SP', 'sorocaba': 'SP',
+    'sao jose dos campos': 'SP', 'jundiai': 'SP', 'sao caetano': 'SP', 'diadema': 'SP',
+    'itapecerica': 'SP', 'braganca paulista': 'SP', 'atibaia': 'SP', 'mogi das cruzes': 'SP',
+    'rio de janeiro': 'RJ', 'niteroi': 'RJ', 'belo horizonte': 'MG', 'uberlandia': 'MG',
+    'contagem': 'MG', 'curitiba': 'PR', 'londrina': 'PR', 'maringa': 'PR', 'porto alegre': 'RS',
+    'caxias do sul': 'RS', 'florianopolis': 'SC', 'joinville': 'SC', 'blumenau': 'SC',
+    'salvador': 'BA', 'recife': 'PE', 'fortaleza': 'CE', 'brasilia': 'DF', 'goiania': 'GO',
+    'manaus': 'AM', 'belem': 'PA', 'vitoria': 'ES', 'natal': 'RN', 'joao pessoa': 'PB',
+    'maceio': 'AL', 'aracaju': 'SE', 'teresina': 'PI', 'sao luis': 'MA', 'cuiaba': 'MT',
+    'campo grande': 'MS', 'palmas': 'TO', 'macapa': 'AP', 'porto velho': 'RO', 'boa vista': 'RR',
+}
+
+
+def _uf(texto, pais):
+    """UF brasileira deduzida de localizacao + endereco. None fora do Brasil."""
+    if pais != 'Brasil' or not texto:
+        return None
+    for cidade, sigla in UF_CIDADES.items():
+        if cidade in texto:
+            return sigla
+    # A sigla costuma fechar o endereco ("... - Zona Sul - SP"); lemos de tras.
+    for m in reversed(re.findall(r'[\s,/\-–]([a-z]{2})\b', ' ' + texto)):
+        if m in UF_SIGLAS:
+            return m.upper()
+    return None
+
 
 def _pais(texto):
     """Deduz o pais de atuacao a partir de localizacao + endereco.
@@ -278,6 +311,7 @@ def carregar(caminho, origem, ano_ref, fx, teto_plausivel):
         .agg(' '.join, axis=1).map(norm).str.contains(RX_FORNECEDOR, regex=True)
     fonte_local = (out['localizacao'].fillna('') + ' | ' + out['endereco'].fillna('')).map(norm)
     out['pais'] = fonte_local.map(_pais)
+    out['uf'] = [_uf(t, p) for t, p in zip(fonte_local, out['pais'])]
     out['atua_fora_br'] = out['pais'] != 'Brasil' 
     out['processos_mapeados'] = out['processos'].map(_sim_nao)
     out['tem_orcamento_anual'] = out['orcamento'].map(_sim_nao)

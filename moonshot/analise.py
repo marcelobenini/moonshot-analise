@@ -39,6 +39,15 @@ def classificar_base(base, max_cats=3):
                 for a, c in zip(base['id_aluna'], base['id_aluna'].map(nesimo['categoria']))]
         base['dores_declaradas_todas'] = base['id_aluna'].map(
             forca.groupby('id_aluna')['categoria'].apply(lambda s: '; '.join(s)))
+
+    # Listas separadas por enquadramento: a matriz de urgencia cruza as duas, e
+    # o BI alterna entre os paineis sem reclassificar.
+    for enq in ('induzida', 'espontanea'):
+        por_aluna = (evid[evid.enquadramento == enq].groupby('id_aluna')['categoria']
+                     .apply(list) if len(evid) else pd.Series(dtype=object))
+        base[f'dores_{enq}s'] = [por_aluna.get(a, []) for a in base['id_aluna']]
+    base.rename(columns={'dores_induzidas': 'dores_induzidas',
+                         'dores_espontaneas': 'dores_espontaneas'}, inplace=True)
     return base, evid
 
 

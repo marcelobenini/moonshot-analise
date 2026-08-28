@@ -115,7 +115,35 @@ Os filtros do `bi_moonshot.html` recalculam sobre as mesmas 708 alunas. Filtrar 
 
 As seções de **Portugal** e **Divergência** ignoram os filtros de propósito: são contrastes contra a base inteira e perderiam o sentido calculados sobre um subconjunto já filtrado.
 
-## 16. Dados pessoais
+## 16. Os bolsões por linha de negócio são elegibilidade, não demanda
+
+Este é o ponto mais frágil de tudo que entreguei, e o que mais pode ser mal usado.
+
+**O formulário nunca perguntou sobre curso, clínica, franquia ou produto.** Não existe uma única resposta na base dizendo "eu compraria um curso". Os quatro bolsões (455 / 351 / 105 / 37) são construídos por regra minha sobre sinais indiretos — dores de conhecimento, menção a expansão, menção a produto, porte. A regra de cada um está visível na aba `Oportunidade_Linhas` e no cartão do BI justamente para ser contestada.
+
+Consequências práticas:
+- **"455 elegíveis para curso" não é um funil de 455 leads.** É o número de alunas cuja dor declarada *poderia* ser endereçada por curso.
+- A fronteira entre "dor de conhecimento" (curso) e "dor de execução" (software) é uma escolha editorial. Precificação, por exemplo, pode ser resolvida ensinando a calcular ou automatizando o cálculo. Coloquei em conhecimento; discordar é legítimo e muda o número.
+- **Clínica/franquia (37 alunas) usa "sinal de expansão" no texto livre**, que captura desde "quero escalar" até menção casual a franquia. É o bolsão mais frágil dos quatro.
+- A calculadora de receita do BI não tem ticket padrão de propósito. Qualquer número que ela mostre é premissa sua multiplicada por público meu.
+
+## 17. As 14 Nabeauty foram achadas por nome, não por cadastro
+
+A identificação do ecossistema Nabeauty vem de busca textual por "nabeauty"/"na beauty" em setor, empresa e produtos. Isso significa: **pode haver franqueada que não citou a marca** (e ficou de fora) e pode haver homônimo ou aluna que apenas menciona a marca sem vínculo (e entrou indevidamente). Confira contra o cadastro real de franqueadas antes de usar a lista comercialmente. Duas das 14 não têm faturamento classificável e uma tem R$ 1.000/mês, o que sugere vínculos de naturezas diferentes no mesmo balde.
+
+## 18. A UF cobre 548 das 668 brasileiras
+
+A unidade federativa é deduzida de texto livre (cidade nomeada, ou sigla no fim do endereço). **120 brasileiras ficaram sem UF** — escreveram só o bairro, ou nada reconhecível. A tabela de geografia, portanto, subestima todos os estados, e subestima de forma desigual: quem escreve endereço completo tende a ser diferente de quem escreve "atendo em casa".
+
+O corte de 10 alunas para "turma presencial fecha" é arbitrário — escolhi-o para ser conservador, não porque haja evidência de que 10 seja o mínimo viável de uma turma. Ajuste ao seu modelo.
+
+## 19. A matriz de urgência é a parte mais sólida, com uma ressalva
+
+O cruzamento induzida × espontânea é dado real: as duas perguntas existem, foram respondidas pela mesma pessoa, e a classificação é a mesma taxonomia nos dois lados. A leitura de que "latente = precisa de conteúdo" e "crua = vende com diagnóstico" é **interpretação comercial**, não achado estatístico. O que o dado diz é mais estreito: *esta dor só aparece quando a pergunta a nomeia.*
+
+Há um efeito de instrumento embutido: as perguntas induzidas dos pilares Flow cobrem fidelização, conteúdo e vendas de forma muito mais direta do que cobrem retenção de equipe. Parte da alta latência dessas categorias vem de a pergunta existir, não de a aluna ser indiferente a elas. A comparação entre categorias é sólida em direção, frágil em magnitude.
+
+## 20. Dados pessoais
 
 As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes` — vale para o Excel, o JSON e o BI.
 

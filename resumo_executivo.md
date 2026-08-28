@@ -99,6 +99,38 @@ Aparece, mas com N absoluto de 3. Não sustenta funcionalidade. Registrada para 
 
 ---
 
+## 5c. Matriz de urgência — o cruzamento induzida × espontânea
+
+Cruzando os dois enquadramentos, cada dor cai em um de três estados. **O estado muda o que vende e como.**
+
+| Dor | Confirmada | Crua | Latente | Cita | % latente |
+|---|---|---|---|---|---|
+| Reter e liderar equipe | 22 | **173** | 49 | 244 | 20% |
+| Fidelização e recompra | 13 | 21 | **210** | 244 | **86%** |
+| Captação de clientes | 19 | 35 | **157** | 211 | 74% |
+| Mentalidade | 26 | 34 | **150** | 210 | 71% |
+| Processos e padronização | 59 | **92** | 57 | 208 | 27% |
+| Conversão em venda | 22 | 10 | **153** | 185 | 83% |
+| Sobrecarga e delegação | 30 | **119** | 32 | 181 | **18%** |
+| Conteúdo e Instagram | 12 | 18 | **140** | 170 | 82% |
+| Contratar | 23 | **102** | 37 | 162 | 23% |
+| Precificação e margem | 10 | 21 | **119** | 150 | 79% |
+| Controle financeiro | 20 | 56 | 53 | 129 | 41% |
+| Tráfego pago | 1 | 9 | 45 | 55 | 82% |
+| Atendimento e agenda | 2 | 14 | 26 | 42 | 62% |
+
+A base se parte em dois grupos limpos:
+
+**Dor crua — ela levanta sozinha (ciclo curto, vende com diagnóstico).**
+Reter e liderar (173 cruas), sobrecarga e delegação (119), contratar (102), processos (92). São só 18% a 27% latentes: existem antes de qualquer campanha. **É a oferta que fecha sem precisar educar o mercado.**
+
+**Interesse latente — só existe quando alguém pergunta (ciclo longo, vende com conteúdo).**
+Fidelização (86% latente), conversão em venda (83%), conteúdo e Instagram (82%), tráfego pago (82%), precificação (79%), captação (74%). Ela concorda que é problema quando provocada, mas não acorda pensando nisso. **Nenhuma dessas fecha por abordagem fria — precisa de conteúdo que desperte a dor antes.**
+
+Isso reorganiza a operação comercial inteira: abordagem direta ataca equipe/delegação/processos; marketing de conteúdo constrói o pipeline de fidelização, conversão e tráfego. Vender tráfego por ligação fria é remar contra 82% de latência.
+
+---
+
 ## 5b. A ordem de ataque
 
 Nas perguntas espontâneas, **tráfego pago é a 13ª de 13 (10 alunas, 1,9%)** e atendimento/agenda a 12ª (16, 3,1%). No consolidado sobem para 8,2% e 6,3%. Só 114 alunas (16,1%) fazem tráfego pago hoje e 148 (20,9%) usam sistema de gestão.
@@ -127,6 +159,33 @@ Score 0–100 (capacidade de pagar 30, complexidade operacional 25, aderência d
 **Classe A: 109 alunas** (score ≥ 60), faturamento mediano R$ 60 mil, 7 pessoas. Classe B: 287. Classe C: 272. Sem score: 40 (38 por não ter dor classificável).
 
 Entre as 109 classe A, a porta de entrada mais comum é **controle financeiro (39)**, seguida de pessoas e processos (31), recrutamento (14), atendimento (13), tráfego (10) e agente comercial (2).
+
+---
+
+## 6b. Onde há mais receita nas 4 linhas do grupo NB
+
+**Aviso que precede qualquer número aqui:** o formulário nunca perguntou sobre curso, clínica, franquia ou produto. Os bolsões abaixo são **público elegível qualificado por sinal indireto**, com a regra escrita e contestável — não demanda declarada. A regra de cada um está na aba `Oportunidade_Linhas` e no cartão do BI.
+
+| Linha | Elegíveis | % | Fatur. mediano | Classe A | Em SP |
+|---|---|---|---|---|---|
+| **Cursos presenciais** | 455 | 64,3% | R$ 17.500 | 88 | 222 |
+| **Sistema (software)** | 351 | 49,6% | R$ 30.000 | 96 | 172 |
+| **Produtos** | 105 | 14,8% | R$ 25.000 | 31 | 50 |
+| **Clínica / franquia** | 37 | 5,2% | R$ 60.000 | 19 | 19 |
+
+**Curso presencial é o maior bolsão e o de menor ticket; clínica é o inverso.** Curso alcança 455 alunas com faturamento mediano de R$ 17,5 mil; clínica/franquia alcança 37, mas com R$ 60 mil de mediana e equipe de 7. São motions opostas — volume contra valor — e não competem pelo mesmo time comercial.
+
+**Venda cruzada é onde está o dinheiro que ninguém está pegando:**
+
+- **250 alunas qualificam para Sistema + Curso ao mesmo tempo** (35,3% da base). É de longe o par mais forte, e faz sentido: dor de execução (software) e dor de conhecimento (curso) convivem na mesma pessoa.
+- 220 alunas qualificam para exatamente 2 linhas, 65 para 3, 8 para as 4.
+- 134 alunas (18,9%) **não qualificam para nenhuma oferta atual** — é o tamanho do buraco de portfólio.
+
+**Geografia decide o presencial.** SP tem 347 alunas e 222 no pool de curso — massa para turmas recorrentes, não uma turma só. Depois cai forte: DF 47, PR 35, RJ 34, MG 18. Abaixo de 10 alunas na UF, turma presencial não fecha; oito estados estão nessa situação.
+
+**14 alunas já estão no ecossistema Nabeauty** — franqueadas, sócias ou gestoras (Sjcampos, Belém, Anália Franco, Brasília, Fortaleza, Mogi, Barra Olímpica, Prosa Rosa). Faturam até R$ 70 mil, medianas acima da base. **Não são aquisição, são expansão de conta:** já compraram uma vez e nenhuma tem o sistema. É a lista mais quente do relatório e a menor.
+
+**A receita você calcula, eu não invento.** O BI tem uma calculadora onde você informa ticket médio e taxa de conversão por linha; ele multiplica pelo público elegível do recorte filtrado. Não coloquei ticket nenhum como padrão de propósito — número inventado vira meta em reunião.
 
 ---
 
