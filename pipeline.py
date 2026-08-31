@@ -117,8 +117,16 @@ def main():
                     help='planilha de matriculas com inicio e termino declarados; opcional')
     ap.add_argument('--excluir-consultores', default='Marcelo,Carol Leão,Ana Elisa,Daniel',
                     help='consultores fora do planejamento de carteira, separados por virgula')
+    ap.add_argument('--destinos-carteira', default='Ana Elisa=Vinícius,Carol Leão=Thiago',
+                    help="para quem vai a carteira de quem sai, no formato "
+                         "'quem sai=quem recebe', separado por virgula")
+    ap.add_argument('--carteiras-diluidas', default='Daniel',
+                    help='consultores cuja carteira ja foi redistribuida entre o time '
+                         'sem registro de quem ficou com quem')
     ap.add_argument('--capacidade-carteira', type=int, default=None,
                     help='tamanho de carteira considerado cheio; padrao: mediana atual')
+    ap.add_argument('--entrada-evento', default='2026-12=40',
+                    help="alunas novas previstas, no formato 'AAAA-MM=n', separado por virgula")
     ap.add_argument('--projecao-desde', default=None,
                     help='mes inicial da projecao de terminos (AAAA-MM); padrao: mes atual')
     ap.add_argument('--saida', default='.')
@@ -215,21 +223,40 @@ def main():
               f'nao canceladas terminam de {desde} em diante')
 
     # ---- capacidade das carteiras ---------------------------------------
-    cart_resumo = cart_detalhe = cart_vagas = pd.DataFrame()
-    orf_resumo = orf_mes = pd.DataFrame()
+    cart_resumo = cart_detalhe = cart_carga = cart_sim = pd.DataFrame()
+    mov_resumo = mov_mes = pd.DataFrame()
     capacidade = None
+    premissas_carteira = {}
     if len(tab_matriculas):
         excluidos = [x.strip() for x in args.excluir_consultores.split(',') if x.strip()]
+        destinos = dict(p.split('=', 1) for p in args.destinos_carteira.split(',') if '=' in p)
+        destinos = {k.strip(): v.strip() for k, v in destinos.items()}
+        diluidos = [x.strip() for x in args.carteiras_diluidas.split(',') if x.strip()]
+        entradas = dict(p.split('=', 1) for p in args.entrada_evento.split(',') if '=' in p)
+        entradas = {k.strip(): int(v) for k, v in entradas.items()}
+
         cart = carteira.base_carteiras(tab_matriculas, excluir=excluidos)
+        cart = carteira.aplicar_destinos(cart, destinos=destinos, diluidos=diluidos)
         # 13 meses a partir do mes corrente para alcancar agosto/27, que
         # concentra o maior lote de terminos.
+        mov_resumo, mov_mes = carteira.movimentacao(cart, desde, 13)
         cart_resumo, cart_detalhe, capacidade = carteira.evolucao(
             cart, desde, 13, args.capacidade_carteira)
-        orf_resumo, orf_mes = carteira.orfas(cart, desde, 13)
         if len(cart_detalhe):
-            cart_vagas = carteira.vagas_por_mes(cart_detalhe, capacidade)
-            print(f'Carteiras: {len(cart_resumo)} consultores no planejamento '
-                  f'(excluidos: {", ".join(excluidos)}), capacidade de referencia {capacidade}')
+            cart_carga = carteira.carga_do_time(cart, cart_detalhe, capacidade, desde, 13)
+            cart_sim = carteira.simular(cart, cart_carga, desde, 13, entradas=entradas,
+                                        meses_contrato=args.meses_contrato)
+            premissas_carteira = {
+                'capacidade': capacidade,
+                'consultores': int(cart_resumo['consultor'].nunique()),
+                'destinos': destinos, 'diluidos': diluidos, 'entradas': entradas,
+                'pool': int((cart['origem'] == 'pool').sum()),
+                'excluidos': excluidos,
+            }
+            print(f'Carteiras: {len(cart_resumo)} consultores no planejamento, '
+                  f'capacidade de referencia {capacidade}; '
+                  f'{premissas_carteira["pool"]} alunas no pool a redistribuir; '
+                  f'deficit inicial {int(cart_sim["deficit"].iloc[0])}')
 
     # ---- contratos: entrada, saida prevista, projecao de termino ---------
     datas_contrato = proj_terminos = pd.DataFrame()
@@ -343,10 +370,11 @@ def main():
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
         'Carteira_Resumo': cart_resumo,
-        'Carteira_Orfas': orf_resumo,
-        'Carteira_Orfas_Mes': orf_mes,
+        'Carteira_Movimentacao': mov_resumo,
+        'Carteira_Movimentacao_Mes': mov_mes,
         'Carteira_Mes_a_Mes': cart_detalhe,
-        'Carteira_Vagas': cart_vagas,
+        'Carteira_Carga_Time': cart_carga,
+        'Carteira_Simulacao': cart_sim,
         'Matriculas': tab_matriculas,
         'Projecao_Terminos': proj_mes,
         'Projecao_Por_Turma': proj_turma,
@@ -407,10 +435,12 @@ def main():
                                   'matriculas_abas': class_abas,
                                   'carteira_resumo': cart_resumo,
                                   'carteira_detalhe': cart_detalhe,
-                                  'carteira_vagas': cart_vagas,
-                                  'carteira_orfas': orf_resumo,
-                                  'carteira_orfas_mes': orf_mes,
+                                  'carteira_carga': cart_carga,
+                                  'carteira_simulacao': cart_sim,
+                                  'carteira_movimentacao': mov_resumo,
+                                  'carteira_movimentacao_mes': mov_mes,
                                   'capacidade': capacidade,
+                                  'premissas_carteira': premissas_carteira,
                                   'matriculas_resumo': res_matriculas,
                                   'cancelamento_conferencia': conf_cancel})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')

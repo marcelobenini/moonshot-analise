@@ -209,18 +209,20 @@ Isso é uma lição sobre a análise inteira, não só sobre esta seção: **ond
 
 ## 25. O planejamento de carteira depende de uma premissa que não está na planilha
 
-**A "capacidade de 45 por carteira" é a mediana das carteiras atuais, não uma medida de quanto um consultor aguenta.** Ela descreve como a operação roda hoje — inclusive se hoje roda sobrecarregada. Se 45 já for demais, todo o cálculo de vagas está otimista; se der para levar 60, está pessimista. É o número mais sensível de toda a seção e o único que não vem de dado nenhum.
+**A "capacidade de 46 por carteira" é a mediana das carteiras próprias de hoje, não uma medida de quanto um consultor aguenta.** Ela descreve como a operação roda — inclusive se hoje roda sobrecarregada. Se 46 já for demais, todo o cálculo de excedente está otimista; se der para levar 60, está pessimista. É o número mais sensível de toda a seção e o único que não vem de dado nenhum. Ele decide sozinho se a resposta sobre contratar júnior é "um" ou "cinco".
 
 Outras limitações:
 
-- **39 alunas não têm consultor atribuído** na planilha. Não sei se é dado faltante ou carteira realmente sem dono. Ficaram fora do cálculo de vagas, o que subestima a carga do time se elas na verdade estiverem distribuídas.
-- **A planilha está desatualizada quanto a quem atende quem.** As alunas do Daniel já foram redistribuídas na prática, mas continuam registradas com o nome dele. O mesmo pode valer para Marcelo, Carol Leão e Ana Elisa. Isso significa que **as carteiras reais dos 7 consultores que ficam já são maiores do que os números mostrados** — e portanto a folga calculada é otimista. As 154 alunas órfãs aparecem separadas em `Carteira_Orfas` justamente para não sumirem da conta, mas eu não sei para quem cada uma foi.
-- **"Vinícius absorve a maior parte da Ana Elisa" virou um número que você escolhe**, com 40 como padrão. A planilha não registra transferências.
+- **39 alunas não têm consultor atribuído** na planilha. Não sei se é dado faltante ou carteira realmente sem dono. Entram no pool junto com as 46 do Marcelo, o que assume que precisam de dono. Se na prática já estiverem distribuídas, a carga do time é a mesma, mas a distribuição individual está errada.
+- **Os destinos das transferências são decisão sua, não registro da planilha.** Ana Elisa → Vinícius e Carol Leão → Thiago vêm do que você me disse. A planilha continua mostrando o nome de quem saiu. Se o destino mudar, o número do Vinícius (101) muda junto.
+- **As 41 alunas do Daniel não têm dono atribuído no modelo.** Você disse que já foram redistribuídas; a planilha não diz para quem. Elas entram na carga do time e ficam fora de toda linha individual — inventar o destino delas distorceria as carteiras de sete pessoas de uma vez. Consequência prática: **as carteiras individuais mostradas são um piso**, não o número real, para todos menos Vinícius e Thiago.
+- **O modelo é de estoque, não de alocação.** Ele responde "cabe ou não cabe", não "quem fica com quem". Não há dado na planilha que permita a segunda pergunta.
+- **O evento de dezembro é um número que você escolhe**, com 40 como padrão. Ele pesa na carteira pela duração inteira do contrato (12 meses por padrão), não só no mês de entrada.
 - **O modelo trata todas as alunas como carga igual.** Uma aluna de R$ 200 mil/mês e uma de R$ 5 mil ocupam o mesmo lugar na conta. Se a carga real for proporcional ao porte, a distribuição por cabeça engana.
-- **A janela de 12 meses termina em agosto de 2027**, quando quase toda a carteira já girou. Os números de maio e agosto de 2027 são grandes porque tudo vence junto, não porque haverá folga sustentada.
-- **Términos não são saídas.** Quem renova continua na carteira. O cálculo de vagas assume que o término libera o lugar, o que só vale para quem não renovar — e a taxa de renovação não está em lugar nenhum dos dados que recebi.
+- **A janela de 13 meses termina em agosto de 2027**, quando quase toda a carteira já girou. A folga de maio e agosto de 2027 é grande porque tudo vence junto, não porque haverá folga sustentada.
+- **Términos não são saídas.** Quem renova continua na carteira. O cálculo assume que o término libera o lugar, o que só vale para quem não renovar — e a taxa de renovação não está em lugar nenhum dos dados que recebi.
 
-Esse último ponto é o mais importante: **se metade renovar, metade das vagas projetadas não existe.**
+Esse último ponto é o mais importante: **se metade renovar, metade do alívio projetado para maio/27 não existe** — e aí o excedente de hoje não é um pico, é o novo normal.
 
 ## 26. Dados pessoais
 

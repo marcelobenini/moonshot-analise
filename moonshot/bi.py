@@ -120,6 +120,9 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
     for nome, tabela in (extras or {}).items():
         if isinstance(tabela, pd.DataFrame):
             dados['referencia'][nome] = _registros(tabela)
+        elif isinstance(tabela, dict):
+            dados['referencia'][nome] = {k: _limpo(v) if not isinstance(v, (dict, list))
+                                         else v for k, v in tabela.items()}
     with open(destino, 'w', encoding='utf-8') as fh:
         json.dump(dados, fh, ensure_ascii=False, separators=(',', ':'))
     return destino

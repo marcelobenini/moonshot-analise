@@ -342,15 +342,19 @@ td.wrapok{white-space:normal; min-width:210px}
       <span class="eyebrow" id="cart-n"></span>
     </div>
     <p class="sec-note">Quantas alunas cada consultor perde por mês, quanto de vaga isso abre e
-      quanto cabe de gente nova. Marcelo, Carol Leão, Ana Elisa e Daniel saíram do quadro — mas as
-      alunas deles não somem: viram carteira órfã, porque continuam sendo carga de alguém.
-      Os campos abaixo são premissas suas — mexa e a conta refaz.</p>
+      quanto cabe de gente nova. Quatro carteiras saíram do quadro e nenhuma evaporou: Ana Elisa vai
+      para o Vinícius e Carol Leão para o Thiago (destinos que você definiu), Daniel já foi
+      redistribuído entre o time sem registro de quem ficou com quem, e as 46 do Marcelo ficam no
+      pool à espera de dono — junto das linhas sem consultor na planilha. Os campos abaixo são
+      premissas suas; os destinos não, esses são dado.</p>
 
     <div class="calc">
       <div class="calc-head">
         <strong>Premissas do cenário</strong>
         <p>Nada aqui vem da planilha: são decisões suas. A capacidade padrão é a mediana das
-          carteiras atuais, que descreve como a operação roda hoje — não o que ela suporta.</p>
+          carteiras próprias de hoje, que descreve como a operação roda — não o que ela suporta.
+          O evento de dezembro pesa na carteira pela duração inteira do contrato, não só no mês
+          em que entra.</p>
       </div>
       <div class="tblwrap"><table id="tb-premissas"></table></div>
     </div>
@@ -358,15 +362,17 @@ td.wrapok{white-space:normal; min-width:210px}
     <div class="callouts" id="cart-orfas" style="margin-top:18px"></div>
     <div class="callouts" id="cart-veredito" style="margin-top:12px"></div>
 
-    <h3 style="font-size:16px; margin:28px 0 0">Vagas do time, mês a mês</h3>
-    <p class="sec-note">Carteira do time depois dos términos, contra a capacidade. A linha de
-      alunas sem consultor acumula quem entrou e não coube.</p>
+    <h3 style="font-size:16px; margin:28px 0 0">Carga do time, mês a mês</h3>
+    <p class="sec-note">Tudo que precisa de consultor — carteira com dono, pool sem dono e as novas
+      do evento — contra o que o time comporta. Não simula quem fica com quem: não há dado que diga
+      isso. Conta estoque, que é o que decide se precisa contratar.</p>
     <div class="chart" id="ch-vagas"></div>
     <div class="tblwrap" style="margin-top:16px"><table id="tb-vagas"></table></div>
 
     <h3 style="font-size:16px; margin:28px 0 0">Por consultor</h3>
-    <p class="sec-note">Quantas terminam em cada mês. A última coluna é a carteira que sobra ao fim
-      da janela — o tamanho do buraco a preencher.</p>
+    <p class="sec-note">Quantas terminam em cada mês, já com as transferências dentro. Carteira
+      acima da capacidade aparece em vermelho. A última coluna é o que sobra ao fim da janela — o
+      tamanho do buraco a preencher.</p>
     <div class="tblwrap"><table id="tb-carteira"></table></div>
   </section>
 
@@ -1222,26 +1228,27 @@ function renderMapa(f) {
 }
 
 /* ---------- Carteiras e capacidade ---------- */
-const cenario = { capacidade: null, transferencia: 40, destino: 'Vinícius',
-                  minhas: 46, mes_minhas: '2026-09', evento: 120, mes_evento: '2026-12' };
+const cenario = { capacidade: null, evento: 40, mes_evento: '2026-12', contrato: 12 };
 
 function renderCarteira() {
   const resumo = (REF.carteira_resumo || []);
   const det = (REF.carteira_detalhe || []);
-  if (!resumo.length) { $('#sec-carteira').hidden = true; return; }
-  if (cenario.capacidade == null) cenario.capacidade = META.capacidade_carteira || 45;
-  const cap = Math.max(1, parseInt(cenario.capacidade) || 45);
-  const SEM = '(sem consultor)';
-  const consultores = [...new Set(det.map(r => r.consultor))].filter(c => c !== SEM);
-  const meses = [...new Set(det.map(r => r.mes))].sort();
+  const carga = (REF.carteira_carga || []);
+  const sim = (REF.carteira_simulacao || []);
+  const mov = (REF.carteira_movimentacao || []);
+  const prem = REF.premissas_carteira || {};
+  if (!resumo.length || !carga.length) { $('#sec-carteira').hidden = true; return; }
+  if (cenario.capacidade == null) cenario.capacidade = prem.capacidade || META.capacidade_carteira || 46;
+  const cap = Math.max(1, parseInt(cenario.capacidade) || 46);
+  const consultores = [...new Set(det.map(r => r.consultor))];
+  const meses = carga.map(r => r.mes);
   $('#cart-n').textContent = `${consultores.length} consultores · capacidade ${cap}`;
 
-  /* premissas editáveis */
+  /* premissas editáveis: só o que é decisão sua. Destino de carteira é dado. */
   const campos = [
     { k: 'capacidade', lab: 'Capacidade por carteira', sufixo: 'alunas' },
-    { k: 'transferencia', lab: `Carteira órfã absorvida por ${cenario.destino}`, sufixo: 'alunas' },
-    { k: 'minhas', lab: 'Suas alunas a redistribuir (set/26)', sufixo: 'alunas' },
     { k: 'evento', lab: 'Alunas do evento de dezembro', sufixo: 'alunas' },
+    { k: 'contrato', lab: 'Duração do contrato', sufixo: 'meses' },
   ];
   $('#tb-premissas').innerHTML =
     `<thead><tr><th>Premissa</th><th style="text-align:right">Valor</th><th></th></tr></thead>
@@ -1259,86 +1266,88 @@ function renderCarteira() {
     });
   });
 
-  /* evolução com as premissas aplicadas */
-  const transf = Math.max(0, parseInt(cenario.transferencia) || 0);
-  const novas = { [cenario.mes_minhas]: Math.max(0, parseInt(cenario.minhas) || 0),
-                  [cenario.mes_evento]: Math.max(0, parseInt(cenario.evento) || 0) };
-  let semDono = 0, picoSemDono = 0, mesPico = null;
-  const linhas = meses.map(m => {
-    const g = det.filter(r => r.mes === m && r.consultor !== SEM);
-    const carteiraTime = g.reduce((s, r) =>
-      s + r.carteira_apos + (r.consultor === cenario.destino ? transf : 0), 0);
-    const vagas = g.reduce((s, r) => {
-      const c = r.carteira_apos + (r.consultor === cenario.destino ? transf : 0);
-      return s + Math.max(0, cap - c);
-    }, 0);
-    const entram = novas[m] || 0;
-    semDono += entram;
-    const alocadas = Math.min(semDono, vagas);
-    semDono -= alocadas;
-    if (semDono > picoSemDono) { picoSemDono = semDono; mesPico = m; }
-    return { mes: m, terminam: g.reduce((s, r) => s + r.terminam_no_mes, 0),
-             carteira: carteiraTime, capacidade: g.length * cap, vagas,
-             entram, alocadas, sem_dono: semDono };
-  });
+  /* as novas do evento pesam do mês em que chegam até o fim do contrato */
+  const evt = Math.max(0, parseInt(cenario.evento) || 0);
+  const dur = Math.max(1, parseInt(cenario.contrato) || 12);
+  const i0 = meses.indexOf(cenario.mes_evento);
+  const novasAtivas = {};
+  meses.forEach((m, i) => { novasAtivas[m] = (i0 >= 0 && i >= i0 && i < i0 + dur) ? evt : 0; });
 
-  /* carteiras órfãs: quem sai leva o nome, não as alunas */
-  const orf = (REF.carteira_orfas || []);
-  const orfMes = (REF.carteira_orfas_mes || []);
-  const totalOrf = orf.reduce((s, r) => s + r.alunas_orfas, 0);
-  const orfAteDez = orfMes.filter(r => r.mes <= '2026-12')
-    .reduce((s, r) => s + r.orfas_terminando, 0);
-  const semDonoPlanilha = (det.filter(r => r.consultor === SEM && r.mes === meses[0])[0] || {});
+  const poolPorMes = Object.fromEntries(sim.map(r => [r.mes, r.pool_sem_dono]));
+  const linhas = carga.map(r => {
+    const pool = poolPorMes[r.mes] || 0;
+    const novas = novasAtivas[r.mes] || 0;
+    const total = r.carteira_do_time + pool + novas;
+    const capTime = r.consultores * cap;
+    return { mes: r.mes, terminam: r.terminam_no_mes, comDono: r.carteira_do_time,
+             diluida: r.diluida_no_time, pool, novas, total, capTime,
+             vagas: Math.max(0, capTime - total), deficit: Math.max(0, total - capTime),
+             media: total / r.consultores };
+  });
+  const hoje = linhas[0];
+  const alivio = linhas.find(l => l.deficit === 0);
+  const nCons = carga[0].consultores;
+
+  /* quem muda de mão */
+  const fixos = mov.filter(m => m.situacao === 'transferida');
+  const pool0 = mov.filter(m => m.situacao === 'pool');
+  const dil = mov.filter(m => m.situacao === 'diluida');
+  const nPool = pool0.reduce((s, m) => s + m.alunas, 0);
+  const nDil = dil.reduce((s, m) => s + m.alunas, 0);
   $('#cart-orfas').innerHTML = `
-    <div class="callout gap"><h4>Carteira órfã</h4><span class="big">${totalOrf}</span>
-      <p>Alunas de ${orf.map(o => `${o.consultor_saindo} (${o.alunas_orfas})`).join(', ')}.
-         Saíram do quadro, não da operação — alguém carrega essas alunas hoje.</p></div>
-    <div class="callout warn"><h4>Órfãs que se resolvem sozinhas até dez/26</h4>
-      <span class="big">${orfAteDez}</span>
-      <p>Terminam contrato na janela curta e não precisam de novo dono. As outras
-         ${totalOrf - orfAteDez} precisam.</p></div>
-    <div class="callout warn"><h4>Sem consultor na planilha</h4>
-      <span class="big">${(resumo.find(r => r.consultor === SEM) || {}).carteira_hoje ?? 0}</span>
-      <p>Linhas com o campo de consultor em branco. Ou é cadastro faltando, ou é carteira
-         realmente sem dono — não dá para distinguir pelo dado.</p></div>`;
+    <div class="callout op"><h4>Transferências com destino definido</h4>
+      <span class="big">${fixos.reduce((s, m) => s + m.alunas, 0)}</span>
+      <p>${fixos.map(m => `${m.consultor_saindo} → <b>${m.destino}</b> (${m.alunas})`).join('; ')}.
+         Cada aluna leva junto a data de término que a matrícula dela declara.</p></div>
+    <div class="callout gap"><h4>Pool sem dono</h4><span class="big">${nPool}</span>
+      <p>${pool0.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ')}. São alunas ativas
+         hoje que precisam de consultor — não é demanda futura, é carga presente.</p></div>
+    <div class="callout warn"><h4>Já diluída no time</h4><span class="big">${nDil}</span>
+      <p>${dil.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ')}. Foram redistribuídas
+         sem registro de quem ficou com quem: entram na carga do time, não na de uma pessoa.</p></div>`;
 
   /* veredito */
-  const juniores = Math.ceil(picoSemDono / cap);
-  const primeiroApertado = linhas.find(l => l.sem_dono > 0);
+  const faltam = Math.ceil(hoje.total / cap) - nCons;
   $('#cart-veredito').innerHTML = `
-    <div class="callout ${picoSemDono ? 'gap' : 'op'}">
-      <h4>Precisa de consultor a mais?</h4>
-      <span class="big">${picoSemDono ? (juniores + (juniores === 1 ? ' junior' : ' juniores')) : 'não'}</span>
-      <p>${picoSemDono
-        ? `No pico, <b>${picoSemDono} alunas</b> ficam sem consultor (${rotMes(mesPico)}). ` +
-          `A ${cap} por carteira, isso são ${juniores} carteira(s) a mais — ou esperar a fila girar.`
-        : `Com estas premissas o time absorve tudo sem contratar. A folga vem dos términos.`}</p></div>
-    <div class="callout warn"><h4>Primeiro mês apertado</h4>
-      <span class="big">${primeiroApertado ? rotMes(primeiroApertado.mes) : '—'}</span>
-      <p>${primeiroApertado
-        ? `${primeiroApertado.sem_dono} alunas sem dono nesse mês. Antes disso a fila absorve.`
-        : 'Nenhum mês fica com aluna sem consultor.'}</p></div>
-    <div class="callout op"><h4>Vagas até dezembro</h4>
-      <span class="big">${(linhas.find(l => l.mes === '2026-12') || {}).vagas ?? '—'}</span>
-      <p>Vagas abertas no time em dez/26, já descontadas suas ${cenario.minhas} e a carteira
-         absorvida. É o que o evento encontra pela frente.</p></div>`;
+    <div class="callout ${hoje.deficit ? 'gap' : 'op'}">
+      <h4>Cabe na equipe atual?</h4>
+      <span class="big">${hoje.deficit ? 'não' : 'sim'}</span>
+      <p>${hoje.deficit
+        ? `Hoje são <b>${hoje.total} alunas</b> para ${nCons} consultores: ${hoje.media.toFixed(1)}
+           por carteira contra a referência de ${cap}. Sobram <b>${hoje.deficit}</b> —
+           ${faltam} carteira(s) a mais para fechar a conta na régua de hoje.`
+        : `As ${hoje.total} alunas cabem nas ${nCons} carteiras a ${cap} cada.`}</p></div>
+    <div class="callout ${alivio ? 'op' : 'warn'}"><h4>Quando a conta fecha sozinha</h4>
+      <span class="big">${alivio ? rotMes(alivio.mes) : 'não fecha'}</span>
+      <p>${alivio
+        ? `Primeiro mês em que a carteira cabe sem contratar, pelos términos declarados.
+           Até lá são ${meses.indexOf(alivio.mes)} meses acima da capacidade.`
+        : 'Em nenhum mês da janela a carga cai abaixo da capacidade do time.'}</p></div>
+    <div class="callout warn"><h4>Vagas quando o evento chega</h4>
+      <span class="big">${(linhas.find(l => l.mes === cenario.mes_evento) || {}).vagas ?? '—'}</span>
+      <p>Vagas livres em ${rotMes(cenario.mes_evento)} já contando as ${evt} novas.
+         Se der zero, a turma de dezembro entra sem carteira que a receba.</p></div>`;
 
-  colunas($('#ch-vagas'), linhas.map(l => ({ rot: rotMes(l.mes), n: l.vagas })),
-    cap * consultores.length, 'var(--s1)');
+  colunas($('#ch-vagas'), linhas.map(l => ({ rot: rotMes(l.mes), n: l.total })),
+    Math.max(...linhas.map(l => Math.max(l.total, l.capTime))), 'var(--s1)');
 
   tabela($('#tb-vagas'), [
     { lab: 'Mês', render: r => `<b>${rotMes(r.mes)}</b>` },
     { lab: 'Terminam', num: true, k: 'terminam' },
-    { lab: 'Carteira do time', num: true, k: 'carteira' },
-    { lab: 'Capacidade', num: true, k: 'capacidade' },
-    { lab: 'Vagas abertas', num: true, render: r => `<b>${r.vagas}</b>` },
-    { lab: 'Entram', num: true, render: r => r.entram || '—' },
-    { lab: 'Alocadas', num: true, render: r => r.alocadas || '—' },
-    { lab: 'Sem consultor', num: true, render: r => r.sem_dono
-        ? `<b style="color:var(--crit)">${r.sem_dono}</b>` : '0' },
+    { lab: 'Com dono', num: true, k: 'comDono' },
+    { lab: 'Pool', num: true, render: r => r.pool || '—' },
+    { lab: 'Novas ativas', num: true, render: r => r.novas || '—' },
+    { lab: 'Total a atender', num: true, render: r => `<b>${r.total}</b>` },
+    { lab: 'Capacidade', num: true, k: 'capTime' },
+    { lab: 'Média por carteira', num: true, render: r => r.media.toFixed(1) },
+    { lab: 'Vagas', num: true, render: r => r.vagas || '0' },
+    { lab: 'Excedente', num: true, render: r => r.deficit
+        ? `<b style="color:var(--crit)">${r.deficit}</b>` : '0' },
   ], linhas);
 
   /* por consultor */
+  const recebeu = Object.fromEntries(resumo.map(r => [r.consultor, r.recebida_por_transferencia]));
+  const deQuem = Object.fromEntries(fixos.map(m => [m.destino, m]));
   const porCons = consultores.map(c => {
     const linha = { consultor: c };
     let ultima = null;
@@ -1349,14 +1358,16 @@ function renderCarteira() {
     });
     const base = resumo.find(r => r.consultor === c) || {};
     linha._hoje = base.carteira_hoje;
-    linha._fim = (ultima ?? 0) + (c === cenario.destino ? transf : 0);
+    linha._fim = ultima ?? 0;
     return linha;
   }).sort((a, b) => b._hoje - a._hoje);
 
   tabela($('#tb-carteira'), [
-    { lab: 'Consultor', render: r => `<b>${r.consultor}</b>${r.consultor === cenario.destino
-        ? ` <span style="color:var(--ink-3);font-size:11.5px">+${transf} da Ana Elisa</span>` : ''}` },
-    { lab: 'Hoje', num: true, render: r => r._hoje },
+    { lab: 'Consultor', render: r => `<b>${r.consultor}</b>${recebeu[r.consultor]
+        ? ` <span style="color:var(--ink-3);font-size:11.5px">+${recebeu[r.consultor]} de ${
+            (deQuem[r.consultor] || {}).consultor_saindo || '—'}</span>` : ''}` },
+    { lab: 'Hoje', num: true, render: r => r._hoje > cap
+        ? `<b style="color:var(--crit)">${r._hoje}</b>` : r._hoje },
     ...meses.map(m => ({ lab: rotMes(m), num: true,
       render: r => r[m] ? `<b>${r[m]}</b>` : '<span style="color:var(--ink-3)">·</span>' })),
     { lab: 'Sobra ao fim', num: true, render: r => r._fim },

@@ -3,10 +3,17 @@
 Le a planilha de matriculas (que tem consultor estrategico e data de termino
 declarada) e projeta a carteira de cada consultor mes a mes. Serve para decidir
 transferencias, absorver turma nova e dimensionar equipe.
+
+Tirar um consultor do planejamento nao faz as alunas dele sumirem. Cada
+carteira que sai do quadro tem um destino declarado, foi diluida no time ou
+esta no pool esperando dono — nunca evapora da conta.
 """
 import pandas as pd
 
 from .matriculas import STATUS_FORA, classificar_abas
+
+POOL = '(a redistribuir)'
+DILUIDA = '(diluida no time)'
 
 
 def base_carteiras(matriculas, excluir=(), so_turmas=True):
@@ -22,116 +29,203 @@ def base_carteiras(matriculas, excluir=(), so_turmas=True):
     return d
 
 
-def orfas(carteiras, inicio, meses=12):
-    """Carteiras dos consultores fora do quadro.
+def aplicar_destinos(carteiras, destinos=None, diluidos=(), sem_dono=('(sem consultor)',)):
+    """Reescreve o dono de cada aluna segundo o destino que voce declarou.
 
-    Tirar um consultor do planejamento NAO faz as alunas dele sumirem: elas
-    continuam existindo e viram carga de outra pessoa. Esta tabela existe para
-    que esse peso apareca em vez de evaporar da conta.
+    destinos: {'consultor que sai': 'consultor que recebe'}. A aluna passa a
+        contar na carteira do destino carregando a data de termino que ja tinha.
+    diluidos: consultores cuja carteira ja foi redistribuida entre o time sem
+        que se saiba quem ficou com quem. Vira carga do time, nao de uma
+        pessoa — atribuir um dono aqui seria inventar dado.
+    sem_dono: rotulos que representam ausencia de consultor.
+
+    Quem sai do quadro e nao tem destino declarado nem foi diluido cai no pool:
+    alunas reais, com termino conhecido, ainda sem dono.
+
+    Devolve a base com duas colunas novas: `dono` (quem responde por ela na
+    projecao) e `origem` (propria, transferida, diluida, pool).
     """
-    d = carteiras[carteiras['excluido']].copy()
+    destinos = {str(k).strip().lower(): v for k, v in (destinos or {}).items()}
+    dil = {str(x).strip().lower() for x in diluidos}
+    nulos = {str(x).strip().lower() for x in sem_dono}
+
+    d = carteiras.copy()
+    chave = d['consultor_norm'].str.strip().str.lower()
+    d['dono'] = d['consultor_norm']
+    d['origem'] = 'propria'
+
+    m_dest = chave.isin(destinos)
+    d.loc[m_dest, 'dono'] = chave[m_dest].map(destinos)
+    d.loc[m_dest, 'origem'] = 'transferida'
+
+    m_dil = chave.isin(dil)
+    d.loc[m_dil, 'dono'] = DILUIDA
+    d.loc[m_dil, 'origem'] = 'diluida'
+
+    m_pool = (d['excluido'] & ~m_dest & ~m_dil) | chave.isin(nulos)
+    d.loc[m_pool, 'dono'] = POOL
+    d.loc[m_pool, 'origem'] = 'pool'
+    return d
+
+
+def _mensal(d, janela):
+    """Terminos por mes dentro da janela, alinhado ao indice completo."""
+    mes = d['termino_efetivo'].dt.to_period('M')
+    return (mes[mes.isin(janela)].value_counts()
+            .reindex(janela, fill_value=0).astype(int))
+
+
+def movimentacao(cart, inicio, meses=12):
+    """De quem sai, para quem vai, quantas sao e quando cada uma termina.
+
+    Uma linha por carteira que muda de mao. `terminam_fora_da_janela` inclui
+    quem ja terminou, quem termina depois do horizonte e quem esta sem data.
+    """
+    d = cart[cart['origem'] != 'propria']
     if not len(d):
         return pd.DataFrame(), pd.DataFrame()
-    d['mes'] = d['termino_efetivo'].dt.to_period('M')
-    ini = pd.Period(inicio, freq='M')
-    janela = pd.period_range(ini, periods=meses, freq='M')
-    resumo = (d.groupby('consultor_norm').size().rename('alunas_orfas')
-              .reset_index().rename(columns={'consultor_norm': 'consultor_saindo'})
-              .sort_values('alunas_orfas', ascending=False))
-    porm = (d[d['mes'].isin(janela)].groupby('mes').size()
-            .reindex(janela, fill_value=0).rename('orfas_terminando')
-            .rename_axis('mes').reset_index())
-    porm['mes'] = porm['mes'].astype(str)
-    return resumo, porm
+    janela = pd.period_range(pd.Period(inicio, freq='M'), periods=meses, freq='M')
+
+    linhas, detalhe = [], []
+    for cons, g in d.groupby('consultor_norm'):
+        origem = g['origem'].iloc[0]
+        destino = {'transferida': g['dono'].iloc[0], 'diluida': DILUIDA}.get(origem, POOL)
+        m = _mensal(g, janela)
+        linhas.append({'consultor_saindo': cons, 'destino': destino,
+                       'situacao': origem, 'alunas': len(g),
+                       'terminam_na_janela': int(m.sum()),
+                       'terminam_fora_da_janela': len(g) - int(m.sum())})
+        for p, n in m.items():
+            detalhe.append({'consultor_saindo': cons, 'destino': destino,
+                            'mes': str(p), 'terminam_no_mes': int(n)})
+    resumo = pd.DataFrame(linhas).sort_values('alunas', ascending=False)
+    return resumo, pd.DataFrame(detalhe)
 
 
-def evolucao(carteiras, inicio, meses=12, capacidade=None):
-    """Carteira de cada consultor mes a mes e vagas abertas.
+def evolucao(cart, inicio, meses=12, capacidade=None):
+    """Carteira de cada consultor mes a mes, ja com as transferencias dentro.
 
     `capacidade` e o tamanho de carteira que se considera cheio. Sem valor,
-    usa a mediana das carteiras atuais — que descreve como a operacao roda
-    hoje, nao o que ela suporta.
+    usa a mediana das carteiras proprias de hoje — que descreve como a operacao
+    roda hoje, nao o que ela suporta.
     """
-    d = carteiras[~carteiras['excluido']].copy()
+    d = cart[~cart['dono'].isin({POOL, DILUIDA})].copy()
     if not len(d):
         return pd.DataFrame(), pd.DataFrame(), None
-    d['mes'] = d['termino_efetivo'].dt.to_period('M')
-    ini = pd.Period(inicio, freq='M')
-    janela = pd.period_range(ini, periods=meses, freq='M')
+    janela = pd.period_range(pd.Period(inicio, freq='M'), periods=meses, freq='M')
 
-    atual = d.groupby('consultor_norm').size().rename('carteira_hoje')
+    propria = d[d['origem'] == 'propria'].groupby('dono').size()
+    recebida = d[d['origem'] == 'transferida'].groupby('dono').size()
+    atual = d.groupby('dono').size().rename('carteira_hoje')
     if capacidade is None:
-        capacidade = int(atual[atual.index != '(sem consultor)'].median())
-
-    # Terminos por consultor e mes, so dentro da janela.
-    term = (d[d['mes'].isin(janela)].groupby(['consultor_norm', 'mes']).size()
-            .unstack(fill_value=0).reindex(columns=janela, fill_value=0)
-            .reindex(atual.index, fill_value=0))
+        capacidade = int(propria.median())
 
     linhas = []
     for cons in atual.index:
+        m = _mensal(d[d['dono'] == cons], janela)
         restante = int(atual[cons])
-        for m in janela:
-            saem = int(term.loc[cons, m])
+        for p in janela:
+            saem = int(m[p])
             restante -= saem
-            linhas.append({'consultor': cons, 'mes': str(m), 'terminam_no_mes': saem,
+            linhas.append({'consultor': cons, 'mes': str(p), 'terminam_no_mes': saem,
                            'carteira_apos': restante,
-                           'vagas': max(0, capacidade - restante)})
+                           'vagas': max(0, capacidade - restante),
+                           'acima_da_capacidade': max(0, restante - capacidade)})
     detalhe = pd.DataFrame(linhas)
 
-    resumo = atual.reset_index().rename(columns={'consultor_norm': 'consultor'})
-    resumo['termina_na_janela'] = resumo['consultor'].map(term.sum(axis=1)).fillna(0).astype(int)
-    resumo['carteira_ao_fim'] = resumo['carteira_hoje'] - resumo['termina_na_janela']
+    resumo = atual.reset_index().rename(columns={'dono': 'consultor'})
+    resumo['carteira_propria'] = resumo['consultor'].map(propria).fillna(0).astype(int)
+    resumo['recebida_por_transferencia'] = resumo['consultor'].map(recebida).fillna(0).astype(int)
+    fim = detalhe[detalhe['mes'] == str(janela[-1])].set_index('consultor')
+    resumo['termina_na_janela'] = resumo['carteira_hoje'] - resumo['consultor'].map(fim['carteira_apos'])
+    resumo['carteira_ao_fim'] = resumo['consultor'].map(fim['carteira_apos']).astype(int)
     resumo['vagas_ao_fim'] = (capacidade - resumo['carteira_ao_fim']).clip(lower=0)
+    resumo['acima_da_capacidade_hoje'] = (resumo['carteira_hoje'] - capacidade).clip(lower=0)
     resumo = resumo.sort_values('carteira_hoje', ascending=False)
     return resumo, detalhe, capacidade
 
 
-def vagas_por_mes(detalhe, capacidade, ignorar=('(sem consultor)',)):
-    """Vagas abertas no time inteiro, mes a mes."""
-    d = detalhe[~detalhe['consultor'].isin(ignorar)]
-    if not len(d):
+def _serie(cart, rotulo, inicio, meses):
+    """Quantas alunas de um bloco ainda existem ao fim de cada mes."""
+    janela = pd.period_range(pd.Period(inicio, freq='M'), periods=meses, freq='M')
+    d = cart[cart['dono'] == rotulo]
+    m = _mensal(d, janela)
+    restante, saida = len(d), {}
+    for p in janela:
+        restante -= int(m[p])
+        saida[str(p)] = {'terminam_no_mes': int(m[p]), 'restante': restante}
+    return saida
+
+
+def carga_do_time(cart, detalhe, capacidade, inicio, meses=12):
+    """Balanco do time mes a mes: o que cabe contra o que ja esta em cima.
+
+    A carteira diluida entra na carga total sem dono individual: sabemos que
+    o time absorveu, nao sabemos quem ficou com quem. O pool fica de fora —
+    ele e demanda a alocar, contada separado em `simular`.
+    """
+    if not len(detalhe):
         return pd.DataFrame()
-    g = d.groupby('mes').agg(
+    dil = _serie(cart, DILUIDA, inicio, meses)
+    g = detalhe.groupby('mes').agg(
         consultores=('consultor', 'nunique'),
         terminam_no_mes=('terminam_no_mes', 'sum'),
-        carteira_do_time=('carteira_apos', 'sum'),
-        vagas_abertas=('vagas', 'sum')).reset_index()
+        carteira_atribuida=('carteira_apos', 'sum'),
+        vagas_individuais=('vagas', 'sum'),
+        excedente_individual=('acima_da_capacidade', 'sum')).reset_index()
+    g['diluida_no_time'] = g['mes'].map(lambda m: dil.get(m, {}).get('restante', 0))
+    g['carteira_do_time'] = g['carteira_atribuida'] + g['diluida_no_time']
     g['capacidade_do_time'] = g['consultores'] * capacidade
+    g['folga_do_time'] = g['capacidade_do_time'] - g['carteira_do_time']
     return g
 
 
-def simular(carteiras, detalhe, capacidade, transferencias=None, entradas=None,
-            ignorar=('(sem consultor)',)):
-    """Aplica transferencias e entradas novas sobre a evolucao das carteiras.
+def simular(cart, carga, inicio, meses=12, entradas=None, meses_contrato=12):
+    """Tudo que precisa de consultor contra tudo que o time comporta.
 
-    transferencias: {'consultor destino': n} — carteiras absorvidas de fora.
-    entradas: {'AAAA-MM': n} — alunas novas a distribuir naquele mes.
-    Devolve o balanco mes a mes: quanto entra, quanto cabe, quanto sobra.
+    entradas: {'AAAA-MM': n} — alunas novas previstas naquele mes (o evento de
+    dezembro, por exemplo). Cada uma pesa na carteira pelos `meses_contrato`
+    seguintes, que e a duracao padrao do contrato.
+
+    Nao simula quem fica com quem: nao ha dado que diga isso. Conta estoque —
+    a aluna do pool ja e aluna ativa hoje, com ou sem consultor ao lado dela,
+    e continua pesando ate a data de termino que a matricula dela declara.
+
+    `deficit` e quanta gente sobra alem do que o time comporta no mes. Enquanto
+    for positivo, a conta so fecha contratando ou aumentando a carteira media.
     """
-    transferencias = transferencias or {}
-    entradas = entradas or {}
-    d = detalhe[~detalhe['consultor'].isin(ignorar)].copy()
-    # A transferencia entra de uma vez e acompanha o consultor pelo resto da janela.
-    d['carteira_apos'] = d['carteira_apos'] + d['consultor'].map(transferencias).fillna(0)
-    d['vagas'] = (capacidade - d['carteira_apos']).clip(lower=0)
+    if not len(carga):
+        return pd.DataFrame()
+    entradas = {str(k): int(v) for k, v in (entradas or {}).items()}
+    pool = _serie(cart, POOL, inicio, meses)
+    janela = [str(p) for p in pd.period_range(pd.Period(inicio, freq='M'),
+                                              periods=meses, freq='M')]
+    # Cada entrada nova ocupa lugar do mes em que chega ate o fim do contrato.
+    novas = {m: 0 for m in janela}
+    for m, n in entradas.items():
+        if m in janela:
+            i = janela.index(m)
+            for j in range(i, min(i + meses_contrato, len(janela))):
+                novas[janela[j]] += n
 
     linhas = []
-    acumulado_sem_dono = 0
-    for m in sorted(d['mes'].unique()):
-        g = d[d['mes'] == m]
-        vagas = int(g['vagas'].sum())
-        novas = int(entradas.get(m, 0))
-        acumulado_sem_dono += novas
-        alocadas = min(acumulado_sem_dono, vagas)
-        acumulado_sem_dono -= alocadas
+    for _, r in carga.iterrows():
+        m = r['mes']
+        p = pool.get(m, {'terminam_no_mes': 0, 'restante': 0})
+        total = int(r['carteira_do_time']) + int(p['restante']) + novas.get(m, 0)
+        cap = int(r['capacidade_do_time'])
         linhas.append({
             'mes': m,
-            'carteira_do_time': int(g['carteira_apos'].sum()),
-            'capacidade_do_time': int(len(g) * capacidade),
-            'vagas_abertas': vagas,
-            'alunas_novas_no_mes': novas,
-            'alocadas': alocadas,
-            'sem_consultor_acumulado': acumulado_sem_dono,
+            'capacidade_do_time': cap,
+            'carteira_com_dono': int(r['carteira_do_time']),
+            'pool_sem_dono': int(p['restante']),
+            'pool_termina_no_mes': int(p['terminam_no_mes']),
+            'alunas_novas_ativas': novas.get(m, 0),
+            'alunas_novas_entrando': entradas.get(m, 0),
+            'total_a_atender': total,
+            'vagas_no_time': max(0, cap - total),
+            'deficit': max(0, total - cap),
+            'carteira_media_necessaria': round(total / int(r['consultores']), 1),
+            'consultores_necessarios': -(-total // (cap // int(r['consultores']))),
         })
     return pd.DataFrame(linhas)

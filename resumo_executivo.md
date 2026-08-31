@@ -306,64 +306,96 @@ Três abas ficaram fora da conta por não serem turma: `MOONSHOT ELITE` (73% das
 
 ## 6f. Carteiras: quando abre vaga e se precisa de júnior
 
-Cruzamento entre **consultor estratégico** e **data de término** na planilha de matrículas. Marcelo, Carol Leão, Ana Elisa e Daniel saíram do quadro.
+Cruzamento entre **consultor estratégico** e **data de término** na planilha de matrículas. Quatro carteiras saem do quadro, e nenhuma delas some da conta — cada uma tem um destino declarado por você:
 
-### Excluir consultor não faz a aluna sumir
-
-**154 alunas ficam órfãs**: Ana Elisa (54), Marcelo (46), Daniel (41), Carol Leão (13). Elas continuam existindo e alguém as carrega hoje — a planilha é que não reflete. Você mesmo disse que as do Daniel já foram para outros consultores, o que confirma: **as carteiras reais são maiores do que a planilha mostra.**
-
-Dessas 154, apenas **29 se resolvem sozinhas até dez/26** por término de contrato. As outras **125 precisam de dono**.
-
-Some-se a isso **39 alunas com o campo de consultor em branco** — ou é cadastro faltando, ou é carteira realmente sem dono; o dado não distingue.
-
-### O quadro que fica
-
-**7 consultores, 323 alunas.** A capacidade de referência é 46 (mediana das carteiras atuais).
-
-| Consultor | Carteira hoje | Termina na janela | Sobra ao fim |
+| Sai | Alunas | Destino | Situação |
 |---|---|---|---|
-| Daniela | 54 | 54 | 0 |
-| Vinícius | 47 | 45 | 2 |
-| Thiago | 47 | 44 | 3 |
-| Hiago | 46 | 45 | 1 |
-| Keren | 45 | 45 | 0 |
-| Anaméli | 43 | 42 | 1 |
-| Andressa | 41 | 41 | 0 |
+| Ana Elisa | 54 | **Vinícius** | transferência definida |
+| Carol Leão | 13 | **Thiago** | transferência definida |
+| Daniel | 41 | o time | já redistribuída, sem registro de quem ficou com quem |
+| Marcelo | 46 | a definir | pool |
+| (sem consultor) | 39 | a definir | pool |
 
-**A conta real de carga:** 323 no quadro + 154 órfãs + 39 sem dono = **516 alunas para uma capacidade de 322** (7 × 46). São 194 acima antes de entrar qualquer aluna nova.
+**Correção de uma conta anterior:** as "46 suas a redistribuir" e a carteira do Marcelo são a mesma coisa. Antes elas entravam duas vezes — uma como carteira órfã, outra como entrada nova de setembro. Agora entram uma vez só, no pool.
 
-### Quando abre vaga
+**As 41 do Daniel entram como carga do time, não de uma pessoa.** Sei que foram absorvidas; não sei por quem. Atribuir um dono aqui seria inventar dado, então elas pesam no total e não aparecem em nenhuma linha individual.
 
-| Mês | Vagas abertas |
-|---|---|
-| set/26 | 25 |
-| out/26 | 25 |
-| nov/26 | 47 |
-| dez/26 | 48 |
-| fev/27 | 89 |
-| mar/27 | 117 |
-| mai/27 | 202 |
+### O quadro que fica, já com as transferências dentro
 
-### Veredito
+Capacidade de referência: **46** (mediana das carteiras próprias de hoje).
 
-Com capacidade 46, Vinícius absorvendo 40 da carteira órfã, suas 46 em setembro e o evento de dezembro:
+| Consultor | Carteira hoje | Própria | Recebida | Acima da capacidade | Sobra ao fim |
+|---|---|---|---|---|---|
+| **Vinícius** | **101** | 47 | +54 Ana Elisa | **+55** | 2 |
+| **Thiago** | **60** | 47 | +13 Carol Leão | **+14** | 9 |
+| Daniela | 54 | 54 | — | +8 | 0 |
+| Hiago | 46 | 46 | — | 0 | 1 |
+| Keren | 45 | 45 | — | 0 | 0 |
+| Anaméli | 43 | 43 | — | 0 | 1 |
+| Andressa | 41 | 41 | — | 0 | 0 |
 
-| Evento de dezembro | Pico sem consultor | Quando | Júniores |
+**O Vinícius carrega 101 alunas — mais que o dobro da referência — e carrega por nove meses.** A carteira da Ana Elisa não alivia antes de mai/27: 39 terminam em maio e as outras 15 só em ago/27. Até lá ele opera com 2,2 carteiras. Se 46 for perto do teto real, esse é o risco operacional número um do plano, e ele não se resolve pelo calendário.
+
+Thiago é o oposto: das 13 da Carol Leão, **6 terminam já em set/26** e 6 já terminaram ou estão sem data. Ele volta ao normal em um mês.
+
+### Quando cada carteira transferida termina
+
+| Sai | set/26 | nov/26 | dez/26 | fev/27 | mar/27 | abr/27 | mai/27 | ago/27 |
+|---|---|---|---|---|---|---|---|---|
+| Ana Elisa → Vinícius | | | | | | | **39** | 15 |
+| Carol Leão → Thiago | **6** | | | 1 | | | | |
+| Daniel → time | | | | | | | **41** | |
+| Marcelo → pool | | **22** | 1 | 12 | 3 | 1 | 7 | |
+| (sem consultor) → pool | | 1 | | | 2 | 2 | 11 | 22 |
+
+**Nov/26 é o primeiro respiro do pool**: 22 das suas 46 terminam sozinhas. Se elas não renovarem, não precisam de dono — só de alguém para conduzir a renovação.
+
+### A carga real do time, mês a mês
+
+Tudo que precisa de consultor contra o que 7 carteiras a 46 comportam (322):
+
+| Mês | Com dono | Pool | Novas do evento | Total | Capacidade | Excedente | Média por carteira |
+|---|---|---|---|---|---|---|---|
+| ago/26 | 431 | 85 | — | **516** | 322 | **194** | 73,7 |
+| set/26 | 386 | 85 | — | 471 | 322 | 149 | 67,3 |
+| out/26 | 381 | 85 | — | 466 | 322 | 144 | 66,6 |
+| nov/26 | 350 | 62 | — | 412 | 322 | 90 | 58,9 |
+| dez/26 | 349 | 61 | 40 | 450 | 322 | 128 | 64,3 |
+| jan/27 | 349 | 61 | 40 | 450 | 322 | 128 | 64,3 |
+| fev/27 | 307 | 49 | 40 | 396 | 322 | 74 | 56,6 |
+| mar/27 | 279 | 44 | 40 | 363 | 322 | 41 | 51,9 |
+| abr/27 | 269 | 41 | 40 | 350 | 322 | 28 | 50,0 |
+| **mai/27** | 107 | 23 | 40 | **170** | 322 | **0** | 24,3 |
+
+Não simulo quem fica com quem — não há dado que diga isso. A conta é de estoque, que é o que decide se precisa contratar.
+
+### Veredito: júnior, sim, mas o problema não é o evento
+
+**Hoje, antes de entrar qualquer aluna nova, o time já está 194 acima da capacidade.** São 516 alunas ativas para 7 consultores: 73,7 por carteira contra a régua de 46. Para fechar na régua de hoje seriam necessários 12 consultores — 5 a mais.
+
+O evento de dezembro é o menor dos problemas:
+
+| Evento de dezembro | Excedente em dez/26 | Média por carteira | Consultores para fechar |
 |---|---|---|---|
-| 60 | ~21 | set/26 | 1 |
-| **120** | **72** | **dez/26** | **2** |
-| 200 | ~152 | dez/26 | 4 |
+| sem evento | 88 | 58,6 | 9 |
+| **40** | **128** | **64,3** | **10** |
+| 80 | 168 | 70,0 | 11 |
 
-**Mas esse cálculo ignora as 125 órfãs que precisam de dono.** Se elas forem distribuídas entre os 7 que ficam, cada um recebe ~18 alunas a mais — e aí o time entra em dezembro já estourado, sem vaga nenhuma para o evento.
+Trocar 40 por 80 alunas no evento move o excedente de 128 para 168. **Tirar o evento inteiro da conta ainda deixa 88 alunas sem lugar.** O aperto não vem da turma nova; vem das quatro carteiras que saíram do quadro somadas às 39 sem cadastro.
 
-**A resposta honesta:** com 125 órfãs para realocar mais 46 suas mais o evento, **um júnior não resolve.** O aperto de dez/26–jan/27 é grande e só alivia em fevereiro (89 vagas) e maio/27 (202).
+**A resposta honesta às suas perguntas:**
+
+1. **Precisa de consultor júnior só para o Club?** Sim, e mais de um. Um júnior a 46 alunas cobre 46 do excedente de 128 em dez/26. Dois cobrem 92. **Nenhum número de júniores resolve o mês de agosto/26**, que é agora — 194 acima da capacidade não é problema de contratação, é problema de régua ou de renovação.
+2. **Quanto espaço abre para o evento?** Zero até abr/27, pelas contas de estoque. A primeira folga real é **mai/27** (152 vagas), quando 121 contratos terminam de uma vez. Antes disso, toda aluna nova entra em carteira já cheia.
+3. **Quando isso vira normal?** Mai/27 — e por término em massa, não por gestão.
 
 Três caminhos, e a escolha é sua:
-1. **Contratar 2 júniores como ponte** — resolve o pico, mas eles sobram a partir de março.
-2. **Segurar as alunas do evento numa fila de onboarding até fevereiro** — sem custo fixo, mas atrasa a entrada.
-3. **Aceitar carteiras maiores temporariamente** — se 46 não for o teto real, o problema encolhe. Esse número é o mais frágil de toda a conta.
 
-A simulação está no BI com os campos editáveis.
+1. **Rever a régua dos 46.** É o número mais frágil de toda a conta e o que mais muda o resultado. Se a carteira sustentável for 60, o excedente de dez/26 cai de 128 para 30 e um júnior resolve. Se for 46 mesmo, a operação já está em dívida hoje.
+2. **Contratar 2 júniores como ponte até maio/27**, dedicados ao pool (suas 46 + as 39 sem cadastro). Resolve o pico e eles ficam ociosos a partir de maio, quando a carteira gira.
+3. **Aliviar o Vinícius antes de tudo.** Ele é o único caso individual com número fechado: 101 alunas por nove meses. Mesmo que a conta geral não mude, mover parte das 54 da Ana Elisa para quem está em 41–46 é a correção mais barata do plano.
+
+A simulação está no BI com capacidade, tamanho do evento e duração do contrato editáveis.
 
 ---
 
