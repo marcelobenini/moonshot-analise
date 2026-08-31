@@ -261,48 +261,41 @@ O mapa está no BI, com quatro métricas (alunas, classe A, taxa de risco, fatur
 
 ---
 
-## 6e. Projeção de término de contratos — dado declarado
+## 6e. Contratos terminando — turma a turma, sem as canceladas
 
-Fonte: planilha de matrículas do Moonshot Club, que traz **data de término declarada** em formato de data completa. Não há inferência aqui.
+Contagem feita aba por aba na planilha de matrículas, retirando as canceladas, pelo mês de término **declarado**. **604 contratos terminam de setembro de 2026 em diante.**
 
-**605 matrículas ativas terminam de setembro de 2026 em diante.**
+| Mês | Terminam | % | Canceladas (fora) | Turmas |
+|---|---|---|---|---|
+| set/26 | 53 | 8,8% | 8 | SetOut 52, JunJulAgo 1 |
+| out/26 | 5 | 0,8% | 0 | SetOut 5 |
+| **nov/26** | **74** | 12,3% | 8 | Novembro25 73, SetOut 1 |
+| dez/26 | 2 | 0,3% | 3 | Novembro25 2 |
+| **fev/27** | **88** | 14,6% | 2 | Janeiro26 88 |
+| mar/27 | 46 | 7,6% | 6 | Brasília Março26 44, Janeiro26 2 |
+| abr/27 | 15 | 2,5% | 5 | Portugal Abril26 15 |
+| **mai/27** | **205** | **33,9%** | 20 | Alphaville Maio26 177, Curitiba Maio26 28 |
+| ago/27 | 116 | 19,2% | 0 | Alphaville Agosto26 116 |
 
-| Mês | Ativas terminando | % | Já em risco | Classe A | Turmas |
-|---|---|---|---|---|---|
-| set/26 | 53 | 8,8% | 7 | 9 | JunJulAgo |
-| out/26 | 6 | 1,0% | 0 | 1 | Elite, SetOut |
-| nov/26 | 73 | 12,1% | 8 | 7 | Alphaville Nov25 |
-| dez/26 | 4 | 0,7% | 1 | 1 | Elite |
-| jan/27 | 4 | 0,7% | 0 | 2 | Elite |
-| **fev/27** | **89** | 14,7% | 18 | 11 | Alphaville Jan26 |
-| mar/27 | 45 | 7,4% | 6 | 6 | Jan26, Brasília Mar26 |
-| abr/27 | 16 | 2,6% | 4 | 0 | Portugal Abr26 |
-| **mai/27** | **202** | **33,4%** | 16 | 17 | Alphaville e Curitiba Mai26 |
-| ago/27 | 113 | 18,7% | 1 | 3 | Alphaville Ago26 |
+**Maio de 2027 concentra um terço da carteira** (205 contratos, das turmas de Alphaville e Curitiba de maio/26). Somando agosto/27 (116) e fevereiro/27 (88), **três meses respondem por 68% de tudo**.
 
-**Um terço da carteira ativa termina em maio de 2027.** São 202 contratos das turmas de Alphaville e Curitiba de maio/2026. Somando agosto/27 (113) e fevereiro/27 (89), **três meses concentram 67% de todos os términos** — e nenhuma estrutura atual de renovação foi dimensionada para picos desse tamanho.
+Os dois primeiros meses são o contraste: setembro tem 53 e outubro apenas 5. É a janela para montar o processo antes de novembro.
 
-Os próximos dois meses são o contraste: setembro tem 53 e outubro apenas 6. É a janela para montar o processo antes de novembro.
+**62 dos 604 já estão hoje sem contato ou pedindo saída**, segundo o relato dos consultores. Fevereiro/27 é o mais exposto: 18 dos 88.
 
-**61 das 605 já estão hoje sem contato ou pedindo saída**, segundo o relato dos consultores. Fevereiro de 2027 é o mês mais exposto: 18 das 89.
+### Três abas ficaram fora da conta, e por quê
 
-**Duas coisas para corrigir na planilha:**
-- **4 alunas com pedido de cancelamento registrado ainda constam como ativas** na matrícula. Estão contadas nos 605 e provavelmente não deveriam.
-- 39 matrículas não têm data alguma e ficam fora da projeção. Das 78 linhas de pedido de cancelamento, 60 não casam com nenhum nome da lista de matrículas.
+- **`MOONSHOT ELITE`** — não é turma, é nível de plano. **73% das suas 45 alunas já aparecem na turma em que foram vendidas**; contá-la somaria a mesma pessoa duas vezes, em meses diferentes.
+- **`Alunas antigas`** — 35 linhas, nenhuma com data de término.
+- **`CANCELAMENTOS`** — aba de controle de saídas.
 
-### A estimativa anterior estava errada e foi descartada
+A regra de exclusão é do próprio dado: se mais da metade das alunas de uma aba também aparece em outras, aquela aba é recorte e não turma.
 
-Antes desta planilha, deduzi as datas do controle de consultorias. **A inferência subestimava em 42%** (349 contra 605) e errava meses inteiros:
+### Quem renovou conta duas vezes, de propósito
 
-| Mês | Real (matrícula) | Inferido | Erro |
-|---|---|---|---|
-| set/26 | 53 | 2 | −51 |
-| fev/27 | 89 | 0 | −89 |
-| mai/27 | 202 | 165 | −37 |
-| ago/27 | 113 | 18 | −95 |
-| jan/27 | 4 | 55 | **+51** |
+36 alunas aparecem em mais de uma turma. Nesta contagem elas entram na turma antiga **e** na nova — são dois contratos, e é assim que a renovação se organiza operacionalmente. Uma contagem por pessoa única daria 604 menos essas repetições; a aba `Matriculas_Resumo` traz essa visão alternativa.
 
-A causa: o controle de consultorias não cobre todas as turmas, e sua coluna de entrada mistura convenções de data. A projeção inferida permanece no Excel apenas como conferência, na aba `Projecao_Inferida_Conferencia`. **Use a aba `Projecao_Terminos`.**
+**Atenção:** 3 alunas com pedido de cancelamento registrado ainda constam como ativas na matrícula e estão contadas acima.
 
 ---
 

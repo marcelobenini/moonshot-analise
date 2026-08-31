@@ -192,20 +192,23 @@ def main():
     # Quando esta planilha existe ela manda: o termino e declarado, nao inferido.
     # A projecao a partir do controle de consultorias fica so como conferencia.
     tab_matriculas = proj_matriculas = res_matriculas = pd.DataFrame()
+    class_abas = proj_mes = proj_turma = pd.DataFrame()
     ped_cancel = conf_cancel = divg_cancel = pd.DataFrame()
     desde = args.projecao_desde or datetime.now().strftime('%Y-%m')
     if args.matriculas and os.path.exists(args.matriculas):
-        brutas = matriculas.carregar(args.matriculas)
-        tab_matriculas = matriculas.deduplicar(brutas)
+        tab_matriculas = matriculas.carregar(args.matriculas)
+        class_abas = matriculas.classificar_abas(tab_matriculas)
+        abas_turma = set(class_abas.loc[class_abas['tipo'] == 'turma', 'aba'])
+        proj_mes, proj_turma = matriculas.por_turma(tab_matriculas, class_abas, desde)
         ped_cancel = matriculas.pedidos_cancelamento(args.matriculas)
         conf_cancel, divg_cancel = matriculas.conferir_cancelamentos(tab_matriculas, ped_cancel)
         cruz_m = matriculas.cruzar_com_base(tab_matriculas, base, consultoria.casar)
-        proj_matriculas = matriculas.projecao_detalhada(cruz_m, desde)
-        res_matriculas = matriculas.resumo(tab_matriculas, desde)
-        print(f'Matriculas: {len(tab_matriculas)} apos deduplicar, '
-              f'{int((tab_matriculas["status_norm"] == "ativo").sum())} ativas; '
-              f'{int(proj_matriculas["ativas_terminando"].sum()) if len(proj_matriculas) else 0} '
-              f'terminam de {desde} em diante')
+        proj_matriculas = matriculas.projecao_detalhada(cruz_m, desde, abas_turma=abas_turma)
+        res_matriculas = matriculas.resumo(matriculas.deduplicar(tab_matriculas), desde)
+        print(f'Matriculas: {len(tab_matriculas)} linhas em {len(class_abas)} abas '
+              f'({len(abas_turma)} turmas, {len(class_abas) - len(abas_turma)} de controle); '
+              f'{int(proj_mes["nao_canceladas"].sum()) if len(proj_mes) else 0} '
+              f'nao canceladas terminam de {desde} em diante')
 
     # ---- contratos: entrada, saida prevista, projecao de termino ---------
     datas_contrato = proj_terminos = pd.DataFrame()
@@ -319,7 +322,10 @@ def main():
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
         'Matriculas': tab_matriculas,
-        'Projecao_Terminos': proj_matriculas,
+        'Projecao_Terminos': proj_mes,
+        'Projecao_Por_Turma': proj_turma,
+        'Matriculas_Abas': class_abas,
+        'Projecao_Perfil': proj_matriculas,
         'Matriculas_Resumo': res_matriculas,
         'Pedidos_Cancelamento': ped_cancel,
         'Cancelamento_Conferencia': conf_cancel,
@@ -371,6 +377,8 @@ def main():
                                   'engajamento': tab_engaj, 'risco': tab_risco,
                                   'confronto_faturamento': tab_confronto,
                                   'projecao_terminos': proj_matriculas,
+                                  'projecao_mes': proj_mes, 'projecao_turma': proj_turma,
+                                  'matriculas_abas': class_abas,
                                   'matriculas_resumo': res_matriculas,
                                   'cancelamento_conferencia': conf_cancel})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')

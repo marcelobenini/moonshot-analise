@@ -18,6 +18,13 @@ from .texto import norm
 ABAS_IGNORAR = {'renovacao 2026', 'dados vendas novembro25 pc', 'alunos boleto nb',
                 'pedidos de cancelamento'}
 
+# Abas de controle: existem na planilha mas nao sao turmas. 'CANCELAMENTOS' e um
+# apanhado de saidas; 'MOONSHOT ELITE' e nivel de plano — 33 das suas 45 alunas
+# tambem aparecem na turma em que foram vendidas, e conta-la como turma
+# duplicaria essas pessoas.
+ABAS_CONTROLE_FIXAS = {'cancelamentos'}
+LIMIAR_SOBREPOSICAO = 0.5  # acima disso a aba e recorte de outras, nao turma
+
 COLUNAS = {
     'nome': ['nome', 'coluna 2', 'aluna'],
     'telefone': ['telefone'],
@@ -151,6 +158,77 @@ def _status(v):
     return n[:30]
 
 
+def classificar_abas(d, limiar=LIMIAR_SOBREPOSICAO):
+    """Separa turma de aba de controle.
+
+    A regra e o proprio dado: se mais da metade das alunas de uma aba tambem
+    aparece em outras abas, aquela aba e um recorte (nivel de plano, lista de
+    cancelamento) e nao uma turma. Contar as duas somaria a mesma pessoa duas
+    vezes num mes que talvez nem seja o do contrato dela.
+    """
+    if not len(d):
+        return pd.DataFrame()
+    x = d.copy()
+    x['_k'] = x['nome'].map(_chave_nome)
+    por = {t: set(g['_k']) for t, g in x.groupby('turma')}
+    linhas = []
+    for t, chaves in por.items():
+        fora = set().union(*[v for u, v in por.items() if u != t]) if len(por) > 1 else set()
+        sobre = len(chaves & fora) / len(chaves) if chaves else 0
+        com_data = int(x.loc[x['turma'] == t, 'termino_efetivo'].notna().sum())
+        if norm(t) in ABAS_CONTROLE_FIXAS:
+            tipo, motivo = 'controle', 'aba de controle de cancelamento'
+        elif not com_data:
+            tipo, motivo = 'controle', 'nenhuma linha tem data de termino'
+        elif sobre > limiar:
+            tipo, motivo = ('controle',
+                            f'{sobre:.0%} das alunas tambem aparecem em outras abas: '
+                            f'e recorte, nao turma')
+        else:
+            tipo, motivo = 'turma', 'turma com datas proprias'
+        linhas.append({'aba': t, 'tipo': tipo, 'alunas': len(chaves),
+                       'com_data_de_termino': com_data,
+                       'sobreposicao_com_outras_abas': round(100 * sobre, 1),
+                       'motivo': motivo})
+    return pd.DataFrame(linhas).sort_values(['tipo', 'alunas'], ascending=[True, False])
+
+
+def por_turma(d, classificacao, inicio, meses=18):
+    """Contagem turma a turma, sem canceladas, por mes de termino.
+
+    E a leitura operacional: cada turma tem um numero de contratos chegando ao
+    fim, e e assim que a renovacao e organizada. Nao deduplica entre turmas —
+    quem renovou aparece na turma antiga e na nova, com dois contratos.
+    """
+    abas = set(classificacao.loc[classificacao['tipo'] == 'turma', 'aba'])
+    v = d[d['turma'].isin(abas) & (d['status_norm'] != 'cancelado')].copy()
+    v = v.dropna(subset=['termino_efetivo'])
+    v['mes'] = v['termino_efetivo'].dt.to_period('M')
+    ini = pd.Period(inicio, freq='M')
+    v = v[(v['mes'] >= ini) & (v['mes'] < ini + meses)]
+    if not len(v):
+        return pd.DataFrame(), pd.DataFrame()
+    detalhe = (v.groupby(['turma', 'mes']).size().rename('nao_canceladas')
+               .reset_index())
+    detalhe['mes'] = detalhe['mes'].astype(str)
+    total = d[d['turma'].isin(abas)].dropna(subset=['termino_efetivo']).copy()
+    total['mes'] = total['termino_efetivo'].dt.to_period('M')
+    total = total[(total['mes'] >= ini) & (total['mes'] < ini + meses)]
+    resumo_mes = pd.DataFrame({
+        'no_total': total.groupby('mes').size(),
+        'canceladas': total[total['status_norm'] == 'cancelado'].groupby('mes').size(),
+    }).fillna(0).astype(int)
+    resumo_mes['nao_canceladas'] = resumo_mes['no_total'] - resumo_mes['canceladas']
+    resumo_mes = resumo_mes.reset_index()
+    resumo_mes['mes'] = resumo_mes['mes'].astype(str)
+    # Mes sem nenhum contrato terminando nao informa nada na tabela; o grafico
+    # ja mostra o vazio pelo espacamento.
+    resumo_mes = resumo_mes[resumo_mes['nao_canceladas'] > 0].copy()
+    resumo_mes['pct'] = (100 * resumo_mes['nao_canceladas']
+                         / resumo_mes['nao_canceladas'].sum()).round(1)
+    return resumo_mes, detalhe
+
+
 def deduplicar(d):
     """Uma aluna pode aparecer em mais de uma turma (renovacao, migracao de
     plano). Fica a matricula de termino mais distante — e a que vale hoje."""
@@ -265,17 +343,23 @@ def cruzar_com_base(matriculas, base, casar_fn):
     return d.merge(base[[c for c in cols if c in base.columns]], on='id_aluna', how='left')
 
 
-def projecao_detalhada(cruzado, inicio, meses=18):
-    """Terminos por mes, so das matriculas ATIVAS, com o perfil de quem termina."""
+def projecao_detalhada(cruzado, inicio, meses=18, abas_turma=None):
+    """Terminos por mes, sem canceladas, com o perfil de quem termina.
+
+    Restrito as abas de turma: incluir as de controle contaria a mesma aluna
+    duas vezes, em meses diferentes.
+    """
     v = cruzado.dropna(subset=['termino_efetivo']).copy()
-    v = v[v['status_norm'] == 'ativo']
+    if abas_turma is not None:
+        v = v[v['turma'].isin(abas_turma)]
+    v = v[v['status_norm'] != 'cancelado']
     v['mes'] = v['termino_efetivo'].dt.to_period('M')
     ini = pd.Period(inicio, freq='M')
     v = v[(v['mes'] >= ini) & (v['mes'] < ini + meses)]
     if not len(v):
         return pd.DataFrame()
     g = v.groupby('mes').apply(lambda x: pd.Series({
-        'ativas_terminando': len(x),
+        'nao_canceladas': len(x),
         'na_base_do_estudo': int(x['id_aluna'].notna().sum()),
         'em_risco_hoje': int(x['em_risco'].fillna(False).sum()),
         'classe_A': int((x['classe'] == 'A').sum()),
@@ -283,5 +367,5 @@ def projecao_detalhada(cruzado, inicio, meses=18):
         'turmas': ', '.join(sorted(x['turma'].unique())[:2]),
     }), include_groups=False).reset_index()
     g['mes'] = g['mes'].astype(str)
-    g['pct_do_total'] = (100 * g['ativas_terminando'] / len(v)).round(1)
+    g['pct_do_total'] = (100 * g['nao_canceladas'] / len(v)).round(1)
     return g

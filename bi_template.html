@@ -326,9 +326,10 @@ td.wrapok{white-space:normal; min-width:210px}
       <h2>Contratos vencendo</h2>
       <span class="eyebrow" id="contr-n"></span>
     </div>
-    <p class="sec-note">Data de término <b>declarada</b> na planilha de matrículas — não inferida.
-      Só matrículas com status ativo: cancelada não renova. Esta seção ignora os filtros do topo,
-      porque lê a planilha de matrículas inteira, inclusive alunas fora da base do estudo.</p>
+    <p class="sec-note">Turma a turma, sem as canceladas, pela data de término <b>declarada</b> na
+      planilha de matrículas. Abas de controle ficam fora — <code>MOONSHOT ELITE</code> é nível de
+      plano, não turma, e 73% das suas alunas já aparecem na turma em que foram vendidas. Esta seção
+      ignora os filtros do topo.</p>
     <div class="callouts" id="contr-alerta"></div>
     <div class="chart" id="ch-contratos" style="margin-top:18px"></div>
     <div class="tblwrap" style="margin-top:18px"><table id="tb-contratos"></table></div>
@@ -1192,49 +1193,52 @@ const rotMes = s => { const [a, m] = String(s).split('-'); return MES_PT[+m - 1]
 function renderContratos() {
   const p = (REF.projecao_terminos || []);
   if (!p.length) { $('#sec-contratos').hidden = true; return; }
-  const res = Object.fromEntries((REF.matriculas_resumo || []).map(r => [r.item, r.valor]));
-  const total = p.reduce((s, r) => s + r.ativas_terminando, 0);
+  const mes = (REF.projecao_mes || []);
+  const turma = (REF.projecao_turma || []);
+  const abas = (REF.matriculas_abas || []);
+  const total = mes.reduce((s, r) => s + r.nao_canceladas, 0);
+  const canceladas = mes.reduce((s, r) => s + r.canceladas, 0);
   const risco = p.reduce((s, r) => s + (r.em_risco_hoje || 0), 0);
-  const pico = p.reduce((a, b) => b.ativas_terminando > a.ativas_terminando ? b : a, p[0]);
-  const canc = Object.entries(res).find(([k]) => k.startsWith('canceladas'));
-  $('#contr-n').textContent = `${total} matrículas ativas na janela`;
+  const pico = mes.reduce((a, b) => b.nao_canceladas > a.nao_canceladas ? b : a, mes[0]);
+  $('#contr-n').textContent = `${total} contratos na janela`;
 
   $('#contr-alerta').innerHTML = `
-    <div class="callout op"><h4>Ativas terminando na janela</h4><span class="big">${total}</span>
-      <p>Contratos com status ativo e término declarado. As ${canc ? canc[1] : '—'} já canceladas
-         ficam fora: não há renovação a fazer.</p></div>
+    <div class="callout op"><h4>Contratos terminando na janela</h4><span class="big">${total}</span>
+      <p>Soma das turmas, sem as ${canceladas} canceladas — nelas não há renovação a fazer.</p></div>
     <div class="callout warn"><h4>Mês de pico</h4><span class="big">${rotMes(pico.mes)}</span>
-      <p>${pico.ativas_terminando} contratos terminam no mesmo mês — ${pico.pct_do_total}% de toda a
+      <p>${pico.nao_canceladas} contratos terminam no mesmo mês — ${pico.pct}% de toda a
          janela. É uma turma inteira chegando ao fim junta.</p></div>
     <div class="callout gap"><h4>Já em risco hoje</h4><span class="big">${risco}</span>
       <p>Dessas, ${risco} já estão sem contato ou pedindo saída segundo o relato do consultor.
          A renovação delas não começa no vencimento — já está em jogo.</p></div>`;
 
-  colunas($('#ch-contratos'), p.map(r => ({ rot: rotMes(r.mes), n: r.ativas_terminando })),
+  colunas($('#ch-contratos'), mes.map(r => ({ rot: rotMes(r.mes), n: r.nao_canceladas })),
     total, 'var(--s1)');
 
+  const perfil = Object.fromEntries(p.map(r => [r.mes, r]));
   tabela($('#tb-contratos'), [
     { lab: 'Mês', render: r => `<b>${rotMes(r.mes)}</b>` },
-    { lab: 'Ativas terminando', num: true, k: 'ativas_terminando' },
-    { lab: '% da janela', num: true, render: r => r.pct_do_total + '%' },
-    { lab: 'Na base do estudo', num: true, k: 'na_base_do_estudo' },
-    { lab: 'Já em risco', num: true, k: 'em_risco_hoje' },
-    { lab: 'Classe A', num: true, k: 'classe_A' },
-    { lab: 'Faturamento mediano', num: true, render: r => brl(r.fat_mediano) },
-    { lab: 'Turmas', wrap: true, k: 'turmas' },
-  ], p);
+    { lab: 'Terminam', num: true, k: 'nao_canceladas' },
+    { lab: '% da janela', num: true, render: r => r.pct + '%' },
+    { lab: 'Canceladas (fora)', num: true, k: 'canceladas' },
+    { lab: 'Na base do estudo', num: true, render: r => (perfil[r.mes] || {}).na_base_do_estudo ?? '—' },
+    { lab: 'Já em risco', num: true, render: r => (perfil[r.mes] || {}).em_risco_hoje ?? '—' },
+    { lab: 'Turmas', wrap: true, render: r => turma.filter(t => t.mes === r.mes)
+        .sort((a, b) => b.nao_canceladas - a.nao_canceladas)
+        .map(t => `${t.turma} <b>${t.nao_canceladas}</b>`).join('<br>') || '—' },
+  ], mes);
 
   const div = (REF.cancelamento_conferencia || []).find(r =>
     String(r['status na matricula']) === 'ativo');
+  const ctrl = abas.filter(a => a.tipo === 'controle');
   $('#contr-nota').innerHTML =
-    `<b>De onde vem este número.</b> Planilha de matrículas: ` +
-    `${res['matriculas na planilha'] || '—'} linhas após deduplicar, ` +
-    `${res['com termino declarado'] || '—'} com término declarado em formato de data, ` +
-    `${res['sem data alguma'] || '—'} sem data alguma. Não há inferência aqui — o término está escrito. ` +
+    `<b>Como a conta é feita.</b> Turma a turma, tirando as canceladas, pelo mês de término escrito ` +
+    `na planilha. Ficaram de fora ${ctrl.length} abas que não são turma: ` +
+    ctrl.map(a => `<b>${a.aba}</b> (${a.motivo})`).join('; ') + '. ' +
+    `Quem renovou aparece na turma antiga e na nova — são dois contratos, e é assim que a renovação ` +
+    `é organizada. ` +
     (div ? `<b>Atenção:</b> ${div.pedidos} alunas com pedido de cancelamento registrado ainda constam ` +
-           `como ativas na matrícula; elas estão contadas acima e provavelmente não deveriam. ` : '') +
-    `A projeção anterior, deduzida das datas do controle de consultorias, subestimava em 42% e ` +
-    `errava meses inteiros — foi descartada e permanece no Excel só como conferência.`;
+           `como ativas e estão contadas acima. ` : '');
 }
 
 /* ---------- Realidade x inferência ---------- */
