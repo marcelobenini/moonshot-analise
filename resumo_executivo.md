@@ -261,32 +261,48 @@ O mapa está no BI, com quatro métricas (alunas, classe A, taxa de risco, fatur
 
 ---
 
-## 6e. Projeção de vencimento de contratos
+## 6e. Projeção de término de contratos — dado declarado
 
-Entrada declarada pelo consultor + 12 meses. **349 contratos vencem de setembro de 2026 em diante:**
+Fonte: planilha de matrículas do Moonshot Club, que traz **data de término declarada** em formato de data completa. Não há inferência aqui.
 
-| Mês | Contratos | % da janela | Já em risco hoje | Classe A | Fatur. mediano |
+**605 matrículas ativas terminam de setembro de 2026 em diante.**
+
+| Mês | Ativas terminando | % | Já em risco | Classe A | Turmas |
 |---|---|---|---|---|---|
-| set/26 | 2 | 0,6% | 0 | 0 | R$ 50.000 |
-| nov/26 | 51 | 14,6% | 13 | 5 | R$ 15.000 |
-| jan/27 | 55 | 15,8% | 16 | 11 | R$ 18.500 |
-| mar/27 | 8 | 2,3% | 1 | 3 | R$ 100.000 |
-| abr/27 | 29 | 8,3% | 12 | 1 | R$ 8.000 |
-| **mai/27** | **165** | **47,3%** | 24 | 14 | R$ 15.005 |
-| jun/27 | 21 | 6,0% | 1 | 2 | R$ 21.250 |
-| ago/27 | 18 | 5,2% | 0 | 1 | R$ 5.000 |
+| set/26 | 53 | 8,8% | 7 | 9 | JunJulAgo |
+| out/26 | 6 | 1,0% | 0 | 1 | Elite, SetOut |
+| nov/26 | 73 | 12,1% | 8 | 7 | Alphaville Nov25 |
+| dez/26 | 4 | 0,7% | 1 | 1 | Elite |
+| jan/27 | 4 | 0,7% | 0 | 2 | Elite |
+| **fev/27** | **89** | 14,7% | 18 | 11 | Alphaville Jan26 |
+| mar/27 | 45 | 7,4% | 6 | 6 | Jan26, Brasília Mar26 |
+| abr/27 | 16 | 2,6% | 4 | 0 | Portugal Abr26 |
+| **mai/27** | **202** | **33,4%** | 16 | 17 | Alphaville e Curitiba Mai26 |
+| ago/27 | 113 | 18,7% | 1 | 3 | Alphaville Ago26 |
 
-**Quase metade da carteira vence no mesmo mês.** Maio de 2027 concentra 165 contratos — reflexo da turma de maio de 2026, que sozinha trouxe 165 entradas. É risco de caixa e risco operacional: a equipe comercial vai precisar conduzir 165 conversas de renovação em semanas, e nenhuma estrutura atual foi dimensionada para isso.
+**Um terço da carteira ativa termina em maio de 2027.** São 202 contratos das turmas de Alphaville e Curitiba de maio/2026. Somando agosto/27 (113) e fevereiro/27 (89), **três meses concentram 67% de todos os términos** — e nenhuma estrutura atual de renovação foi dimensionada para picos desse tamanho.
 
-Os próximos três meses são calmos (2 em setembro, nada em outubro), o que dá janela para montar o processo antes de novembro, quando começa o volume real.
+Os próximos dois meses são o contraste: setembro tem 53 e outubro apenas 6. É a janela para montar o processo antes de novembro.
 
-**67 das 349 já estão hoje sem contato ou pedindo saída.** Para elas, a renovação não começa no vencimento — a decisão já está sendo tomada. Abril de 2027 é o mês mais crítico nesse aspecto: 12 das 29 já estão em risco, quase metade.
+**61 das 605 já estão hoje sem contato ou pedindo saída**, segundo o relato dos consultores. Fevereiro de 2027 é o mês mais exposto: 18 das 89.
 
-**Três ressalvas que a decisão precisa carregar:**
+**Duas coisas para corrigir na planilha:**
+- **4 alunas com pedido de cancelamento registrado ainda constam como ativas** na matrícula. Estão contadas nos 605 e provavelmente não deveriam.
+- 39 matrículas não têm data alguma e ficam fora da projeção. Das 78 linhas de pedido de cancelamento, 60 não casam com nenhum nome da lista de matrículas.
 
-1. **O contrato de 12 meses é premissa sua**, não dado da planilha. Ela não registra duração nem data de término.
-2. **202 dos 554 registros ficam fora** — 139 em abas sem coluna de entrada (Thiago, Vinícius, Cristiane, Relatório Felipe), 61 em branco, 2 irresolúveis. O número real de vencimentos é maior que 349.
-3. **A data de entrada não é confiável na origem.** A planilha mistura três convenções e "nov/25" tanto pode ser novembro de 2025 quanto 25 de novembro — consultores diferentes usam convenções opostas. Resolvi 354 de 417 com duas regras deterministas (ninguém entra no futuro; a entrada precede a primeira consultoria), mas isso é remendo. **A coluna precisa virar data completa com validação.**
+### A estimativa anterior estava errada e foi descartada
+
+Antes desta planilha, deduzi as datas do controle de consultorias. **A inferência subestimava em 42%** (349 contra 605) e errava meses inteiros:
+
+| Mês | Real (matrícula) | Inferido | Erro |
+|---|---|---|---|
+| set/26 | 53 | 2 | −51 |
+| fev/27 | 89 | 0 | −89 |
+| mai/27 | 202 | 165 | −37 |
+| ago/27 | 113 | 18 | −95 |
+| jan/27 | 4 | 55 | **+51** |
+
+A causa: o controle de consultorias não cobre todas as turmas, e sua coluna de entrada mistura convenções de data. A projeção inferida permanece no Excel apenas como conferência, na aba `Projecao_Inferida_Conferencia`. **Use a aba `Projecao_Terminos`.**
 
 ---
 

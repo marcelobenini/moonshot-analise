@@ -185,27 +185,24 @@ Além disso, os dois números não têm a mesma data. O formulário foi respondi
 
 A hipótese de que a divergência entre dor declarada e inferida prediria desengajamento **foi testada e rejeitada** (χ² p = 0,19; 20,0% de risco entre divergentes contra 27,4% entre convergentes — direção inversa à esperada). Não use essa relação em nenhuma argumentação: ela não está nos dados.
 
-## 24. A data de entrada não é um dado confiável na origem
+## 24. A projeção de término agora vem de dado declarado — e o que ainda falta nela
 
-A projeção de vencimento de contratos é a parte mais frágil de tudo que entreguei, e é frágil por causa da planilha, não da análise.
+A planilha de matrículas do Moonshot Club tem **data de início e de término declaradas em formato de data completa**, além do período do plano e do status por aluna. Isso elimina a inferência: 723 das 764 matrículas têm término escrito, 2 foram calculadas pelo período e **39 não têm data alguma**.
 
-**Três convenções de data convivem na mesma coluna.** Lendo o formato de exibição de cada célula: 165 estão como `dd/MM/yyyy` (data completa, confiável), 38 como `mmmm/yyyy` (mês/ano, confiável) e **1.407 como `mmm/d` ou `mmmm/d`** — que exibe "nov/25" e pode significar *novembro de 2025* ou *25 de novembro*. A diferença entre as duas leituras é de até um ano, exatamente a grandeza que decide se alguém termina em 2026 ou 2027.
+O que ainda limita:
 
-O que permitiu resolver:
-- Em **236 casos as duas leituras caem no mesmo mês** — a ambiguidade é inofensiva para uma projeção mensal.
-- Em **87 casos uma das leituras cairia no futuro**, e ninguém entra no programa amanhã.
-- Em **10 casos** só uma leitura antecede a primeira consultoria registrada.
-- 21 tinham formato explícito.
+- **A planilha cobre o Moonshot Club, não a base inteira do estudo.** Das 605 ativas terminando de set/26 em diante, 435 casam com a base de 708 alunas analisadas. As demais não estão no estudo — responderam outro formulário, ou nenhum.
+- **4 alunas com pedido de cancelamento registrado ainda constam como ativas.** Estão contadas nos 605. A divergência entre a aba de pedidos e o status da matrícula está na aba `Cancelamento_Divergente`.
+- **60 das 78 linhas de pedido de cancelamento não casam com nenhum nome da lista de matrículas.** Podem ser alunas do Moonshot Pro, grafias diferentes, ou registros antigos. Não sei distinguir.
+- **A deduplicação escolheu, para cada nome repetido, a matrícula de término mais distante.** Uma aluna que renovou aparece uma vez, com o contrato vigente — mas o histórico de matrículas anteriores não entra em lugar nenhum deste relatório.
+- **Término declarado não é saída efetiva.** É a data em que o contrato completa; não diz quem renovou, quem saiu antes nem quem vai sair.
+- O período varia: 747 planos de 12 meses, 15 de 6, e uma dúzia com períodos atípicos (21 a 31 meses). A premissa de "12 meses para todos" que usei antes desta planilha era errada.
 
-Sobraram **2 linhas irresolúveis** e **61 com a célula vazia**.
+### A projeção anterior, inferida, estava errada
 
-**Consultores diferentes usam convenções opostas.** Hiago e Marcelo escrevem mês/ano; Keren e Daniela escrevem data. Isso não é detalhe: foi só o teste contra a primeira consultoria que revelou, e num mês em que as duas leituras fossem plausíveis a projeção erraria por um ano sem avisar.
+Antes desta planilha eu deduzia a entrada do controle de consultorias e somava 12 meses. **O resultado subestimava em 42%** (349 contra 605 reais) com erros mensais de até 95 contratos, e em fevereiro de 2027 apontava zero onde havia 89.
 
-**139 alunas nunca entram na projeção** porque quatro abas (Thiago, Vinícius, Cristiane e o Relatório Felipe) não têm coluna de entrada. Somadas às 61 em branco e às 2 irresolúveis, **202 dos 554 registros ficam fora**. A projeção cobre 354 entradas, das quais 349 vencem de setembro de 2026 em diante.
-
-**O contrato de 12 meses é premissa sua, não dado.** A planilha não registra duração nem data de término. Se houver planos de 6, 18 ou 24 meses misturados, a projeção está errada para eles. O parâmetro é `--meses-contrato` no pipeline.
-
-**A projeção é de vencimento, não de saída.** Ela diz quando o contrato completa um ano, não quem vai renovar, cancelar antes ou já ter saído. Das 349, **67 já estão hoje sem contato ou pedindo saída** — para essas o vencimento é uma formalidade, a decisão já aconteceu.
+Isso é uma lição sobre a análise inteira, não só sobre esta seção: **onde existe um campo declarado, ele vence qualquer inferência minha, por mais bem fundamentada que a regra pareça.** As regras que usei para desambiguar as datas do controle de consultorias eram defensáveis e mesmo assim produziram um número que erraria a decisão. A projeção inferida permanece no Excel apenas como conferência.
 
 ## 25. Dados pessoais
 

@@ -21,8 +21,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import (analise, bi, cluster, consultoria, contrato, geo, oportunidade,
-                      produto, score)
+from moonshot import (analise, bi, cluster, consultoria, contrato, geo, matriculas,
+                      oportunidade, produto, score)
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -113,6 +113,8 @@ def main():
                     help='planilha de acompanhamento dos consultores; opcional')
     ap.add_argument('--meses-contrato', type=int, default=12,
                     help='duracao do contrato em meses, para projetar o termino')
+    ap.add_argument('--matriculas', default='dados/matriculados_club.xlsx',
+                    help='planilha de matriculas com inicio e termino declarados; opcional')
     ap.add_argument('--projecao-desde', default=None,
                     help='mes inicial da projecao de terminos (AAAA-MM); padrao: mes atual')
     ap.add_argument('--saida', default='.')
@@ -186,13 +188,31 @@ def main():
     base = score.calcular_score(base)
     diag = score.diagnostico_individual(base, usar_nome=not args.sem_nomes)
 
+    # ---- matriculas: fonte precisa de inicio e termino de contrato -------
+    # Quando esta planilha existe ela manda: o termino e declarado, nao inferido.
+    # A projecao a partir do controle de consultorias fica so como conferencia.
+    tab_matriculas = proj_matriculas = res_matriculas = pd.DataFrame()
+    ped_cancel = conf_cancel = divg_cancel = pd.DataFrame()
+    desde = args.projecao_desde or datetime.now().strftime('%Y-%m')
+    if args.matriculas and os.path.exists(args.matriculas):
+        brutas = matriculas.carregar(args.matriculas)
+        tab_matriculas = matriculas.deduplicar(brutas)
+        ped_cancel = matriculas.pedidos_cancelamento(args.matriculas)
+        conf_cancel, divg_cancel = matriculas.conferir_cancelamentos(tab_matriculas, ped_cancel)
+        cruz_m = matriculas.cruzar_com_base(tab_matriculas, base, consultoria.casar)
+        proj_matriculas = matriculas.projecao_detalhada(cruz_m, desde)
+        res_matriculas = matriculas.resumo(tab_matriculas, desde)
+        print(f'Matriculas: {len(tab_matriculas)} apos deduplicar, '
+              f'{int((tab_matriculas["status_norm"] == "ativo").sum())} ativas; '
+              f'{int(proj_matriculas["ativas_terminando"].sum()) if len(proj_matriculas) else 0} '
+              f'terminam de {desde} em diante')
+
     # ---- contratos: entrada, saida prevista, projecao de termino ---------
     datas_contrato = proj_terminos = pd.DataFrame()
     if args.consultorias and os.path.exists(args.consultorias):
         datas_contrato = contrato.carregar_datas(args.consultorias)
         if len(datas_contrato):
             cruz = contrato.cruzar_com_base(datas_contrato, base, consultoria.casar)
-            desde = args.projecao_desde or datetime.now().strftime('%Y-%m')
             proj_terminos = contrato.projecao_detalhada(cruz, desde)
             resolvidas = int((datas_contrato['entrada_confianca'] == 'alta').sum())
             print(f'Contratos: {resolvidas} entradas resolvidas de {len(datas_contrato)} linhas '
@@ -298,8 +318,14 @@ def main():
         'Produtividade_por_Porte': fat_prod,
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
-        'Contratos_Datas': datas_contrato,
-        'Projecao_Terminos': proj_terminos,
+        'Matriculas': tab_matriculas,
+        'Projecao_Terminos': proj_matriculas,
+        'Matriculas_Resumo': res_matriculas,
+        'Pedidos_Cancelamento': ped_cancel,
+        'Cancelamento_Conferencia': conf_cancel,
+        'Cancelamento_Divergente': divg_cancel,
+        'Contratos_Datas_Inferidas': datas_contrato,
+        'Projecao_Inferida_Conferencia': proj_terminos,
         'Consultoria_Engajamento': tab_engaj,
         'Consultoria_Risco': tab_risco,
         'Consultoria_Faturamento': tab_confronto,
@@ -344,7 +370,9 @@ def main():
                                   'municipios': tab_municipios, 'nabeauty': tab_nb,
                                   'engajamento': tab_engaj, 'risco': tab_risco,
                                   'confronto_faturamento': tab_confronto,
-                                  'projecao_terminos': proj_terminos})
+                                  'projecao_terminos': proj_matriculas,
+                                  'matriculas_resumo': res_matriculas,
+                                  'cancelamento_conferencia': conf_cancel})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')
 
     geometria = os.path.join(os.path.dirname(os.path.abspath(__file__)),
