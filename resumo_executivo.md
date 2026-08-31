@@ -320,35 +320,37 @@ Cruzamento entre **consultor estratégico** e **data de término** na planilha d
 
 **As 41 do Daniel entram como carga do time, não de uma pessoa.** Sei que foram absorvidas; não sei por quem. Atribuir um dono aqui seria inventar dado, então elas pesam no total e não aparecem em nenhuma linha individual.
 
-### O quadro que fica, já com as transferências dentro
+### As transferências têm data, e a data muda o número
+
+A carteira da **Ana Elisa só vira em out/26**. Até lá ela é de quem está saindo. Isso importa porque **o Vinícius perde 22 das dele em set/26 e mais 5 em out/26** — quando as 54 chegam, ele já esvaziou 27 lugares. A carteira dele não é 47 + 54: é uma substituição parcial.
+
+| Vinícius | ago/26 | set/26 | **out/26** | nov/26 → abr/27 | mai/27 | ago/27 |
+|---|---|---|---|---|---|---|
+| Própria | 47 | 25 | 20 | 19 → 18 | 12 | 2 |
+| Da Ana Elisa | — | — | **+54** | 54 | 15 | — |
+| **Total** | 47 | **25** | **74** | 73 → 72 | 27 | 2 |
+
+**O pico é 74 em out/26, não 101.** São 28 acima da régua de 46, não 55. E ele passa por set/26 **abaixo da capacidade** (25) — é a única janela do ano em que ele tem folga real.
+
+Isso abre uma decisão que não existia antes: **setembro é o mês para carregar o Vinícius, não outubro.** Se parte do pool (suas 46) for para ele em setembro, ele absorve sem estourar; se esperar outubro, ele já está em 74.
+
+O Thiago é o inverso. As 13 da Carol Leão já estão com ele, mas **6 delas terminam em set/26** e outras 6 têm data de término já vencida com status ainda ativo. Ele sai de 60 hoje para **38 em set/26** e nunca mais volta à régua. O pico dele é agora.
+
+### O quadro que fica, com cada transferência na data em que vira
 
 Capacidade de referência: **46** (mediana das carteiras próprias de hoje).
 
-| Consultor | Carteira hoje | Própria | Recebida | Acima da capacidade | Sobra ao fim |
+| Consultor | Hoje | Pico | Quando | Acima da régua no pico | Ao fim da janela |
 |---|---|---|---|---|---|
-| **Vinícius** | **101** | 47 | +54 Ana Elisa | **+55** | 2 |
-| **Thiago** | **60** | 47 | +13 Carol Leão | **+14** | 9 |
-| Daniela | 54 | 54 | — | +8 | 0 |
-| Hiago | 46 | 46 | — | 0 | 1 |
-| Keren | 45 | 45 | — | 0 | 0 |
-| Anaméli | 43 | 43 | — | 0 | 1 |
-| Andressa | 41 | 41 | — | 0 | 0 |
+| **Vinícius** | 47 | **74** | **out/26** | **+28** | 2 |
+| **Thiago** | **60** | 60 | ago/26 | +14 | 9 |
+| Daniela | 54 | 54 | ago/26 | +8 | 0 |
+| Hiago | 46 | 46 | ago/26 | 0 | 1 |
+| Keren | 45 | 45 | ago/26 | 0 | 0 |
+| Anaméli | 43 | 43 | ago/26 | 0 | 1 |
+| Andressa | 41 | 41 | ago/26 | 0 | 0 |
 
-**O Vinícius carrega 101 alunas — mais que o dobro da referência — e carrega por nove meses.** A carteira da Ana Elisa não alivia antes de mai/27: 39 terminam em maio e as outras 15 só em ago/27. Até lá ele opera com 2,2 carteiras. Se 46 for perto do teto real, esse é o risco operacional número um do plano, e ele não se resolve pelo calendário.
-
-Thiago é o oposto: das 13 da Carol Leão, **6 terminam já em set/26** e 6 já terminaram ou estão sem data. Ele volta ao normal em um mês.
-
-### Quando cada carteira transferida termina
-
-| Sai | set/26 | nov/26 | dez/26 | fev/27 | mar/27 | abr/27 | mai/27 | ago/27 |
-|---|---|---|---|---|---|---|---|---|
-| Ana Elisa → Vinícius | | | | | | | **39** | 15 |
-| Carol Leão → Thiago | **6** | | | 1 | | | | |
-| Daniel → time | | | | | | | **41** | |
-| Marcelo → pool | | **22** | 1 | 12 | 3 | 1 | 7 | |
-| (sem consultor) → pool | | 1 | | | 2 | 2 | 11 | 22 |
-
-**Nov/26 é o primeiro respiro do pool**: 22 das suas 46 terminam sozinhas. Se elas não renovarem, não precisam de dono — só de alguém para conduzir a renovação.
+**O excedente individual do time se move assim:** 23 em ago/26 → **8 em set/26** → **36 em out/26**. Setembro é o vale, outubro é o pico. Qualquer remanejamento que você fizer rende mais em setembro.
 
 ### A carga real do time, mês a mês
 
@@ -393,7 +395,7 @@ Três caminhos, e a escolha é sua:
 
 1. **Rever a régua dos 46.** É o número mais frágil de toda a conta e o que mais muda o resultado. Se a carteira sustentável for 60, o excedente de dez/26 cai de 128 para 30 e um júnior resolve. Se for 46 mesmo, a operação já está em dívida hoje.
 2. **Contratar 2 júniores como ponte até maio/27**, dedicados ao pool (suas 46 + as 39 sem cadastro). Resolve o pico e eles ficam ociosos a partir de maio, quando a carteira gira.
-3. **Aliviar o Vinícius antes de tudo.** Ele é o único caso individual com número fechado: 101 alunas por nove meses. Mesmo que a conta geral não mude, mover parte das 54 da Ana Elisa para quem está em 41–46 é a correção mais barata do plano.
+3. **Usar setembro, não outubro.** O Vinícius cai para 25 em set/26 e sobe para 74 em out/26 quando a carteira da Ana Elisa vira. Mover parte das 54 para quem está em 41–46 **antes da virada** custa uma conversa; depois dela, custa um resgate. É a correção mais barata do plano e tem prazo.
 
 A simulação está no BI com capacidade, tamanho do evento e duração do contrato editáveis.
 

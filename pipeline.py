@@ -120,6 +120,9 @@ def main():
     ap.add_argument('--destinos-carteira', default='Ana Elisa=Vinícius,Carol Leão=Thiago',
                     help="para quem vai a carteira de quem sai, no formato "
                          "'quem sai=quem recebe', separado por virgula")
+    ap.add_argument('--vigencia-transferencia', default='Ana Elisa=2026-10',
+                    help="mes em que cada transferencia passa a valer, no formato "
+                         "'quem sai=AAAA-MM'. Sem vigencia, a transferencia ja vale")
     ap.add_argument('--carteiras-diluidas', default='Daniel',
                     help='consultores cuja carteira ja foi redistribuida entre o time '
                          'sem registro de quem ficou com quem')
@@ -231,12 +234,15 @@ def main():
         excluidos = [x.strip() for x in args.excluir_consultores.split(',') if x.strip()]
         destinos = dict(p.split('=', 1) for p in args.destinos_carteira.split(',') if '=' in p)
         destinos = {k.strip(): v.strip() for k, v in destinos.items()}
+        vigencia = dict(p.split('=', 1) for p in args.vigencia_transferencia.split(',') if '=' in p)
+        vigencia = {k.strip(): v.strip() for k, v in vigencia.items()}
         diluidos = [x.strip() for x in args.carteiras_diluidas.split(',') if x.strip()]
         entradas = dict(p.split('=', 1) for p in args.entrada_evento.split(',') if '=' in p)
         entradas = {k.strip(): int(v) for k, v in entradas.items()}
 
         cart = carteira.base_carteiras(tab_matriculas, excluir=excluidos)
-        cart = carteira.aplicar_destinos(cart, destinos=destinos, diluidos=diluidos)
+        cart = carteira.aplicar_destinos(cart, destinos=destinos, diluidos=diluidos,
+                                         vigencia=vigencia)
         # 13 meses a partir do mes corrente para alcancar agosto/27, que
         # concentra o maior lote de terminos.
         mov_resumo, mov_mes = carteira.movimentacao(cart, desde, 13)
@@ -249,7 +255,8 @@ def main():
             premissas_carteira = {
                 'capacidade': capacidade,
                 'consultores': int(cart_resumo['consultor'].nunique()),
-                'destinos': destinos, 'diluidos': diluidos, 'entradas': entradas,
+                'destinos': destinos, 'vigencia': vigencia,
+                'diluidos': diluidos, 'entradas': entradas,
                 'pool': int((cart['origem'] == 'pool').sum()),
                 'excluidos': excluidos,
             }

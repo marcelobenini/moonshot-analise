@@ -345,8 +345,10 @@ td.wrapok{white-space:normal; min-width:210px}
       quanto cabe de gente nova. Quatro carteiras saíram do quadro e nenhuma evaporou: Ana Elisa vai
       para o Vinícius e Carol Leão para o Thiago (destinos que você definiu), Daniel já foi
       redistribuído entre o time sem registro de quem ficou com quem, e as 46 do Marcelo ficam no
-      pool à espera de dono — junto das linhas sem consultor na planilha. Os campos abaixo são
-      premissas suas; os destinos não, esses são dado.</p>
+      pool à espera de dono — junto das linhas sem consultor na planilha. A carteira da Ana Elisa
+      só vira em out/26, depois de o Vinícius perder 22 das dele em setembro: a substituição
+      aparece no mês certo, não como soma imediata. Os campos abaixo são premissas suas; os
+      destinos e as datas não, esses são dado.</p>
 
     <div class="calc">
       <div class="calc-head">
@@ -370,9 +372,9 @@ td.wrapok{white-space:normal; min-width:210px}
     <div class="tblwrap" style="margin-top:16px"><table id="tb-vagas"></table></div>
 
     <h3 style="font-size:16px; margin:28px 0 0">Por consultor</h3>
-    <p class="sec-note">Quantas terminam em cada mês, já com as transferências dentro. Carteira
-      acima da capacidade aparece em vermelho. A última coluna é o que sobra ao fim da janela — o
-      tamanho do buraco a preencher.</p>
+    <p class="sec-note">O tamanho da carteira ao fim de cada mês, com a transferida entrando na
+      data em que vira (marcada em azul). Acima da régua aparece em vermelho. O pico é o mês que
+      importa para decidir remanejamento — não o número de hoje.</p>
     <div class="tblwrap"><table id="tb-carteira"></table></div>
   </section>
 
@@ -1280,7 +1282,7 @@ function renderCarteira() {
     const total = r.carteira_do_time + pool + novas;
     const capTime = r.consultores * cap;
     return { mes: r.mes, terminam: r.terminam_no_mes, comDono: r.carteira_do_time,
-             diluida: r.diluida_no_time, pool, novas, total, capTime,
+             diluida: r.diluida_no_time, transito: r.em_transito, pool, novas, total, capTime,
              vagas: Math.max(0, capTime - total), deficit: Math.max(0, total - capTime),
              media: total / r.consultores };
   });
@@ -1294,20 +1296,27 @@ function renderCarteira() {
   const dil = mov.filter(m => m.situacao === 'diluida');
   const nPool = pool0.reduce((s, m) => s + m.alunas, 0);
   const nDil = dil.reduce((s, m) => s + m.alunas, 0);
+  const vencidas = mov.reduce((s, m) => s + (m.datas_vencidas || 0), 0);
   $('#cart-orfas').innerHTML = `
-    <div class="callout op"><h4>Transferências com destino definido</h4>
+    <div class="callout op"><h4>Transferências com destino e data</h4>
       <span class="big">${fixos.reduce((s, m) => s + m.alunas, 0)}</span>
-      <p>${fixos.map(m => `${m.consultor_saindo} → <b>${m.destino}</b> (${m.alunas})`).join('; ')}.
-         Cada aluna leva junto a data de término que a matrícula dela declara.</p></div>
+      <p>${fixos.map(m => `${m.consultor_saindo} → <b>${m.destino}</b> (${m.alunas}, ${
+        m.vigencia === 'ja vale' ? 'já vale' : 'a partir de ' + rotMes(m.vigencia)})`).join('; ')}.
+      ${fixos.some(m => m.terminam_antes_da_virada)
+        ? `<b>${fixos.reduce((s, m) => s + m.terminam_antes_da_virada, 0)} terminam antes da virada</b>
+           e nunca chegam ao destino — quem sai as leva até o fim.` : ''}</p></div>
     <div class="callout gap"><h4>Pool sem dono</h4><span class="big">${nPool}</span>
       <p>${pool0.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ')}. São alunas ativas
          hoje que precisam de consultor — não é demanda futura, é carga presente.</p></div>
     <div class="callout warn"><h4>Já diluída no time</h4><span class="big">${nDil}</span>
       <p>${dil.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ')}. Foram redistribuídas
-         sem registro de quem ficou com quem: entram na carga do time, não na de uma pessoa.</p></div>`;
+         sem registro de quem ficou com quem: entram na carga do time, não na de uma pessoa.
+         ${vencidas ? `Outras <b>${vencidas}</b> em toda a movimentação têm data de término já
+         vencida com status ainda ativo — ou a planilha está velha, ou renovaram.` : ''}</p></div>`;
 
   /* veredito */
   const faltam = Math.ceil(hoje.total / cap) - nCons;
+  const picoInd = resumo.reduce((a, b) => b.pico > a.pico ? b : a, resumo[0]);
   $('#cart-veredito').innerHTML = `
     <div class="callout ${hoje.deficit ? 'gap' : 'op'}">
       <h4>Cabe na equipe atual?</h4>
@@ -1317,16 +1326,20 @@ function renderCarteira() {
            por carteira contra a referência de ${cap}. Sobram <b>${hoje.deficit}</b> —
            ${faltam} carteira(s) a mais para fechar a conta na régua de hoje.`
         : `As ${hoje.total} alunas cabem nas ${nCons} carteiras a ${cap} cada.`}</p></div>
-    <div class="callout ${alivio ? 'op' : 'warn'}"><h4>Quando a conta fecha sozinha</h4>
+    <div class="callout ${picoInd.pico > cap ? 'warn' : 'op'}"><h4>Maior carteira individual</h4>
+      <span class="big">${picoInd.pico}</span>
+      <p><b>${picoInd.consultor}</b> em ${rotMes(picoInd.mes_do_pico)}${
+        picoInd.recebe_por_transferencia
+          ? `, quando a carteira transferida entra e a própria já encolheu de ${
+              picoInd.carteira_propria_hoje} para ${picoInd.pico - picoInd.recebe_por_transferencia}`
+          : ''}. ${picoInd.pico > cap
+        ? `São ${picoInd.pico - cap} acima da régua de ${cap}.` : 'Dentro da régua.'}</p></div>
+    <div class="callout ${alivio ? 'op' : 'warn'}"><h4>Quando a conta do time fecha</h4>
       <span class="big">${alivio ? rotMes(alivio.mes) : 'não fecha'}</span>
       <p>${alivio
-        ? `Primeiro mês em que a carteira cabe sem contratar, pelos términos declarados.
+        ? `Primeiro mês em que a carga cabe sem contratar, pelos términos declarados.
            Até lá são ${meses.indexOf(alivio.mes)} meses acima da capacidade.`
-        : 'Em nenhum mês da janela a carga cai abaixo da capacidade do time.'}</p></div>
-    <div class="callout warn"><h4>Vagas quando o evento chega</h4>
-      <span class="big">${(linhas.find(l => l.mes === cenario.mes_evento) || {}).vagas ?? '—'}</span>
-      <p>Vagas livres em ${rotMes(cenario.mes_evento)} já contando as ${evt} novas.
-         Se der zero, a turma de dezembro entra sem carteira que a receba.</p></div>`;
+        : 'Em nenhum mês da janela a carga cai abaixo da capacidade do time.'}</p></div>`;
 
   colunas($('#ch-vagas'), linhas.map(l => ({ rot: rotMes(l.mes), n: l.total })),
     Math.max(...linhas.map(l => Math.max(l.total, l.capTime))), 'var(--s1)');
@@ -1335,6 +1348,7 @@ function renderCarteira() {
     { lab: 'Mês', render: r => `<b>${rotMes(r.mes)}</b>` },
     { lab: 'Terminam', num: true, k: 'terminam' },
     { lab: 'Com dono', num: true, k: 'comDono' },
+    { lab: 'Em trânsito', num: true, render: r => r.transito || '—' },
     { lab: 'Pool', num: true, render: r => r.pool || '—' },
     { lab: 'Novas ativas', num: true, render: r => r.novas || '—' },
     { lab: 'Total a atender', num: true, render: r => `<b>${r.total}</b>` },
@@ -1345,32 +1359,36 @@ function renderCarteira() {
         ? `<b style="color:var(--crit)">${r.deficit}</b>` : '0' },
   ], linhas);
 
-  /* por consultor */
-  const recebeu = Object.fromEntries(resumo.map(r => [r.consultor, r.recebida_por_transferencia]));
+  /* por consultor: onde a carteira própria abre espaço e a transferida entra */
   const deQuem = Object.fromEntries(fixos.map(m => [m.destino, m]));
-  const porCons = consultores.map(c => {
+  const porCons = [...new Set(det.map(r => r.consultor))].map(c => {
     const linha = { consultor: c };
-    let ultima = null;
-    meses.forEach(m => {
-      const r = det.find(x => x.consultor === c && x.mes === m);
-      linha[m] = r ? r.terminam_no_mes : 0;
-      if (r) ultima = r.carteira_apos;
-    });
+    meses.forEach(m => { linha[m] = det.find(x => x.consultor === c && x.mes === m) || null; });
     const base = resumo.find(r => r.consultor === c) || {};
-    linha._hoje = base.carteira_hoje;
-    linha._fim = ultima ?? 0;
+    Object.assign(linha, base);
     return linha;
-  }).sort((a, b) => b._hoje - a._hoje);
+  }).sort((a, b) => b.pico - a.pico);
+
+  const cel = r => m => {
+    const d = r[m];
+    if (!d) return '<span style="color:var(--ink-3)">·</span>';
+    const acima = d.carteira_apos > cap;
+    const rec = d.carteira_recebida
+      ? `<span style="color:var(--s3);font-size:11px"> +${d.carteira_recebida}</span>` : '';
+    return `<span style="${acima ? 'color:var(--crit);font-weight:600' : ''}">${
+      d.carteira_apos}</span>${rec}`;
+  };
 
   tabela($('#tb-carteira'), [
-    { lab: 'Consultor', render: r => `<b>${r.consultor}</b>${recebeu[r.consultor]
-        ? ` <span style="color:var(--ink-3);font-size:11.5px">+${recebeu[r.consultor]} de ${
-            (deQuem[r.consultor] || {}).consultor_saindo || '—'}</span>` : ''}` },
-    { lab: 'Hoje', num: true, render: r => r._hoje > cap
-        ? `<b style="color:var(--crit)">${r._hoje}</b>` : r._hoje },
-    ...meses.map(m => ({ lab: rotMes(m), num: true,
-      render: r => r[m] ? `<b>${r[m]}</b>` : '<span style="color:var(--ink-3)">·</span>' })),
-    { lab: 'Sobra ao fim', num: true, render: r => r._fim },
+    { lab: 'Consultor', render: r => `<b>${r.consultor}</b>${r.recebe_por_transferencia
+        ? ` <span style="color:var(--ink-3);font-size:11.5px">+${r.recebe_por_transferencia} de ${
+            (deQuem[r.consultor] || {}).consultor_saindo || '—'} em ${rotMes(
+            (deQuem[r.consultor] || {}).vigencia === 'ja vale' ? meses[0]
+            : (deQuem[r.consultor] || {}).vigencia)}</span>` : ''}` },
+    ...meses.map(m => ({ lab: rotMes(m), num: true, render: r => cel(r)(m) })),
+    { lab: 'Pico', num: true, render: r => r.pico > cap
+        ? `<b style="color:var(--crit)">${r.pico}</b> <span style="font-size:11px;color:var(--ink-3)">${
+            rotMes(r.mes_do_pico)}</span>` : r.pico },
   ], porCons);
 }
 
