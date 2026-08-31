@@ -113,6 +113,32 @@ NOMES_CONSULTOR = {'vinicius': 'Vinícius', 'vinícius': 'Vinícius',
                    'marcelo': 'Marcelo', 'ana elisa': 'Ana Elisa', 'daniel': 'Daniel'}
 
 
+def comparar_cenarios(pos_declarado, pos_alternativo, capacidade):
+    """Concentrar a carteira que sai num consultor so, ou diluir no time.
+
+    A carga total e a mesma nos dois: o que muda e quem carrega. Somar os
+    meses acima da capacidade favorece concentrar (quem fica abaixo da linha
+    soma zero), entao a comparacao aqui e por quanto tempo alguem passa muito
+    acima e por quao desigual fica o time.
+    """
+    linhas = []
+    for rot, d in (('destino fixo declarado', pos_declarado),
+                   ('diluido entre os sete', pos_alternativo)):
+        if not len(d):
+            continue
+        piv = d.pivot(index='consultor', columns='mes', values='carteira_depois')
+        muito = int(round(capacidade * 1.5))
+        linhas.append({
+            'cenario': rot,
+            'maior_carteira': int(piv.max().max()),
+            'quem': piv.max(axis=1).idxmax(),
+            'meses_de_alguem_acima_de_%d' % muito: int((piv >= muito).sum().sum()),
+            'consultores_acima_de_%d' % muito: int((piv >= muito).any(axis=1).sum()),
+            'maior_diferenca_entre_carteiras': int((piv.max() - piv.min()).max()),
+        })
+    return pd.DataFrame(linhas)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -240,6 +266,7 @@ def main():
     # ---- capacidade das carteiras ---------------------------------------
     cart_resumo = cart_detalhe = cart_carga = cart_sim = pd.DataFrame()
     mov_resumo = mov_mes = conf_carteira = pd.DataFrame()
+    cart_saidas = plano_rem = pos_rem = cenarios = pd.DataFrame()
     capacidade = None
     premissas_carteira = {}
     if len(tab_matriculas):
@@ -289,6 +316,20 @@ def main():
             cart_carga = carteira.carga_do_time(cart, cart_detalhe, capacidade, desde, 13)
             cart_sim = carteira.simular(cart, cart_carga, desde, 13, entradas=entradas,
                                         meses_contrato=args.meses_contrato)
+            _, cart_saidas = carteira.saidas(cart, desde, 13)
+            plano_rem, pos_rem = carteira.remanejar(
+                cart, capacidade, desde, 13, entradas=entradas,
+                meses_contrato=args.meses_contrato)
+            # O mesmo plano com a carteira que tem destino fixo devolvida ao
+            # bolo: mostra o custo de concentrar num consultor so.
+            alt = carteira.aplicar_destinos(
+                carteira.base_carteiras(tab_matriculas, excluir=excluidos),
+                destinos={}, diluidos=diluidos, vigencia=vigencia)
+            _, _, cap_alt = carteira.evolucao(alt, desde, 13, args.capacidade_carteira)
+            _, pos_alt = carteira.remanejar(alt, cap_alt or capacidade, desde, 13,
+                                            entradas=entradas,
+                                            meses_contrato=args.meses_contrato)
+            cenarios = comparar_cenarios(pos_rem, pos_alt, capacidade)
             premissas_carteira = {
                 'capacidade': capacidade,
                 'consultores': int(cart_resumo['consultor'].nunique()),
@@ -415,6 +456,10 @@ def main():
         'Clustering': rel_cluster,
         'Carteira_Resumo': cart_resumo,
         'Carteira_Conferencia': conf_carteira,
+        'Carteira_Saidas': cart_saidas,
+        'Carteira_Remanejamento': plano_rem,
+        'Carteira_Pos_Remanejamento': pos_rem,
+        'Carteira_Cenarios': cenarios,
         'Carteira_Movimentacao': mov_resumo,
         'Carteira_Movimentacao_Mes': mov_mes,
         'Carteira_Mes_a_Mes': cart_detalhe,
@@ -483,6 +528,10 @@ def main():
                                   'carteira_carga': cart_carga,
                                   'carteira_simulacao': cart_sim,
                                   'carteira_conferencia': conf_carteira,
+                                  'carteira_saidas': cart_saidas,
+                                  'carteira_remanejamento': plano_rem,
+                                  'carteira_pos_remanejamento': pos_rem,
+                                  'carteira_cenarios': cenarios,
                                   'carteira_movimentacao': mov_resumo,
                                   'carteira_movimentacao_mes': mov_mes,
                                   'capacidade': capacidade,

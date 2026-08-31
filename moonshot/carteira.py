@@ -421,3 +421,115 @@ def redirecionar(carteiras, destinos_por_nome, no_quadro=None):
                     d.at[i, 'origem'] = 'transferida'
                 break
     return d
+
+
+def saidas(cart, inicio, meses=12):
+    """Quem termina em cada mes, por consultor e por bloco sem dono.
+
+    E a oferta de espaco: cada termino e um lugar que abre — desde que a aluna
+    nao renove, o que a planilha nao registra em lugar nenhum.
+    """
+    janela = pd.period_range(pd.Period(inicio, freq='M'), periods=meses, freq='M')
+    d = cart.copy()
+    d['bloco'] = d['dono'].where(~d['dono'].isin({POOL, DILUIDA}), d['dono'])
+    linhas = []
+    for bloco, g in d.groupby('bloco'):
+        m = _mensal(g, janela)
+        rest = _restante(g, janela, com_vigencia=True)
+        for p in janela:
+            linhas.append({'bloco': bloco, 'mes': str(p), 'saem': int(m[p]),
+                           'restante': rest[p]})
+    t = pd.DataFrame(linhas)
+    piv = t.pivot(index='bloco', columns='mes', values='saem').fillna(0).astype(int)
+    piv['total_na_janela'] = piv.sum(axis=1)
+    return t, piv.sort_values('total_na_janela', ascending=False).reset_index()
+
+
+def remanejar(cart, capacidade, inicio, meses=12, entradas=None, meses_contrato=12):
+    """Distribui quem esta sem dono entre os consultores, aluna a aluna.
+
+    Nao e rateio por cabeca: cada aluna tem data de termino propria, entao
+    ocupa um lugar por um tempo diferente. O criterio e achatar o pico —
+    para cada aluna, escolhe o consultor cuja maior carteira, ao longo dos
+    meses em que ela fica, ficaria menor. Quem fica muito tempo entra primeiro,
+    porque e a mais dificil de encaixar depois.
+
+    entradas: {'AAAA-MM': n} — a turma nova entra como vaga a preencher, com
+    `meses_contrato` de duracao, para que o plano ja reserve lugar para ela.
+
+    Devolve o destino sugerido de cada aluna e a carteira resultante mes a mes.
+    O plano e uma proposta de balanceamento, nao uma decisao: afinidade,
+    idioma, porte da aluna e relacao ja construida nao estao no dado.
+    """
+    janela = pd.period_range(pd.Period(inicio, freq='M'), periods=meses, freq='M')
+    idx = {p: i for i, p in enumerate(janela)}
+    fixos = cart[~cart['dono'].isin({POOL, DILUIDA})]
+    consultores = sorted(fixos['dono'].unique())
+    if not consultores:
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Ocupacao de partida: o que cada um ja carrega, mes a mes.
+    carga = {c: [0] * len(janela) for c in consultores}
+    for c in consultores:
+        r = _restante(fixos[fixos['dono'] == c], janela, com_vigencia=True)
+        carga[c] = [r[p] for p in janela]
+    # A carteira diluida nao tem dono declarado; espalha igual para nao sumir.
+    n_dil = len(cart[cart['dono'] == DILUIDA])
+    if n_dil:
+        rd = _restante(cart[cart['dono'] == DILUIDA], janela)
+        for c in consultores:
+            for i, p in enumerate(janela):
+                carga[c][i] += rd[p] / len(consultores)
+
+    def vida(termino, desde=0):
+        """Indices dos meses em que a aluna ainda ocupa lugar."""
+        t = pd.Period(termino, freq='M') if pd.notna(termino) else None
+        fim = idx.get(t, len(janela)) if t is not None and t >= janela[0] else len(janela)
+        return list(range(desde, max(desde, fim + 1) if t is not None and t in idx else len(janela)))
+
+    fila = []
+    for _, r in cart[cart['dono'] == POOL].iterrows():
+        # Carteira com vigencia so entra na conta do destino a partir da virada.
+        v = r.get('vigencia')
+        desde = idx.get(v, 0) if pd.notna(v) else 0
+        fila.append({'nome': r.get('nome'), 'origem': r['consultor_norm'],
+                     'turma': r.get('turma'), 'termino': r['termino_efetivo'],
+                     'meses': vida(r['termino_efetivo'], desde)})
+    for m, n in (entradas or {}).items():
+        p = pd.Period(m, freq='M')
+        if p not in idx:
+            continue
+        i0 = idx[p]
+        for k in range(int(n)):
+            fila.append({'nome': f'evento {m} #{k + 1}', 'origem': f'turma nova {m}',
+                         'turma': None, 'termino': None,
+                         'meses': list(range(i0, min(i0 + meses_contrato, len(janela))))})
+
+    # Quem ocupa lugar por mais tempo entra primeiro: sobra menos escolha depois.
+    fila.sort(key=lambda a: -len(a['meses']))
+    plano = []
+    for a in fila:
+        if not a['meses']:
+            continue
+        melhor = min(consultores, key=lambda c: (
+            max(carga[c][i] + 1 for i in a['meses']),
+            sum(carga[c][i] for i in a['meses'])))
+        for i in a['meses']:
+            carga[melhor][i] += 1
+        plano.append({'nome': a['nome'], 'origem': a['origem'], 'turma': a['turma'],
+                      'termino': a['termino'], 'destino_sugerido': melhor,
+                      'entra_em': str(janela[a['meses'][0]]),
+                      'ocupa_meses': len(a['meses'])})
+    plano = pd.DataFrame(plano)
+
+    linhas = []
+    for c in consultores:
+        antes = _restante(fixos[fixos['dono'] == c], janela, com_vigencia=True)
+        for i, p in enumerate(janela):
+            linhas.append({'consultor': c, 'mes': str(p),
+                           'carteira_antes': antes[p],
+                           'carteira_depois': int(round(carga[c][i])),
+                           'recebe_acumulado': int(round(carga[c][i])) - antes[p],
+                           'acima_da_capacidade': max(0, int(round(carga[c][i])) - capacidade)})
+    depois = pd.DataFrame(linhas)
+    return plano, depois

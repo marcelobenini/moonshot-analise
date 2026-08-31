@@ -390,6 +390,72 @@ Tudo que precisa de consultor contra o que 7 carteiras a 46 comportam (322):
 
 Não simulo quem fica com quem — não há dado que diga isso. A conta é de estoque, que é o que decide se precisa contratar.
 
+### Saídas: o espaço que abre, mês a mês
+
+| Bloco | set/26 | out/26 | nov/26 | dez/26 | fev/27 | mar/27 | abr/27 | mai/27 | ago/27 | Total |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Vinícius | 22 | 5 | 1 | | | | 1 | **47** | 25 | 101 |
+| Sem dono (pool) | 4 | | **23** | 1 | 13 | 5 | 3 | 20 | 22 | 91 |
+| Daniela | | | 11 | | 9 | 4 | 5 | 14 | 11 | 54 |
+| Anaméli | | | | | | | | **34** | 18 | 52 |
+| Hiago | 1 | | 15 | 1 | 14 | 6 | | 7 | 4 | 48 |
+| Thiago | 18 | | 4 | | | 3 | | 9 | 13 | 47 |
+| Keren | | | | | 18 | 7 | 4 | 11 | 6 | 46 |
+| Andressa | | | | | | 8 | | 19 | 17 | 44 |
+| Diluída do Daniel | | | | | | | | 19 | | 19 |
+
+**Setembro abre 45 lugares** — 22 no Vinícius e 18 no Thiago. É o mês com mais espaço antes de maio/27, e é justamente quando a carteira da Ana Elisa ainda não virou.
+
+### Remanejamento sugerido: 135 alunas, uma a uma
+
+Não é rateio por cabeça. Cada aluna tem data de término própria, então ocupa lugar por um tempo diferente — uma da Agosto26 fica 13 meses, uma da JunJulAgo fica 2. O critério é achatar o pico: quem fica mais tempo entra primeiro, porque é a mais difícil de encaixar depois.
+
+| Destino | Do Marcelo | Sem consultor | Da Carol | Do Daniel | Evento dez/26 | Total |
+|---|---|---|---|---|---|---|
+| Hiago | 8 | 6 | 1 | 1 | 14 | **30** |
+| Thiago | 6 | 5 | 1 | | 18 | **30** |
+| Andressa | 8 | 12 | 1 | | | **21** |
+| Keren | 8 | 11 | | | | **19** |
+| Daniela | 8 | 2 | | 1 | 8 | **19** |
+| Anaméli | 8 | 3 | 1 | | | **12** |
+| Vinícius | | | 4 | | | **4** |
+
+O Vinícius recebe quase nada, e não é escolha — é consequência. Ele já carrega as 54 da Ana Elisa a partir de out/26.
+
+### Como fica cada carteira depois do plano
+
+| Consultor | ago/26 | set/26 | out/26 | nov/26 | dez/26 | fev/27 | abr/27 | mai/27 | ago/27 |
+|---|---|---|---|---|---|---|---|---|---|
+| **Vinícius** | 56 | **34** | **79** | 78 | 78 | 78 | 77 | 27 | 2 |
+| Anaméli | 68 | 68 | 68 | 68 | 64 | 64 | 61 | 23 | 2 |
+| Andressa | 68 | 68 | 68 | 68 | 64 | 64 | 53 | 30 | 10 |
+| Keren | 68 | 68 | 68 | 68 | 64 | 46 | 32 | 17 | 8 |
+| Daniela | 68 | 68 | 68 | 57 | 61 | 52 | 40 | 23 | 8 |
+| Hiago | 68 | 67 | 67 | 52 | 61 | 47 | 38 | 28 | 21 |
+| Thiago | 68 | **50** | 50 | 46 | 61 | 60 | 54 | 42 | 25 |
+
+O plano achata o time em ~68 até dezembro. **O Vinícius é a exceção que o remanejamento não resolve:** ele fica em 77–79 por sete meses seguidos enquanto os outros ficam em 61–68, e não há aluna a menos que se possa dar a ele — o problema é o que ele já recebe.
+
+### Concentrar ou diluir a carteira da Ana Elisa
+
+A carga total do time é idêntica nos dois cenários. O que muda é quem carrega:
+
+| | Destino fixo (tudo no Vinícius) | Diluída entre os sete |
+|---|---|---|
+| Maior carteira | **79** (Vinícius) | 74 (Anaméli) |
+| Meses de alguém acima de 69 | 7 | 28 |
+| Consultores que passam de 69 | **1** | **7** |
+| Maior diferença entre carteiras | **45** | 29 |
+
+Não existe resposta certa aqui, e é uma escolha de gestão, não de dado:
+
+- **Destino fixo** protege seis pessoas e sacrifica uma. O Vinícius passa sete meses em 78 — mais de 1,7 carteira. O risco é concentrado e nominal: se ele saturar ou sair, 78 alunas ficam órfãs de uma vez.
+- **Diluir** tira o pico de 79 para 74, mas leva todos os sete acima de 69. Ninguém quebra sozinho; todo mundo opera apertado.
+
+Uma ressalva sobre a métrica óbvia: somar "pessoa-meses acima da capacidade" favorece concentrar, porque quem fica abaixo da linha soma zero. Por essa conta o cenário A parece melhor (991 contra 1.075) e a conclusão seria errada. Por isso a comparação acima é por quanto tempo alguém passa muito acima e por quão desigual fica o time.
+
+### Veredito: júnior, sim, mas o problema não é o evento
+
 ### Veredito: júnior, sim, mas o problema não é o evento
 
 **Hoje, antes de entrar qualquer aluna nova, o time já está 194 acima da capacidade.** São 516 alunas ativas para 7 consultores: 73,7 por carteira contra a régua de 46. Para fechar na régua de hoje seriam necessários 12 consultores — 5 a mais.

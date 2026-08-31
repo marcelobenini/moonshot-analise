@@ -378,6 +378,26 @@ td.wrapok{white-space:normal; min-width:210px}
       data em que vira (marcada em azul). Acima da régua aparece em vermelho. O pico é o mês que
       importa para decidir remanejamento — não o número de hoje.</p>
     <div class="tblwrap"><table id="tb-carteira"></table></div>
+
+    <h3 style="font-size:16px; margin:32px 0 0">Saídas: quem termina em cada mês</h3>
+    <p class="sec-note">O espaço que abre, por consultor e por bloco sem dono. Cada término é um
+      lugar — desde que a aluna não renove, o que a planilha não registra em lugar nenhum.</p>
+    <div class="tblwrap"><table id="tb-saidas"></table></div>
+
+    <h3 style="font-size:16px; margin:32px 0 0">Remanejamento sugerido</h3>
+    <p class="sec-note">Para onde vai cada aluna sem dono, uma a uma. Não é rateio por cabeça: cada
+      uma tem data de término própria, então ocupa lugar por um tempo diferente. O critério é
+      achatar o pico — quem fica mais tempo entra primeiro, porque é a mais difícil de encaixar
+      depois. É proposta de balanceamento, não decisão: afinidade, idioma, porte e relação já
+      construída não estão no dado.</p>
+    <div class="callouts" id="cart-rem"></div>
+    <div class="tblwrap" style="margin-top:16px"><table id="tb-rem"></table></div>
+
+    <h3 style="font-size:16px; margin:32px 0 0">Carteira depois do remanejamento</h3>
+    <p class="sec-note">Como fica cada consultor mês a mês com o plano aplicado, já contando a
+      turma de dezembro. Vermelho é acima da régua.</p>
+    <div class="tblwrap"><table id="tb-pos"></table></div>
+    <div class="tblwrap" style="margin-top:20px"><table id="tb-cenarios"></table></div>
   </section>
 
   <section id="sec-cons">
@@ -1404,6 +1424,75 @@ function renderCarteira() {
         ? `<b style="color:var(--crit)">${r.pico}</b> <span style="font-size:11px;color:var(--ink-3)">${
             rotMes(r.mes_do_pico)}</span>` : r.pico },
   ], porCons);
+
+  renderRemanejo(cap, meses);
+}
+
+function renderRemanejo(cap, meses) {
+  const sai = (REF.carteira_saidas || []);
+  const plano = (REF.carteira_remanejamento || []);
+  const pos = (REF.carteira_pos_remanejamento || []);
+  const cen = (REF.carteira_cenarios || []);
+  if (!sai.length) return;
+
+  tabela($('#tb-saidas'), [
+    { lab: 'Bloco', render: r => `<b>${r.bloco}</b>` },
+    ...meses.map(m => ({ lab: rotMes(m), num: true,
+      render: r => r[m] ? `<b>${r[m]}</b>` : '<span style="color:var(--ink-3)">·</span>' })),
+    { lab: 'Total', num: true, render: r => `<b>${r.total_na_janela}</b>` },
+  ], sai);
+
+  if (!plano.length) return;
+  const porDest = {}, porOrig = {};
+  plano.forEach(r => {
+    porDest[r.destino_sugerido] = (porDest[r.destino_sugerido] || 0) + 1;
+    porOrig[r.origem] = (porOrig[r.origem] || 0) + 1;
+  });
+  const ord = a => Object.entries(a).sort((x, y) => y[1] - x[1]);
+  $('#cart-rem').innerHTML = `
+    <div class="callout gap"><h4>Alunas a remanejar</h4><span class="big">${plano.length}</span>
+      <p>${ord(porOrig).map(([k, v]) => `${k} (${v})`).join(', ')}.</p></div>
+    <div class="callout op"><h4>Quem recebe mais</h4>
+      <span class="big">${ord(porDest)[0][1]}</span>
+      <p><b>${ord(porDest)[0][0]}</b> é quem tem mais espaço na janela.
+         Distribuição: ${ord(porDest).map(([k, v]) => `${k} ${v}`).join(', ')}.</p></div>`;
+
+  tabela($('#tb-rem'), [
+    { lab: 'Aluna', render: r => r.nome || '—' },
+    { lab: 'Vem de', render: r => `<span style="color:var(--ink-2)">${r.origem}</span>` },
+    { lab: 'Turma', render: r => r.turma || '—' },
+    { lab: 'Termina', render: r => r.termino ? rotMes(String(r.termino).slice(0, 7)) : '—' },
+    { lab: 'Destino sugerido', render: r => `<b>${r.destino_sugerido}</b>` },
+    { lab: 'Ocupa', num: true, render: r => `${r.ocupa_meses} m` },
+  ], plano);
+
+  const cons = [...new Set(pos.map(r => r.consultor))];
+  const linhasPos = cons.map(c => {
+    const o = { consultor: c };
+    meses.forEach(m => { o[m] = pos.find(r => r.consultor === c && r.mes === m) || null; });
+    o._pico = Math.max(...pos.filter(r => r.consultor === c).map(r => r.carteira_depois));
+    return o;
+  }).sort((a, b) => b._pico - a._pico);
+  tabela($('#tb-pos'), [
+    { lab: 'Consultor', render: r => `<b>${r.consultor}</b>` },
+    ...meses.map(m => ({ lab: rotMes(m), num: true, render: r => {
+      const d = r[m]; if (!d) return '·';
+      const rec = d.recebe_acumulado > 0
+        ? `<span style="color:var(--s3);font-size:11px"> +${d.recebe_acumulado}</span>` : '';
+      return `<span style="${d.carteira_depois > cap
+        ? 'color:var(--crit);font-weight:600' : ''}">${d.carteira_depois}</span>${rec}`;
+    } })),
+    { lab: 'Pico', num: true, render: r => r._pico > cap
+        ? `<b style="color:var(--crit)">${r._pico}</b>` : r._pico },
+  ], linhasPos);
+
+  if (cen.length) {
+    const k = Object.keys(cen[0]);
+    tabela($('#tb-cenarios'), k.map((c, i) => ({
+      lab: c.replace(/_/g, ' '), num: i > 0,
+      render: r => i === 0 ? `<b>${r[c]}</b>` : r[c],
+    })), cen);
+  }
 }
 
 /* ---------- Contratos vencendo ---------- */
