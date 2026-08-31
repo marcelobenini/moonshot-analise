@@ -321,6 +321,20 @@ td.wrapok{white-space:normal; min-width:210px}
     <div class="tblwrap"><table id="tb-nb"></table></div>
   </section>
 
+  <section id="sec-contratos">
+    <div class="sec-head">
+      <h2>Contratos vencendo</h2>
+      <span class="eyebrow" id="contr-n"></span>
+    </div>
+    <p class="sec-note">Entrada declarada pelo consultor + 12 meses. Esta seção ignora os filtros do
+      topo: ela lê a planilha de consultorias inteira, inclusive alunas que não estão na base do
+      estudo.</p>
+    <div class="callouts" id="contr-alerta"></div>
+    <div class="chart" id="ch-contratos" style="margin-top:18px"></div>
+    <div class="tblwrap" style="margin-top:18px"><table id="tb-contratos"></table></div>
+    <p class="foot" id="contr-nota"></p>
+  </section>
+
   <section id="sec-cons">
     <div class="sec-head">
       <h2>Realidade × inferência</h2>
@@ -787,6 +801,7 @@ function render() {
   barrasH($('#ch-dores'), itensDor, comDor.length);
 
   renderMapa(f);
+  renderContratos();
   renderOportunidades(f);
   renderConsultoria(f);
 
@@ -1168,6 +1183,49 @@ function renderMapa(f) {
     `endereço reconhecível. O estado vem do CEP quando existe (mais confiável), senão da cidade ` +
     `nomeada ou da sigla no texto. A cidade foi identificada em ${comMun} — as que faltam ` +
     `escreveram só o bairro, e por isso aparecem no estado mas não na lista de cidades.`;
+}
+
+/* ---------- Contratos vencendo ---------- */
+const MES_PT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const rotMes = s => { const [a, m] = String(s).split('-'); return MES_PT[+m - 1] + '/' + a.slice(2); };
+
+function renderContratos() {
+  const p = (REF.projecao_terminos || []);
+  if (!p.length) { $('#sec-contratos').hidden = true; return; }
+  const total = p.reduce((s, r) => s + r.contratos_vencendo, 0);
+  const risco = p.reduce((s, r) => s + (r.em_risco_hoje || 0), 0);
+  const pico = p.reduce((a, b) => b.contratos_vencendo > a.contratos_vencendo ? b : a, p[0]);
+  $('#contr-n').textContent = `${total} contratos na janela`;
+
+  $('#contr-alerta').innerHTML = `
+    <div class="callout op"><h4>Vencem na janela projetada</h4><span class="big">${total}</span>
+      <p>Contratos de 12 meses cuja entrada foi identificada na planilha dos consultores.</p></div>
+    <div class="callout warn"><h4>Mês de pico</h4><span class="big">${rotMes(pico.mes)}</span>
+      <p>${pico.contratos_vencendo} contratos vencem no mesmo mês — ${pico.pct_do_total}% de toda a
+         janela. É uma turma inteira chegando ao fim junta.</p></div>
+    <div class="callout gap"><h4>Já em risco hoje</h4><span class="big">${risco}</span>
+      <p>Dessas que vencem, ${risco} já estão sem contato ou pedindo saída. A renovação delas não
+         começa no vencimento — já está em jogo.</p></div>`;
+
+  colunas($('#ch-contratos'), p.map(r => ({ rot: rotMes(r.mes), n: r.contratos_vencendo })),
+    total, 'var(--s1)');
+
+  tabela($('#tb-contratos'), [
+    { lab: 'Mês', render: r => `<b>${rotMes(r.mes)}</b>` },
+    { lab: 'Contratos vencendo', num: true, k: 'contratos_vencendo' },
+    { lab: '% da janela', num: true, render: r => r.pct_do_total + '%' },
+    { lab: 'Na base do estudo', num: true, k: 'casadas_com_a_base' },
+    { lab: 'Já em risco', num: true, k: 'em_risco_hoje' },
+    { lab: 'Classe A', num: true, k: 'classe_A' },
+    { lab: 'Faturamento mediano', num: true, render: r => brl(r.fat_mediano) },
+  ], p);
+
+  $('#contr-nota').innerHTML = `<b>O que está fora desta conta.</b> A planilha tem 554 registros, ` +
+    `mas quatro abas (Thiago, Vinícius, Cristiane e o Relatório Felipe) não têm coluna de entrada — ` +
+    `são 139 alunas que nunca entram na projeção. Das 417 restantes, 354 tiveram a entrada resolvida ` +
+    `e 61 estão em branco. <b>A data de entrada não é confiável na origem:</b> a planilha mistura três ` +
+    `convenções de data, e "nov/25" pode significar novembro de 2025 ou 25 de novembro. A leitura foi ` +
+    `desempatada por duas regras — ninguém entra no futuro, e a entrada precede a primeira consultoria.`;
 }
 
 /* ---------- Realidade x inferência ---------- */

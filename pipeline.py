@@ -21,7 +21,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import analise, bi, cluster, consultoria, geo, oportunidade, produto, score
+from moonshot import (analise, bi, cluster, consultoria, contrato, geo, oportunidade,
+                      produto, score)
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -110,6 +111,10 @@ def main():
     ap.add_argument('--club', default='dados/moonshot_club.xlsx')
     ap.add_argument('--consultorias', default='dados/controle_consultorias.xlsx',
                     help='planilha de acompanhamento dos consultores; opcional')
+    ap.add_argument('--meses-contrato', type=int, default=12,
+                    help='duracao do contrato em meses, para projetar o termino')
+    ap.add_argument('--projecao-desde', default=None,
+                    help='mes inicial da projecao de terminos (AAAA-MM); padrao: mes atual')
     ap.add_argument('--saida', default='.')
     ap.add_argument('--usd-brl', type=float, default=CONFIG['fx']['USD'])
     ap.add_argument('--eur-brl', type=float, default=CONFIG['fx']['EUR'])
@@ -180,6 +185,20 @@ def main():
     base = produto.marcar_temas_latentes(base)
     base = score.calcular_score(base)
     diag = score.diagnostico_individual(base, usar_nome=not args.sem_nomes)
+
+    # ---- contratos: entrada, saida prevista, projecao de termino ---------
+    datas_contrato = proj_terminos = pd.DataFrame()
+    if args.consultorias and os.path.exists(args.consultorias):
+        datas_contrato = contrato.carregar_datas(args.consultorias)
+        if len(datas_contrato):
+            cruz = contrato.cruzar_com_base(datas_contrato, base, consultoria.casar)
+            desde = args.projecao_desde or datetime.now().strftime('%Y-%m')
+            proj_terminos = contrato.projecao_detalhada(cruz, desde)
+            resolvidas = int((datas_contrato['entrada_confianca'] == 'alta').sum())
+            print(f'Contratos: {resolvidas} entradas resolvidas de {len(datas_contrato)} linhas '
+                  f'com coluna de entrada; {int(proj_terminos["contratos_vencendo"].sum()) if len(proj_terminos) else 0} '
+                  f'vencem de {desde} em diante')
+
 
     if 'engajamento' in base.columns and base['engajamento'].notna().any():
         tab_engaj = consultoria.tabela_engajamento(base)
@@ -279,6 +298,8 @@ def main():
         'Produtividade_por_Porte': fat_prod,
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
+        'Contratos_Datas': datas_contrato,
+        'Projecao_Terminos': proj_terminos,
         'Consultoria_Engajamento': tab_engaj,
         'Consultoria_Risco': tab_risco,
         'Consultoria_Faturamento': tab_confronto,
@@ -322,7 +343,8 @@ def main():
                                   'geografia': geo_uf, 'estados': tab_estados,
                                   'municipios': tab_municipios, 'nabeauty': tab_nb,
                                   'engajamento': tab_engaj, 'risco': tab_risco,
-                                  'confronto_faturamento': tab_confronto})
+                                  'confronto_faturamento': tab_confronto,
+                                  'projecao_terminos': proj_terminos})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')
 
     geometria = os.path.join(os.path.dirname(os.path.abspath(__file__)),

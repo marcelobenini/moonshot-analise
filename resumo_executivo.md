@@ -261,6 +261,35 @@ O mapa está no BI, com quatro métricas (alunas, classe A, taxa de risco, fatur
 
 ---
 
+## 6e. Projeção de vencimento de contratos
+
+Entrada declarada pelo consultor + 12 meses. **349 contratos vencem de setembro de 2026 em diante:**
+
+| Mês | Contratos | % da janela | Já em risco hoje | Classe A | Fatur. mediano |
+|---|---|---|---|---|---|
+| set/26 | 2 | 0,6% | 0 | 0 | R$ 50.000 |
+| nov/26 | 51 | 14,6% | 13 | 5 | R$ 15.000 |
+| jan/27 | 55 | 15,8% | 16 | 11 | R$ 18.500 |
+| mar/27 | 8 | 2,3% | 1 | 3 | R$ 100.000 |
+| abr/27 | 29 | 8,3% | 12 | 1 | R$ 8.000 |
+| **mai/27** | **165** | **47,3%** | 24 | 14 | R$ 15.005 |
+| jun/27 | 21 | 6,0% | 1 | 2 | R$ 21.250 |
+| ago/27 | 18 | 5,2% | 0 | 1 | R$ 5.000 |
+
+**Quase metade da carteira vence no mesmo mês.** Maio de 2027 concentra 165 contratos — reflexo da turma de maio de 2026, que sozinha trouxe 165 entradas. É risco de caixa e risco operacional: a equipe comercial vai precisar conduzir 165 conversas de renovação em semanas, e nenhuma estrutura atual foi dimensionada para isso.
+
+Os próximos três meses são calmos (2 em setembro, nada em outubro), o que dá janela para montar o processo antes de novembro, quando começa o volume real.
+
+**67 das 349 já estão hoje sem contato ou pedindo saída.** Para elas, a renovação não começa no vencimento — a decisão já está sendo tomada. Abril de 2027 é o mês mais crítico nesse aspecto: 12 das 29 já estão em risco, quase metade.
+
+**Três ressalvas que a decisão precisa carregar:**
+
+1. **O contrato de 12 meses é premissa sua**, não dado da planilha. Ela não registra duração nem data de término.
+2. **202 dos 554 registros ficam fora** — 139 em abas sem coluna de entrada (Thiago, Vinícius, Cristiane, Relatório Felipe), 61 em branco, 2 irresolúveis. O número real de vencimentos é maior que 349.
+3. **A data de entrada não é confiável na origem.** A planilha mistura três convenções e "nov/25" tanto pode ser novembro de 2025 quanto 25 de novembro — consultores diferentes usam convenções opostas. Resolvi 354 de 417 com duas regras deterministas (ninguém entra no futuro; a entrada precede a primeira consultoria), mas isso é remendo. **A coluna precisa virar data completa com validação.**
+
+---
+
 ## 7. Portugal — a hipótese não se sustenta como está
 
 27 alunas atuam em Portugal (identificadas por localização e endereço, com nome de rua descartado e CEP de 4 dígitos como confirmação). O contraste, em números absolutos porque os sub-recortes são pequenos:

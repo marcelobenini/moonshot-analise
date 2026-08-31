@@ -185,7 +185,29 @@ Além disso, os dois números não têm a mesma data. O formulário foi respondi
 
 A hipótese de que a divergência entre dor declarada e inferida prediria desengajamento **foi testada e rejeitada** (χ² p = 0,19; 20,0% de risco entre divergentes contra 27,4% entre convergentes — direção inversa à esperada). Não use essa relação em nenhuma argumentação: ela não está nos dados.
 
-## 24. Dados pessoais
+## 24. A data de entrada não é um dado confiável na origem
+
+A projeção de vencimento de contratos é a parte mais frágil de tudo que entreguei, e é frágil por causa da planilha, não da análise.
+
+**Três convenções de data convivem na mesma coluna.** Lendo o formato de exibição de cada célula: 165 estão como `dd/MM/yyyy` (data completa, confiável), 38 como `mmmm/yyyy` (mês/ano, confiável) e **1.407 como `mmm/d` ou `mmmm/d`** — que exibe "nov/25" e pode significar *novembro de 2025* ou *25 de novembro*. A diferença entre as duas leituras é de até um ano, exatamente a grandeza que decide se alguém termina em 2026 ou 2027.
+
+O que permitiu resolver:
+- Em **236 casos as duas leituras caem no mesmo mês** — a ambiguidade é inofensiva para uma projeção mensal.
+- Em **87 casos uma das leituras cairia no futuro**, e ninguém entra no programa amanhã.
+- Em **10 casos** só uma leitura antecede a primeira consultoria registrada.
+- 21 tinham formato explícito.
+
+Sobraram **2 linhas irresolúveis** e **61 com a célula vazia**.
+
+**Consultores diferentes usam convenções opostas.** Hiago e Marcelo escrevem mês/ano; Keren e Daniela escrevem data. Isso não é detalhe: foi só o teste contra a primeira consultoria que revelou, e num mês em que as duas leituras fossem plausíveis a projeção erraria por um ano sem avisar.
+
+**139 alunas nunca entram na projeção** porque quatro abas (Thiago, Vinícius, Cristiane e o Relatório Felipe) não têm coluna de entrada. Somadas às 61 em branco e às 2 irresolúveis, **202 dos 554 registros ficam fora**. A projeção cobre 354 entradas, das quais 349 vencem de setembro de 2026 em diante.
+
+**O contrato de 12 meses é premissa sua, não dado.** A planilha não registra duração nem data de término. Se houver planos de 6, 18 ou 24 meses misturados, a projeção está errada para eles. O parâmetro é `--meses-contrato` no pipeline.
+
+**A projeção é de vencimento, não de saída.** Ela diz quando o contrato completa um ano, não quem vai renovar, cancelar antes ou já ter saído. Das 349, **67 já estão hoje sem contato ou pedindo saída** — para essas o vencimento é uma formalidade, a decisão já aconteceu.
+
+## 25. Dados pessoais
 
 As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes` — vale para o Excel, o JSON e o BI.
 

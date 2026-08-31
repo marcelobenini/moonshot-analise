@@ -13,13 +13,19 @@ from .taxonomia import (DEFINICOES, FRENTES_PRODUTO, FRENTES_ROTULO, ROTULOS_DOR
 
 
 def _limpo(v):
-    """Converte tipos numpy/pandas em algo serializavel, NaN vira None."""
-    if isinstance(v, (np.integer,)):
+    """Converte tipos numpy/pandas em algo serializavel, NaN vira None.
+
+    bool vem antes de int de proposito: em Python bool E int, e um True virando
+    1 quebraria os filtros do BI. E int puro precisa estar aqui: o pandas 3
+    devolve int nativo em varios agregados, e sem este ramo ele cairia no
+    str() do final — numero virando texto, soma virando concatenacao.
+    """
+    if isinstance(v, (np.bool_, bool)):
+        return bool(v)
+    if isinstance(v, (np.integer, int)):
         return int(v)
     if isinstance(v, (np.floating, float)):
         return None if pd.isna(v) else round(float(v), 2)
-    if isinstance(v, (np.bool_, bool)):
-        return bool(v)
     if v is None or (isinstance(v, float) and pd.isna(v)):
         return None
     try:
