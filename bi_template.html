@@ -342,7 +342,8 @@ td.wrapok{white-space:normal; min-width:210px}
       <span class="eyebrow" id="cart-n"></span>
     </div>
     <p class="sec-note">Quantas alunas cada consultor perde por mês, quanto de vaga isso abre e
-      quanto cabe de gente nova. Marcelo, Carol Leão e Ana Elisa estão fora do planejamento.
+      quanto cabe de gente nova. Marcelo, Carol Leão, Ana Elisa e Daniel saíram do quadro — mas as
+      alunas deles não somem: viram carteira órfã, porque continuam sendo carga de alguém.
       Os campos abaixo são premissas suas — mexa e a conta refaz.</p>
 
     <div class="calc">
@@ -354,7 +355,8 @@ td.wrapok{white-space:normal; min-width:210px}
       <div class="tblwrap"><table id="tb-premissas"></table></div>
     </div>
 
-    <div class="callouts" id="cart-veredito" style="margin-top:18px"></div>
+    <div class="callouts" id="cart-orfas" style="margin-top:18px"></div>
+    <div class="callouts" id="cart-veredito" style="margin-top:12px"></div>
 
     <h3 style="font-size:16px; margin:28px 0 0">Vagas do time, mês a mês</h3>
     <p class="sec-note">Carteira do time depois dos términos, contra a capacidade. A linha de
@@ -1237,7 +1239,7 @@ function renderCarteira() {
   /* premissas editáveis */
   const campos = [
     { k: 'capacidade', lab: 'Capacidade por carteira', sufixo: 'alunas' },
-    { k: 'transferencia', lab: `Carteira da Ana Elisa absorvida por ${cenario.destino}`, sufixo: 'alunas' },
+    { k: 'transferencia', lab: `Carteira órfã absorvida por ${cenario.destino}`, sufixo: 'alunas' },
     { k: 'minhas', lab: 'Suas alunas a redistribuir (set/26)', sufixo: 'alunas' },
     { k: 'evento', lab: 'Alunas do evento de dezembro', sufixo: 'alunas' },
   ];
@@ -1279,6 +1281,26 @@ function renderCarteira() {
              carteira: carteiraTime, capacidade: g.length * cap, vagas,
              entram, alocadas, sem_dono: semDono };
   });
+
+  /* carteiras órfãs: quem sai leva o nome, não as alunas */
+  const orf = (REF.carteira_orfas || []);
+  const orfMes = (REF.carteira_orfas_mes || []);
+  const totalOrf = orf.reduce((s, r) => s + r.alunas_orfas, 0);
+  const orfAteDez = orfMes.filter(r => r.mes <= '2026-12')
+    .reduce((s, r) => s + r.orfas_terminando, 0);
+  const semDonoPlanilha = (det.filter(r => r.consultor === SEM && r.mes === meses[0])[0] || {});
+  $('#cart-orfas').innerHTML = `
+    <div class="callout gap"><h4>Carteira órfã</h4><span class="big">${totalOrf}</span>
+      <p>Alunas de ${orf.map(o => `${o.consultor_saindo} (${o.alunas_orfas})`).join(', ')}.
+         Saíram do quadro, não da operação — alguém carrega essas alunas hoje.</p></div>
+    <div class="callout warn"><h4>Órfãs que se resolvem sozinhas até dez/26</h4>
+      <span class="big">${orfAteDez}</span>
+      <p>Terminam contrato na janela curta e não precisam de novo dono. As outras
+         ${totalOrf - orfAteDez} precisam.</p></div>
+    <div class="callout warn"><h4>Sem consultor na planilha</h4>
+      <span class="big">${(resumo.find(r => r.consultor === SEM) || {}).carteira_hoje ?? 0}</span>
+      <p>Linhas com o campo de consultor em branco. Ou é cadastro faltando, ou é carteira
+         realmente sem dono — não dá para distinguir pelo dado.</p></div>`;
 
   /* veredito */
   const juniores = Math.ceil(picoSemDono / cap);

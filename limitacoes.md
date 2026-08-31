@@ -214,6 +214,7 @@ Isso é uma lição sobre a análise inteira, não só sobre esta seção: **ond
 Outras limitações:
 
 - **39 alunas não têm consultor atribuído** na planilha. Não sei se é dado faltante ou carteira realmente sem dono. Ficaram fora do cálculo de vagas, o que subestima a carga do time se elas na verdade estiverem distribuídas.
+- **A planilha está desatualizada quanto a quem atende quem.** As alunas do Daniel já foram redistribuídas na prática, mas continuam registradas com o nome dele. O mesmo pode valer para Marcelo, Carol Leão e Ana Elisa. Isso significa que **as carteiras reais dos 7 consultores que ficam já são maiores do que os números mostrados** — e portanto a folga calculada é otimista. As 154 alunas órfãs aparecem separadas em `Carteira_Orfas` justamente para não sumirem da conta, mas eu não sei para quem cada uma foi.
 - **"Vinícius absorve a maior parte da Ana Elisa" virou um número que você escolhe**, com 40 como padrão. A planilha não registra transferências.
 - **O modelo trata todas as alunas como carga igual.** Uma aluna de R$ 200 mil/mês e uma de R$ 5 mil ocupam o mesmo lugar na conta. Se a carga real for proporcional ao porte, a distribuição por cabeça engana.
 - **A janela de 12 meses termina em agosto de 2027**, quando quase toda a carteira já girou. Os números de maio e agosto de 2027 são grandes porque tudo vence junto, não porque haverá folga sustentada.

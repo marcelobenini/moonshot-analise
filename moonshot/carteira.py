@@ -22,6 +22,29 @@ def base_carteiras(matriculas, excluir=(), so_turmas=True):
     return d
 
 
+def orfas(carteiras, inicio, meses=12):
+    """Carteiras dos consultores fora do quadro.
+
+    Tirar um consultor do planejamento NAO faz as alunas dele sumirem: elas
+    continuam existindo e viram carga de outra pessoa. Esta tabela existe para
+    que esse peso apareca em vez de evaporar da conta.
+    """
+    d = carteiras[carteiras['excluido']].copy()
+    if not len(d):
+        return pd.DataFrame(), pd.DataFrame()
+    d['mes'] = d['termino_efetivo'].dt.to_period('M')
+    ini = pd.Period(inicio, freq='M')
+    janela = pd.period_range(ini, periods=meses, freq='M')
+    resumo = (d.groupby('consultor_norm').size().rename('alunas_orfas')
+              .reset_index().rename(columns={'consultor_norm': 'consultor_saindo'})
+              .sort_values('alunas_orfas', ascending=False))
+    porm = (d[d['mes'].isin(janela)].groupby('mes').size()
+            .reindex(janela, fill_value=0).rename('orfas_terminando')
+            .rename_axis('mes').reset_index())
+    porm['mes'] = porm['mes'].astype(str)
+    return resumo, porm
+
+
 def evolucao(carteiras, inicio, meses=12, capacidade=None):
     """Carteira de cada consultor mes a mes e vagas abertas.
 

@@ -115,7 +115,7 @@ def main():
                     help='duracao do contrato em meses, para projetar o termino')
     ap.add_argument('--matriculas', default='dados/matriculados_club.xlsx',
                     help='planilha de matriculas com inicio e termino declarados; opcional')
-    ap.add_argument('--excluir-consultores', default='Marcelo,Carol Leão,Ana Elisa',
+    ap.add_argument('--excluir-consultores', default='Marcelo,Carol Leão,Ana Elisa,Daniel',
                     help='consultores fora do planejamento de carteira, separados por virgula')
     ap.add_argument('--capacidade-carteira', type=int, default=None,
                     help='tamanho de carteira considerado cheio; padrao: mediana atual')
@@ -216,12 +216,16 @@ def main():
 
     # ---- capacidade das carteiras ---------------------------------------
     cart_resumo = cart_detalhe = cart_vagas = pd.DataFrame()
+    orf_resumo = orf_mes = pd.DataFrame()
     capacidade = None
     if len(tab_matriculas):
         excluidos = [x.strip() for x in args.excluir_consultores.split(',') if x.strip()]
         cart = carteira.base_carteiras(tab_matriculas, excluir=excluidos)
+        # 13 meses a partir do mes corrente para alcancar agosto/27, que
+        # concentra o maior lote de terminos.
         cart_resumo, cart_detalhe, capacidade = carteira.evolucao(
-            cart, desde, 12, args.capacidade_carteira)
+            cart, desde, 13, args.capacidade_carteira)
+        orf_resumo, orf_mes = carteira.orfas(cart, desde, 13)
         if len(cart_detalhe):
             cart_vagas = carteira.vagas_por_mes(cart_detalhe, capacidade)
             print(f'Carteiras: {len(cart_resumo)} consultores no planejamento '
@@ -339,6 +343,8 @@ def main():
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
         'Carteira_Resumo': cart_resumo,
+        'Carteira_Orfas': orf_resumo,
+        'Carteira_Orfas_Mes': orf_mes,
         'Carteira_Mes_a_Mes': cart_detalhe,
         'Carteira_Vagas': cart_vagas,
         'Matriculas': tab_matriculas,
@@ -402,6 +408,8 @@ def main():
                                   'carteira_resumo': cart_resumo,
                                   'carteira_detalhe': cart_detalhe,
                                   'carteira_vagas': cart_vagas,
+                                  'carteira_orfas': orf_resumo,
+                                  'carteira_orfas_mes': orf_mes,
                                   'capacidade': capacidade,
                                   'matriculas_resumo': res_matriculas,
                                   'cancelamento_conferencia': conf_cancel})

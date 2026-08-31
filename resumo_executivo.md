@@ -306,59 +306,64 @@ Três abas ficaram fora da conta por não serem turma: `MOONSHOT ELITE` (73% das
 
 ## 6f. Carteiras: quando abre vaga e se precisa de júnior
 
-Cruzamento entre **consultor estratégico** e **data de término** na planilha de matrículas. Marcelo, Carol Leão e Ana Elisa estão fora do planejamento.
+Cruzamento entre **consultor estratégico** e **data de término** na planilha de matrículas. Marcelo, Carol Leão, Ana Elisa e Daniel saíram do quadro.
 
-### O time começa apertado
+### Excluir consultor não faz a aluna sumir
 
-**8 consultores, 404 alunas na carteira, capacidade de referência 360** (8 × 45, a mediana das carteiras atuais). Já são 44 acima antes de qualquer coisa nova entrar.
+**154 alunas ficam órfãs**: Ana Elisa (54), Marcelo (46), Daniel (41), Carol Leão (13). Elas continuam existindo e alguém as carrega hoje — a planilha é que não reflete. Você mesmo disse que as do Daniel já foram para outros consultores, o que confirma: **as carteiras reais são maiores do que a planilha mostra.**
+
+Dessas 154, apenas **29 se resolvem sozinhas até dez/26** por término de contrato. As outras **125 precisam de dono**.
+
+Some-se a isso **39 alunas com o campo de consultor em branco** — ou é cadastro faltando, ou é carteira realmente sem dono; o dado não distingue.
+
+### O quadro que fica
+
+**7 consultores, 323 alunas.** A capacidade de referência é 46 (mediana das carteiras atuais).
 
 | Consultor | Carteira hoje | Termina na janela | Sobra ao fim |
 |---|---|---|---|
 | Daniela | 54 | 54 | 0 |
-| Thiago | 47 | 44 | 3 |
 | Vinícius | 47 | 45 | 2 |
+| Thiago | 47 | 44 | 3 |
 | Hiago | 46 | 45 | 1 |
 | Keren | 45 | 45 | 0 |
 | Anaméli | 43 | 42 | 1 |
-| Daniel | 41 | 41 | 0 |
 | Andressa | 41 | 41 | 0 |
 
-Além desses, **39 alunas estão sem consultor atribuído** na planilha — já são espaço aberto, ou trabalho que ninguém está fazendo.
+**A conta real de carga:** 323 no quadro + 154 órfãs + 39 sem dono = **516 alunas para uma capacidade de 322** (7 × 46). São 194 acima antes de entrar qualquer aluna nova.
 
 ### Quando abre vaga
 
-| Mês | Terminam | Vagas abertas |
-|---|---|---|
-| set/26 | 39 | 24 |
-| out/26 | 5 | 24 |
-| **nov/26** | **31** | **45** |
-| dez/26 | 1 | 46 |
-| jan/27 | 0 | 46 |
-| fev/27 | 41 | 87 |
-| mar/27 | 28 | 115 |
-| mai/27 | 123 | 241 |
+| Mês | Vagas abertas |
+|---|---|
+| set/26 | 25 |
+| out/26 | 25 |
+| nov/26 | 47 |
+| dez/26 | 48 |
+| fev/27 | 89 |
+| mar/27 | 117 |
+| mai/27 | 202 |
 
-Setembro concentra o alívio no Vinícius (22) e no Thiago (16); novembro no Hiago (15) e na Daniela (11); fevereiro na Keren (18) e no Hiago (14).
+### Veredito
 
-### O ponto que decide a resposta
+Com capacidade 46, Vinícius absorvendo 40 da carteira órfã, suas 46 em setembro e o evento de dezembro:
 
-**A carteira da Ana Elisa não alivia tão cedo.** As 54 alunas dela terminam em maio/27 (39) e agosto/27 (15) — nada antes. Quem absorver carrega o peso por oito meses ou mais, sem folga natural.
-
-### Cenário e veredito
-
-Com capacidade 45, Vinícius absorvendo 40 da Ana Elisa, suas 46 entrando em setembro e o evento de dezembro:
-
-| Evento de dezembro | Pico sem consultor | Quando | Júniores necessários |
+| Evento de dezembro | Pico sem consultor | Quando | Júniores |
 |---|---|---|---|
-| 60 alunas | 22 | set/26 | 1 |
-| **120 alunas** | **74** | **dez/26** | **2** |
-| 200 alunas | 154 | dez/26 | 4 |
+| 60 | ~21 | set/26 | 1 |
+| **120** | **72** | **dez/26** | **2** |
+| 200 | ~152 | dez/26 | 4 |
 
-**A resposta depende inteiramente do tamanho do evento.** Até ~60 alunas, um júnior resolve e a fila gira sozinha a partir de fevereiro. A partir de 120, são 2 ou mais.
+**Mas esse cálculo ignora as 125 órfãs que precisam de dono.** Se elas forem distribuídas entre os 7 que ficam, cada um recebe ~18 alunas a mais — e aí o time entra em dezembro já estourado, sem vaga nenhuma para o evento.
 
-Vale notar: o aperto é **temporário e concentrado em dez/26–jan/27**. De fevereiro em diante abrem 87 vagas, e em maio/27 abrem 241. Se o júnior for contratado como ponte, ele fica ocioso a partir de março — o que sugere considerar a alternativa de segurar as alunas do evento numa fila de onboarding até fevereiro, em vez de contratar.
+**A resposta honesta:** com 125 órfãs para realocar mais 46 suas mais o evento, **um júnior não resolve.** O aperto de dez/26–jan/27 é grande e só alivia em fevereiro (89 vagas) e maio/27 (202).
 
-A simulação está no BI com os quatro campos editáveis; mexer no tamanho do evento recalcula o veredito na hora.
+Três caminhos, e a escolha é sua:
+1. **Contratar 2 júniores como ponte** — resolve o pico, mas eles sobram a partir de março.
+2. **Segurar as alunas do evento numa fila de onboarding até fevereiro** — sem custo fixo, mas atrasa a entrada.
+3. **Aceitar carteiras maiores temporariamente** — se 46 não for o teto real, o problema encolhe. Esse número é o mais frágil de toda a conta.
+
+A simulação está no BI com os campos editáveis.
 
 ---
 
