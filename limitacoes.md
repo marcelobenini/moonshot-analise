@@ -207,7 +207,21 @@ Antes desta planilha eu deduzia a entrada do controle de consultorias e somava 1
 
 Isso é uma lição sobre a análise inteira, não só sobre esta seção: **onde existe um campo declarado, ele vence qualquer inferência minha, por mais bem fundamentada que a regra pareça.** As regras que usei para desambiguar as datas do controle de consultorias eram defensáveis e mesmo assim produziram um número que erraria a decisão. A projeção inferida permanece no Excel apenas como conferência.
 
-## 25. Dados pessoais
+## 25. O planejamento de carteira depende de uma premissa que não está na planilha
+
+**A "capacidade de 45 por carteira" é a mediana das carteiras atuais, não uma medida de quanto um consultor aguenta.** Ela descreve como a operação roda hoje — inclusive se hoje roda sobrecarregada. Se 45 já for demais, todo o cálculo de vagas está otimista; se der para levar 60, está pessimista. É o número mais sensível de toda a seção e o único que não vem de dado nenhum.
+
+Outras limitações:
+
+- **39 alunas não têm consultor atribuído** na planilha. Não sei se é dado faltante ou carteira realmente sem dono. Ficaram fora do cálculo de vagas, o que subestima a carga do time se elas na verdade estiverem distribuídas.
+- **"Vinícius absorve a maior parte da Ana Elisa" virou um número que você escolhe**, com 40 como padrão. A planilha não registra transferências.
+- **O modelo trata todas as alunas como carga igual.** Uma aluna de R$ 200 mil/mês e uma de R$ 5 mil ocupam o mesmo lugar na conta. Se a carga real for proporcional ao porte, a distribuição por cabeça engana.
+- **A janela de 12 meses termina em agosto de 2027**, quando quase toda a carteira já girou. Os números de maio e agosto de 2027 são grandes porque tudo vence junto, não porque haverá folga sustentada.
+- **Términos não são saídas.** Quem renova continua na carteira. O cálculo de vagas assume que o término libera o lugar, o que só vale para quem não renovar — e a taxa de renovação não está em lugar nenhum dos dados que recebi.
+
+Esse último ponto é o mais importante: **se metade renovar, metade das vagas projetadas não existe.**
+
+## 26. Dados pessoais
 
 As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes` — vale para o Excel, o JSON e o BI.
 

@@ -100,6 +100,7 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
             'linhas_nb': {k: {'rotulo': v[0], 'regra': v[2]} for k, v in LINHAS.items()},
             'quadrantes': {k: {'rotulo': v[0], 'definicao': v[1]} for k, v in QUADRANTES.items()},
             'rotulos_engajamento': ROTULO_ENGAJAMENTO,
+            'capacidade_carteira': _limpo(extras.get('capacidade')) if extras else None,
         },
         'alunas': linhas,
         'referencia': {
@@ -117,7 +118,8 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
         },
     }
     for nome, tabela in (extras or {}).items():
-        dados['referencia'][nome] = _registros(tabela)
+        if isinstance(tabela, pd.DataFrame):
+            dados['referencia'][nome] = _registros(tabela)
     with open(destino, 'w', encoding='utf-8') as fh:
         json.dump(dados, fh, ensure_ascii=False, separators=(',', ':'))
     return destino

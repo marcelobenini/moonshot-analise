@@ -304,6 +304,64 @@ Três abas ficaram fora da conta por não serem turma: `MOONSHOT ELITE` (73% das
 
 ---
 
+## 6f. Carteiras: quando abre vaga e se precisa de júnior
+
+Cruzamento entre **consultor estratégico** e **data de término** na planilha de matrículas. Marcelo, Carol Leão e Ana Elisa estão fora do planejamento.
+
+### O time começa apertado
+
+**8 consultores, 404 alunas na carteira, capacidade de referência 360** (8 × 45, a mediana das carteiras atuais). Já são 44 acima antes de qualquer coisa nova entrar.
+
+| Consultor | Carteira hoje | Termina na janela | Sobra ao fim |
+|---|---|---|---|
+| Daniela | 54 | 54 | 0 |
+| Thiago | 47 | 44 | 3 |
+| Vinícius | 47 | 45 | 2 |
+| Hiago | 46 | 45 | 1 |
+| Keren | 45 | 45 | 0 |
+| Anaméli | 43 | 42 | 1 |
+| Daniel | 41 | 41 | 0 |
+| Andressa | 41 | 41 | 0 |
+
+Além desses, **39 alunas estão sem consultor atribuído** na planilha — já são espaço aberto, ou trabalho que ninguém está fazendo.
+
+### Quando abre vaga
+
+| Mês | Terminam | Vagas abertas |
+|---|---|---|
+| set/26 | 39 | 24 |
+| out/26 | 5 | 24 |
+| **nov/26** | **31** | **45** |
+| dez/26 | 1 | 46 |
+| jan/27 | 0 | 46 |
+| fev/27 | 41 | 87 |
+| mar/27 | 28 | 115 |
+| mai/27 | 123 | 241 |
+
+Setembro concentra o alívio no Vinícius (22) e no Thiago (16); novembro no Hiago (15) e na Daniela (11); fevereiro na Keren (18) e no Hiago (14).
+
+### O ponto que decide a resposta
+
+**A carteira da Ana Elisa não alivia tão cedo.** As 54 alunas dela terminam em maio/27 (39) e agosto/27 (15) — nada antes. Quem absorver carrega o peso por oito meses ou mais, sem folga natural.
+
+### Cenário e veredito
+
+Com capacidade 45, Vinícius absorvendo 40 da Ana Elisa, suas 46 entrando em setembro e o evento de dezembro:
+
+| Evento de dezembro | Pico sem consultor | Quando | Júniores necessários |
+|---|---|---|---|
+| 60 alunas | 22 | set/26 | 1 |
+| **120 alunas** | **74** | **dez/26** | **2** |
+| 200 alunas | 154 | dez/26 | 4 |
+
+**A resposta depende inteiramente do tamanho do evento.** Até ~60 alunas, um júnior resolve e a fila gira sozinha a partir de fevereiro. A partir de 120, são 2 ou mais.
+
+Vale notar: o aperto é **temporário e concentrado em dez/26–jan/27**. De fevereiro em diante abrem 87 vagas, e em maio/27 abrem 241. Se o júnior for contratado como ponte, ele fica ocioso a partir de março — o que sugere considerar a alternativa de segurar as alunas do evento numa fila de onboarding até fevereiro, em vez de contratar.
+
+A simulação está no BI com os quatro campos editáveis; mexer no tamanho do evento recalcula o veredito na hora.
+
+---
+
 ## 7. Portugal — a hipótese não se sustenta como está
 
 27 alunas atuam em Portugal (identificadas por localização e endereço, com nome de rua descartado e CEP de 4 dígitos como confirmação). O contraste, em números absolutos porque os sub-recortes são pequenos:

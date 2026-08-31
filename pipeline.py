@@ -21,8 +21,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import (analise, bi, cluster, consultoria, contrato, geo, matriculas,
-                      oportunidade, produto, score)
+from moonshot import (analise, bi, carteira, cluster, consultoria, contrato, geo,
+                      matriculas, oportunidade, produto, score)
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
 from moonshot.texto import tem_conteudo
@@ -115,6 +115,10 @@ def main():
                     help='duracao do contrato em meses, para projetar o termino')
     ap.add_argument('--matriculas', default='dados/matriculados_club.xlsx',
                     help='planilha de matriculas com inicio e termino declarados; opcional')
+    ap.add_argument('--excluir-consultores', default='Marcelo,Carol Leão,Ana Elisa',
+                    help='consultores fora do planejamento de carteira, separados por virgula')
+    ap.add_argument('--capacidade-carteira', type=int, default=None,
+                    help='tamanho de carteira considerado cheio; padrao: mediana atual')
     ap.add_argument('--projecao-desde', default=None,
                     help='mes inicial da projecao de terminos (AAAA-MM); padrao: mes atual')
     ap.add_argument('--saida', default='.')
@@ -209,6 +213,19 @@ def main():
               f'({len(abas_turma)} turmas, {len(class_abas) - len(abas_turma)} de controle); '
               f'{int(proj_mes["nao_canceladas"].sum()) if len(proj_mes) else 0} '
               f'nao canceladas terminam de {desde} em diante')
+
+    # ---- capacidade das carteiras ---------------------------------------
+    cart_resumo = cart_detalhe = cart_vagas = pd.DataFrame()
+    capacidade = None
+    if len(tab_matriculas):
+        excluidos = [x.strip() for x in args.excluir_consultores.split(',') if x.strip()]
+        cart = carteira.base_carteiras(tab_matriculas, excluir=excluidos)
+        cart_resumo, cart_detalhe, capacidade = carteira.evolucao(
+            cart, desde, 12, args.capacidade_carteira)
+        if len(cart_detalhe):
+            cart_vagas = carteira.vagas_por_mes(cart_detalhe, capacidade)
+            print(f'Carteiras: {len(cart_resumo)} consultores no planejamento '
+                  f'(excluidos: {", ".join(excluidos)}), capacidade de referencia {capacidade}')
 
     # ---- contratos: entrada, saida prevista, projecao de termino ---------
     datas_contrato = proj_terminos = pd.DataFrame()
@@ -321,6 +338,9 @@ def main():
         'Produtividade_por_Porte': fat_prod,
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
+        'Carteira_Resumo': cart_resumo,
+        'Carteira_Mes_a_Mes': cart_detalhe,
+        'Carteira_Vagas': cart_vagas,
         'Matriculas': tab_matriculas,
         'Projecao_Terminos': proj_mes,
         'Projecao_Por_Turma': proj_turma,
@@ -379,6 +399,10 @@ def main():
                                   'projecao_terminos': proj_matriculas,
                                   'projecao_mes': proj_mes, 'projecao_turma': proj_turma,
                                   'matriculas_abas': class_abas,
+                                  'carteira_resumo': cart_resumo,
+                                  'carteira_detalhe': cart_detalhe,
+                                  'carteira_vagas': cart_vagas,
+                                  'capacidade': capacidade,
                                   'matriculas_resumo': res_matriculas,
                                   'cancelamento_conferencia': conf_cancel})
     print(f'-> {json_bi} ({os.path.getsize(json_bi)//1024} KB)')

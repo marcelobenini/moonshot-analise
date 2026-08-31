@@ -336,6 +336,38 @@ td.wrapok{white-space:normal; min-width:210px}
     <p class="foot" id="contr-nota"></p>
   </section>
 
+  <section id="sec-carteira">
+    <div class="sec-head">
+      <h2>Carteiras e capacidade</h2>
+      <span class="eyebrow" id="cart-n"></span>
+    </div>
+    <p class="sec-note">Quantas alunas cada consultor perde por mês, quanto de vaga isso abre e
+      quanto cabe de gente nova. Marcelo, Carol Leão e Ana Elisa estão fora do planejamento.
+      Os campos abaixo são premissas suas — mexa e a conta refaz.</p>
+
+    <div class="calc">
+      <div class="calc-head">
+        <strong>Premissas do cenário</strong>
+        <p>Nada aqui vem da planilha: são decisões suas. A capacidade padrão é a mediana das
+          carteiras atuais, que descreve como a operação roda hoje — não o que ela suporta.</p>
+      </div>
+      <div class="tblwrap"><table id="tb-premissas"></table></div>
+    </div>
+
+    <div class="callouts" id="cart-veredito" style="margin-top:18px"></div>
+
+    <h3 style="font-size:16px; margin:28px 0 0">Vagas do time, mês a mês</h3>
+    <p class="sec-note">Carteira do time depois dos términos, contra a capacidade. A linha de
+      alunas sem consultor acumula quem entrou e não coube.</p>
+    <div class="chart" id="ch-vagas"></div>
+    <div class="tblwrap" style="margin-top:16px"><table id="tb-vagas"></table></div>
+
+    <h3 style="font-size:16px; margin:28px 0 0">Por consultor</h3>
+    <p class="sec-note">Quantas terminam em cada mês. A última coluna é a carteira que sobra ao fim
+      da janela — o tamanho do buraco a preencher.</p>
+    <div class="tblwrap"><table id="tb-carteira"></table></div>
+  </section>
+
   <section id="sec-cons">
     <div class="sec-head">
       <h2>Realidade × inferência</h2>
@@ -803,6 +835,7 @@ function render() {
 
   renderMapa(f);
   renderContratos();
+  renderCarteira();
   renderOportunidades(f);
   renderConsultoria(f);
 
@@ -1184,6 +1217,128 @@ function renderMapa(f) {
     `endereço reconhecível. O estado vem do CEP quando existe (mais confiável), senão da cidade ` +
     `nomeada ou da sigla no texto. A cidade foi identificada em ${comMun} — as que faltam ` +
     `escreveram só o bairro, e por isso aparecem no estado mas não na lista de cidades.`;
+}
+
+/* ---------- Carteiras e capacidade ---------- */
+const cenario = { capacidade: null, transferencia: 40, destino: 'Vinícius',
+                  minhas: 46, mes_minhas: '2026-09', evento: 120, mes_evento: '2026-12' };
+
+function renderCarteira() {
+  const resumo = (REF.carteira_resumo || []);
+  const det = (REF.carteira_detalhe || []);
+  if (!resumo.length) { $('#sec-carteira').hidden = true; return; }
+  if (cenario.capacidade == null) cenario.capacidade = META.capacidade_carteira || 45;
+  const cap = Math.max(1, parseInt(cenario.capacidade) || 45);
+  const SEM = '(sem consultor)';
+  const consultores = [...new Set(det.map(r => r.consultor))].filter(c => c !== SEM);
+  const meses = [...new Set(det.map(r => r.mes))].sort();
+  $('#cart-n').textContent = `${consultores.length} consultores · capacidade ${cap}`;
+
+  /* premissas editáveis */
+  const campos = [
+    { k: 'capacidade', lab: 'Capacidade por carteira', sufixo: 'alunas' },
+    { k: 'transferencia', lab: `Carteira da Ana Elisa absorvida por ${cenario.destino}`, sufixo: 'alunas' },
+    { k: 'minhas', lab: 'Suas alunas a redistribuir (set/26)', sufixo: 'alunas' },
+    { k: 'evento', lab: 'Alunas do evento de dezembro', sufixo: 'alunas' },
+  ];
+  $('#tb-premissas').innerHTML =
+    `<thead><tr><th>Premissa</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+     <tbody>${campos.map(c => `<tr><td>${c.lab}</td>
+       <td class="num"><input data-c="${c.k}" inputmode="numeric" value="${cenario[c.k]}"
+         aria-label="${c.lab}"></td>
+       <td style="color:var(--ink-3);font-size:12px">${c.sufixo}</td></tr>`).join('')}</tbody>`;
+  $('#tb-premissas').querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      cenario[e.target.dataset.c] = e.target.value;
+      const k = e.target.dataset.c, pos = e.target.selectionStart;
+      renderCarteira();
+      const v = $(`#tb-premissas input[data-c="${k}"]`);
+      if (v) { v.focus(); try { v.setSelectionRange(pos, pos); } catch (_) {} }
+    });
+  });
+
+  /* evolução com as premissas aplicadas */
+  const transf = Math.max(0, parseInt(cenario.transferencia) || 0);
+  const novas = { [cenario.mes_minhas]: Math.max(0, parseInt(cenario.minhas) || 0),
+                  [cenario.mes_evento]: Math.max(0, parseInt(cenario.evento) || 0) };
+  let semDono = 0, picoSemDono = 0, mesPico = null;
+  const linhas = meses.map(m => {
+    const g = det.filter(r => r.mes === m && r.consultor !== SEM);
+    const carteiraTime = g.reduce((s, r) =>
+      s + r.carteira_apos + (r.consultor === cenario.destino ? transf : 0), 0);
+    const vagas = g.reduce((s, r) => {
+      const c = r.carteira_apos + (r.consultor === cenario.destino ? transf : 0);
+      return s + Math.max(0, cap - c);
+    }, 0);
+    const entram = novas[m] || 0;
+    semDono += entram;
+    const alocadas = Math.min(semDono, vagas);
+    semDono -= alocadas;
+    if (semDono > picoSemDono) { picoSemDono = semDono; mesPico = m; }
+    return { mes: m, terminam: g.reduce((s, r) => s + r.terminam_no_mes, 0),
+             carteira: carteiraTime, capacidade: g.length * cap, vagas,
+             entram, alocadas, sem_dono: semDono };
+  });
+
+  /* veredito */
+  const juniores = Math.ceil(picoSemDono / cap);
+  const primeiroApertado = linhas.find(l => l.sem_dono > 0);
+  $('#cart-veredito').innerHTML = `
+    <div class="callout ${picoSemDono ? 'gap' : 'op'}">
+      <h4>Precisa de consultor a mais?</h4>
+      <span class="big">${picoSemDono ? (juniores + (juniores === 1 ? ' junior' : ' juniores')) : 'não'}</span>
+      <p>${picoSemDono
+        ? `No pico, <b>${picoSemDono} alunas</b> ficam sem consultor (${rotMes(mesPico)}). ` +
+          `A ${cap} por carteira, isso são ${juniores} carteira(s) a mais — ou esperar a fila girar.`
+        : `Com estas premissas o time absorve tudo sem contratar. A folga vem dos términos.`}</p></div>
+    <div class="callout warn"><h4>Primeiro mês apertado</h4>
+      <span class="big">${primeiroApertado ? rotMes(primeiroApertado.mes) : '—'}</span>
+      <p>${primeiroApertado
+        ? `${primeiroApertado.sem_dono} alunas sem dono nesse mês. Antes disso a fila absorve.`
+        : 'Nenhum mês fica com aluna sem consultor.'}</p></div>
+    <div class="callout op"><h4>Vagas até dezembro</h4>
+      <span class="big">${(linhas.find(l => l.mes === '2026-12') || {}).vagas ?? '—'}</span>
+      <p>Vagas abertas no time em dez/26, já descontadas suas ${cenario.minhas} e a carteira
+         absorvida. É o que o evento encontra pela frente.</p></div>`;
+
+  colunas($('#ch-vagas'), linhas.map(l => ({ rot: rotMes(l.mes), n: l.vagas })),
+    cap * consultores.length, 'var(--s1)');
+
+  tabela($('#tb-vagas'), [
+    { lab: 'Mês', render: r => `<b>${rotMes(r.mes)}</b>` },
+    { lab: 'Terminam', num: true, k: 'terminam' },
+    { lab: 'Carteira do time', num: true, k: 'carteira' },
+    { lab: 'Capacidade', num: true, k: 'capacidade' },
+    { lab: 'Vagas abertas', num: true, render: r => `<b>${r.vagas}</b>` },
+    { lab: 'Entram', num: true, render: r => r.entram || '—' },
+    { lab: 'Alocadas', num: true, render: r => r.alocadas || '—' },
+    { lab: 'Sem consultor', num: true, render: r => r.sem_dono
+        ? `<b style="color:var(--crit)">${r.sem_dono}</b>` : '0' },
+  ], linhas);
+
+  /* por consultor */
+  const porCons = consultores.map(c => {
+    const linha = { consultor: c };
+    let ultima = null;
+    meses.forEach(m => {
+      const r = det.find(x => x.consultor === c && x.mes === m);
+      linha[m] = r ? r.terminam_no_mes : 0;
+      if (r) ultima = r.carteira_apos;
+    });
+    const base = resumo.find(r => r.consultor === c) || {};
+    linha._hoje = base.carteira_hoje;
+    linha._fim = (ultima ?? 0) + (c === cenario.destino ? transf : 0);
+    return linha;
+  }).sort((a, b) => b._hoje - a._hoje);
+
+  tabela($('#tb-carteira'), [
+    { lab: 'Consultor', render: r => `<b>${r.consultor}</b>${r.consultor === cenario.destino
+        ? ` <span style="color:var(--ink-3);font-size:11.5px">+${transf} da Ana Elisa</span>` : ''}` },
+    { lab: 'Hoje', num: true, render: r => r._hoje },
+    ...meses.map(m => ({ lab: rotMes(m), num: true,
+      render: r => r[m] ? `<b>${r[m]}</b>` : '<span style="color:var(--ink-3)">·</span>' })),
+    { lab: 'Sobra ao fim', num: true, render: r => r._fim },
+  ], porCons);
 }
 
 /* ---------- Contratos vencendo ---------- */
