@@ -326,10 +326,10 @@ td.wrapok{white-space:normal; min-width:210px}
       <h2>Contratos vencendo</h2>
       <span class="eyebrow" id="contr-n"></span>
     </div>
-    <p class="sec-note">Turma a turma, sem as canceladas, pela data de término <b>declarada</b> na
-      planilha de matrículas. Abas de controle ficam fora — <code>MOONSHOT ELITE</code> é nível de
-      plano, não turma, e 73% das suas alunas já aparecem na turma em que foram vendidas. Esta seção
-      ignora os filtros do topo.</p>
+    <p class="sec-note">Turma a turma, pela data de término <b>declarada</b> na planilha de
+      matrículas. Saem da fila as canceladas e as já encerradas; pendente de pagamento e bloqueada
+      continuam, porque ainda são contrato vivo. Abas de controle ficam fora —
+      <code>MOONSHOT ELITE</code> é nível de plano, não turma. Esta seção ignora os filtros do topo.</p>
     <div class="callouts" id="contr-alerta"></div>
     <div class="chart" id="ch-contratos" style="margin-top:18px"></div>
     <div class="tblwrap" style="margin-top:18px"><table id="tb-contratos"></table></div>
@@ -1197,14 +1197,17 @@ function renderContratos() {
   const turma = (REF.projecao_turma || []);
   const abas = (REF.matriculas_abas || []);
   const total = mes.reduce((s, r) => s + r.nao_canceladas, 0);
+  const ativas = mes.reduce((s, r) => s + (r.ativas || 0), 0);
   const canceladas = mes.reduce((s, r) => s + r.canceladas, 0);
+  const encerradas = mes.reduce((s, r) => s + (r.encerradas || 0), 0);
   const risco = p.reduce((s, r) => s + (r.em_risco_hoje || 0), 0);
   const pico = mes.reduce((a, b) => b.nao_canceladas > a.nao_canceladas ? b : a, mes[0]);
   $('#contr-n').textContent = `${total} contratos na janela`;
 
   $('#contr-alerta').innerHTML = `
-    <div class="callout op"><h4>Contratos terminando na janela</h4><span class="big">${total}</span>
-      <p>Soma das turmas, sem as ${canceladas} canceladas — nelas não há renovação a fazer.</p></div>
+    <div class="callout op"><h4>Na fila de renovação</h4><span class="big">${total}</span>
+      <p>${ativas} com status ativo, mais ${total - ativas} pendentes ou bloqueadas, que ainda são
+         contrato vivo. Fora da conta: ${canceladas} canceladas e ${encerradas} já encerradas.</p></div>
     <div class="callout warn"><h4>Mês de pico</h4><span class="big">${rotMes(pico.mes)}</span>
       <p>${pico.nao_canceladas} contratos terminam no mesmo mês — ${pico.pct}% de toda a
          janela. É uma turma inteira chegando ao fim junta.</p></div>
@@ -1218,9 +1221,11 @@ function renderContratos() {
   const perfil = Object.fromEntries(p.map(r => [r.mes, r]));
   tabela($('#tb-contratos'), [
     { lab: 'Mês', render: r => `<b>${rotMes(r.mes)}</b>` },
-    { lab: 'Terminam', num: true, k: 'nao_canceladas' },
+    { lab: 'Na fila', num: true, render: r => `<b>${r.nao_canceladas}</b>` },
     { lab: '% da janela', num: true, render: r => r.pct + '%' },
+    { lab: 'Ativas', num: true, k: 'ativas' },
     { lab: 'Canceladas (fora)', num: true, k: 'canceladas' },
+    { lab: 'Encerradas (fora)', num: true, k: 'encerradas' },
     { lab: 'Na base do estudo', num: true, render: r => (perfil[r.mes] || {}).na_base_do_estudo ?? '—' },
     { lab: 'Já em risco', num: true, render: r => (perfil[r.mes] || {}).em_risco_hoje ?? '—' },
     { lab: 'Turmas', wrap: true, render: r => turma.filter(t => t.mes === r.mes)

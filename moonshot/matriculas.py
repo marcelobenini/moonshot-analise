@@ -149,13 +149,21 @@ def _status(v):
         return 'sem status'
     if 'cancel' in n:
         return 'cancelado'
+    if 'encerr' in n:          # "ENCERROU PLANO" / "Encerrado": contrato ja terminou
+        return 'encerrado'
     if 'pausad' in n:
         return 'pausado'
+    if 'bloquead' in n:
+        return 'bloqueado'
     if 'pendente' in n:
         return 'pendente de pagamento'
     if n.startswith('ativ'):
         return 'ativo'
     return n[:30]
+
+
+# Status que tiram o contrato da fila de renovacao: ou ja saiu, ou ja acabou.
+STATUS_FORA = {'cancelado', 'encerrado'}
 
 
 def classificar_abas(d, limiar=LIMIAR_SOBREPOSICAO):
@@ -201,7 +209,7 @@ def por_turma(d, classificacao, inicio, meses=18):
     quem renovou aparece na turma antiga e na nova, com dois contratos.
     """
     abas = set(classificacao.loc[classificacao['tipo'] == 'turma', 'aba'])
-    v = d[d['turma'].isin(abas) & (d['status_norm'] != 'cancelado')].copy()
+    v = d[d['turma'].isin(abas) & (~d['status_norm'].isin(STATUS_FORA))].copy()
     v = v.dropna(subset=['termino_efetivo'])
     v['mes'] = v['termino_efetivo'].dt.to_period('M')
     ini = pd.Period(inicio, freq='M')
@@ -214,11 +222,18 @@ def por_turma(d, classificacao, inicio, meses=18):
     total = d[d['turma'].isin(abas)].dropna(subset=['termino_efetivo']).copy()
     total['mes'] = total['termino_efetivo'].dt.to_period('M')
     total = total[(total['mes'] >= ini) & (total['mes'] < ini + meses)]
+    conta = lambda sel: total[sel].groupby('mes').size()
     resumo_mes = pd.DataFrame({
         'no_total': total.groupby('mes').size(),
-        'canceladas': total[total['status_norm'] == 'cancelado'].groupby('mes').size(),
+        'ativas': conta(total['status_norm'] == 'ativo'),
+        'canceladas': conta(total['status_norm'] == 'cancelado'),
+        'encerradas': conta(total['status_norm'] == 'encerrado'),
+        'outros_status': conta(~total['status_norm'].isin(['ativo', 'cancelado', 'encerrado'])),
     }).fillna(0).astype(int)
-    resumo_mes['nao_canceladas'] = resumo_mes['no_total'] - resumo_mes['canceladas']
+    # Fica na fila de renovacao tudo que nao saiu nem acabou — inclui pendente de
+    # pagamento e bloqueado, que ainda sao contrato vivo.
+    resumo_mes['nao_canceladas'] = (resumo_mes['no_total'] - resumo_mes['canceladas']
+                                    - resumo_mes['encerradas'])
     resumo_mes = resumo_mes.reset_index()
     resumo_mes['mes'] = resumo_mes['mes'].astype(str)
     # Mes sem nenhum contrato terminando nao informa nada na tabela; o grafico
@@ -277,7 +292,9 @@ def resumo(d, inicio):
         ('sem data alguma', int((d['termino_fonte'] == 'sem data').sum())),
         ('ativas', int((d['status_norm'] == 'ativo').sum())),
         ('canceladas', int((d['status_norm'] == 'cancelado').sum())),
-        ('pausadas', int((d['status_norm'] == 'pausado').sum())),
+        ('encerradas (plano ja terminou)', int((d['status_norm'] == 'encerrado').sum())),
+        ('outros status', int((~d['status_norm'].isin(
+            ['ativo', 'cancelado', 'encerrado'])).sum())),
         (f'terminam antes de {inicio}', int((mes < ini).sum())),
         (f'terminam de {inicio} em diante', int((mes >= ini).sum())),
         (f'ATIVAS terminando de {inicio} em diante',
@@ -352,7 +369,7 @@ def projecao_detalhada(cruzado, inicio, meses=18, abas_turma=None):
     v = cruzado.dropna(subset=['termino_efetivo']).copy()
     if abas_turma is not None:
         v = v[v['turma'].isin(abas_turma)]
-    v = v[v['status_norm'] != 'cancelado']
+    v = v[~v['status_norm'].isin(STATUS_FORA)]
     v['mes'] = v['termino_efetivo'].dt.to_period('M')
     ini = pd.Period(inicio, freq='M')
     v = v[(v['mes'] >= ini) & (v['mes'] < ini + meses)]

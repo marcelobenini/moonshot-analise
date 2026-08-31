@@ -261,41 +261,46 @@ O mapa está no BI, com quatro métricas (alunas, classe A, taxa de risco, fatur
 
 ---
 
-## 6e. Contratos terminando — turma a turma, sem as canceladas
+## 6e. Fila de renovação — turma a turma
 
-Contagem feita aba por aba na planilha de matrículas, retirando as canceladas, pelo mês de término **declarado**. **604 contratos terminam de setembro de 2026 em diante.**
+Contagem aba por aba na planilha de matrículas, pelo mês de término **declarado**. Saem da fila as canceladas e as já encerradas ("ENCERROU PLANO"); pendente de pagamento e bloqueada continuam, porque ainda são contrato vivo.
 
-| Mês | Terminam | % | Canceladas (fora) | Turmas |
-|---|---|---|---|---|
-| set/26 | 53 | 8,8% | 8 | SetOut 52, JunJulAgo 1 |
-| out/26 | 5 | 0,8% | 0 | SetOut 5 |
-| **nov/26** | **74** | 12,3% | 8 | Novembro25 73, SetOut 1 |
-| dez/26 | 2 | 0,3% | 3 | Novembro25 2 |
-| **fev/27** | **88** | 14,6% | 2 | Janeiro26 88 |
-| mar/27 | 46 | 7,6% | 6 | Brasília Março26 44, Janeiro26 2 |
-| abr/27 | 15 | 2,5% | 5 | Portugal Abril26 15 |
-| **mai/27** | **205** | **33,9%** | 20 | Alphaville Maio26 177, Curitiba Maio26 28 |
-| ago/27 | 116 | 19,2% | 0 | Alphaville Agosto26 116 |
+**502 contratos na fila de renovação de setembro de 2026 em diante** — 498 ativos e 4 pendentes ou bloqueados.
 
-**Maio de 2027 concentra um terço da carteira** (205 contratos, das turmas de Alphaville e Curitiba de maio/26). Somando agosto/27 (116) e fevereiro/27 (88), **três meses respondem por 68% de tudo**.
+| Mês | Na fila | % | Ativas | Canceladas (fora) | Turmas |
+|---|---|---|---|---|---|
+| set/26 | 45 | 9,0% | 43 | 15 | SetOut 45 |
+| out/26 | 5 | 1,0% | 5 | 0 | SetOut 5 |
+| nov/26 | 54 | 10,8% | 53 | 27 | Novembro25 53, SetOut 1 |
+| dez/26 | 2 | 0,4% | 2 | 3 | Novembro25 2 |
+| fev/27 | 54 | 10,8% | 54 | 35 | Janeiro26 54 |
+| mar/27 | 33 | 6,6% | 33 | 19 | Brasília 31, Janeiro26 2 |
+| abr/27 | 13 | 2,6% | 13 | 7 | Portugal 13 |
+| **mai/27** | **180** | **35,9%** | 180 | 45 | Alphaville 152, Curitiba 28 |
+| ago/27 | 116 | 23,1% | 115 | 0 | Alphaville Agosto26 116 |
 
-Os dois primeiros meses são o contraste: setembro tem 53 e outubro apenas 5. É a janela para montar o processo antes de novembro.
+**Maio de 2027 concentra 36% da fila** (180 contratos). Com agosto/27 (116), dois meses respondem por 59% de tudo. Setembro tem 45 e outubro apenas 5 — é a folga para montar o processo antes de novembro.
 
-**62 dos 604 já estão hoje sem contato ou pedindo saída**, segundo o relato dos consultores. Fevereiro/27 é o mais exposto: 18 dos 88.
+**49 dos 502 já estão hoje sem contato ou pedindo saída** segundo o relato dos consultores. Fevereiro/27 é o mais exposto: 12 dos 54.
 
-### Três abas ficaram fora da conta, e por quê
+### A carteira encolheu 17% entre as duas versões da planilha
 
-- **`MOONSHOT ELITE`** — não é turma, é nível de plano. **73% das suas 45 alunas já aparecem na turma em que foram vendidas**; contá-la somaria a mesma pessoa duas vezes, em meses diferentes.
-- **`Alunas antigas`** — 35 linhas, nenhuma com data de término.
-- **`CANCELAMENTOS`** — aba de controle de saídas.
+A versão anterior indicava 604 na fila; a atualizada indica **502**. A diferença não é método — é churn que foi registrado no intervalo:
 
-A regra de exclusão é do próprio dado: se mais da metade das alunas de uma aba também aparece em outras, aquela aba é recorte e não turma.
+| Mês | Antes | Agora | Δ |
+|---|---|---|---|
+| set/26 | 53 | 45 | −8 |
+| nov/26 | 74 | 54 | **−20** |
+| fev/27 | 88 | 54 | **−34** |
+| mar/27 | 46 | 33 | −13 |
+| mai/27 | 205 | 180 | −25 |
+| ago/27 | 116 | 116 | 0 |
 
-### Quem renovou conta duas vezes, de propósito
+Cancelamentos registrados saltaram de 73 para 174; encerramentos, de 7 para 64.
 
-36 alunas aparecem em mais de uma turma. Nesta contagem elas entram na turma antiga **e** na nova — são dois contratos, e é assim que a renovação se organiza operacionalmente. Uma contagem por pessoa única daria 604 menos essas repetições; a aba `Matriculas_Resumo` traz essa visão alternativa.
+**Fevereiro de 2027 perdeu 39% da turma** e novembro/26, 27%. Agosto/27 não perdeu ninguém — é a turma mais recente, ainda sem tempo de churn. O padrão sugere que **a perda se concentra nos meses seguintes à entrada**, e que as turmas mais antigas na fila já sofreram a maior parte da evasão.
 
-**Atenção:** 3 alunas com pedido de cancelamento registrado ainda constam como ativas na matrícula e estão contadas acima.
+Três abas ficaram fora da conta por não serem turma: `MOONSHOT ELITE` (73% das alunas repetem em outras abas — é nível de plano), `Alunas antigas` (sem datas) e `CANCELAMENTOS` (controle).
 
 ---
 
