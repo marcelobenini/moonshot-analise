@@ -122,9 +122,7 @@ def movimentacao(cart, inicio, meses=12):
     ini = janela[0]
 
     linhas, detalhe = [], []
-    for cons, g in d.groupby('consultor_norm'):
-        origem = g['origem'].iloc[0]
-        destino = {'transferida': g['dono'].iloc[0], 'diluida': DILUIDA}.get(origem, POOL)
+    for (cons, origem, destino), g in d.groupby(['consultor_norm', 'origem', 'dono']):
         v = g['vigencia'].dropna()
         v = v.iloc[0] if len(v) else None
         term = g['termino_efetivo'].dt.to_period('M')
@@ -313,3 +311,113 @@ def simular(cart, carga, inicio, meses=12, entradas=None, meses_contrato=12):
             'consultores_necessarios': -(-total // (cap // int(r['consultores']))),
         })
     return pd.DataFrame(linhas)
+
+
+NAO_CONFIRMADA = '(nao confirmada)'
+
+
+def _casa(nome, lista):
+    """Nome bate com algum da lista: igual, ou dois tokens em comum."""
+    from .consultoria import _chave, _tokens
+    ch, tk = _chave(nome), _tokens(nome)
+    for c2, t2 in lista:
+        if ch == c2:
+            return True
+        if len(tk) >= 2 and len(t2) >= 2 and len(tk & t2) >= 2:
+            return True
+    return False
+
+
+def reconciliar(carteiras, carteiras_reais, entradas=None):
+    """A aba do proprio consultor manda sobre o campo `consultor` da matricula.
+
+    carteiras_reais: {'consultor': [nomes que ele mesmo lista]}. Onde existe
+    essa lista, ela e a autoridade: o consultor sabe quem atende, a planilha
+    de matricula registra quem foi atribuido a ele um dia.
+
+    entradas: {'consultor': {nome: data de entrada}}. Grafia de nome varia
+    ('Elisabete' na aba, 'Elizabeth' na matricula) e sozinha faz o casamento
+    falhar. A data de entrada declarada, quando bate com o inicio do contrato,
+    resolve o caso com um sobrenome so em comum.
+
+    Quem esta na matricula sob o nome dele e nao aparece na aba dele nao
+    evapora: vira `nao_confirmada` e vai para o pool. E aluna real, em turma
+    real, so nao se sabe de quem e. Quem esta na aba e nao tem linha datada na
+    matricula aparece em `sem_linha_datada`: existe, mas o termino nao da
+    para projetar.
+    """
+    from .consultoria import _chave, _tokens
+    d = carteiras.copy()
+    d['confirmada'] = pd.NA
+    relatorio = []
+    for cons, nomes in (carteiras_reais or {}).items():
+        alvo = str(cons).strip().lower()
+        m = d['consultor_norm'].str.strip().str.lower() == alvo
+        if not m.any():
+            continue
+        datas = {_chave(k): pd.Timestamp(v).normalize()
+                 for k, v in ((entradas or {}).get(cons, {}) or {}).items()
+                 if pd.notna(v)}
+        lista = [(_chave(n), _tokens(n), datas.get(_chave(n))) for n in nomes]
+        casados = set()
+
+        def bate(i):
+            ch, tk = _chave(d.at[i, 'nome'] or ''), _tokens(d.at[i, 'nome'] or '')
+            ini = d.at[i, 'inicio'] if 'inicio' in d.columns else pd.NaT
+            for c2, t2, dt in lista:
+                if ch == c2 or (len(tk) >= 2 and len(t2) >= 2 and len(tk & t2) >= 2):
+                    casados.add(c2)
+                    return True
+                # Um sobrenome em comum so vale com a data de entrada batendo.
+                if tk & t2 and dt is not None and pd.notna(ini) \
+                        and abs((pd.Timestamp(ini).normalize() - dt).days) <= 3:
+                    casados.add(c2)
+                    return True
+            return False
+
+        ok = pd.Series({i: bate(i) for i in d.index[m]})
+        d.loc[ok.index, 'confirmada'] = ok
+        relatorio.append({
+            'consultor': cons,
+            'na_matricula': int(m.sum()),
+            'na_aba_do_consultor': len(nomes),
+            'confirmadas_nos_dois': int(ok.sum()),
+            'so_na_matricula': int((~ok).sum()),
+            'sem_linha_datada': len(lista) - len(casados),
+        })
+    nao = d['confirmada'].eq(False)
+    d.loc[nao, 'origem'] = 'nao_confirmada'
+    d.loc[nao, 'dono'] = POOL
+    d.loc[nao, 'vigencia'] = pd.NA
+    return d, pd.DataFrame(relatorio)
+
+
+def redirecionar(carteiras, destinos_por_nome, no_quadro=None):
+    """Aplica o destino declarado aluna a aluna, nao carteira inteira.
+
+    A aba do Daniel registra, em coluna propria, para quem cada aluna dele
+    foi. Isso e melhor que tratar a carteira como diluida: onde o destino
+    esta escrito, ele vale. Quem nao aparece na aba fica diluida mesmo.
+
+    `no_quadro` limita os destinos aceitos. Um destino que tambem saiu do
+    quadro (a aba do Daniel manda alunas para o Marcelo e a Ana Elisa) nao
+    resolve nada: essa aluna vai para o pool, que e onde ela esta de fato.
+    """
+    from .consultoria import _chave, _tokens
+    if not destinos_por_nome:
+        return carteiras
+    pares = [(_chave(n), _tokens(n), dest) for n, dest in destinos_por_nome.items()]
+    d = carteiras.copy()
+    alvo = d['dono'] == DILUIDA
+    for i in d.index[alvo]:
+        ch, tk = _chave(d.at[i, 'nome'] or ''), _tokens(d.at[i, 'nome'] or '')
+        for c2, t2, dest in pares:
+            if ch == c2 or (len(tk) >= 2 and len(t2) >= 2 and len(tk & t2) >= 2):
+                if no_quadro is not None and dest not in no_quadro:
+                    d.at[i, 'dono'] = POOL
+                    d.at[i, 'origem'] = 'pool'
+                else:
+                    d.at[i, 'dono'] = dest
+                    d.at[i, 'origem'] = 'transferida'
+                break
+    return d

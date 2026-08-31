@@ -104,6 +104,15 @@ def aba_regras(cortes_inferencia):
         [['campo', 'regra', 'descricao', 'valor']]], ignore_index=True)
 
 
+# A planilha escreve o mesmo consultor de varias formas. Sem isso, 'Vinicius'
+# da aba do Daniel viraria um oitavo consultor com 3 alunas.
+NOMES_CONSULTOR = {'vinicius': 'Vinícius', 'vinícius': 'Vinícius',
+                   'anameli': 'Anameli', 'anaméli': 'Anameli',
+                   'carol': 'Carol Leão', 'daniela': 'Daniela', 'thiago': 'Thiago',
+                   'hiago': 'Hiago', 'keren': 'Keren', 'andressa': 'Andressa',
+                   'marcelo': 'Marcelo', 'ana elisa': 'Ana Elisa', 'daniel': 'Daniel'}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -123,6 +132,9 @@ def main():
     ap.add_argument('--vigencia-transferencia', default='Ana Elisa=2026-10',
                     help="mes em que cada transferencia passa a valer, no formato "
                          "'quem sai=AAAA-MM'. Sem vigencia, a transferencia ja vale")
+    ap.add_argument('--carteira-da-aba', default='Carol=Carol Leão',
+                    help="consultores cuja aba na planilha de consultorias e a autoridade "
+                         "sobre o campo da matricula, no formato 'aba=consultor'")
     ap.add_argument('--carteiras-diluidas', default='Daniel',
                     help='consultores cuja carteira ja foi redistribuida entre o time '
                          'sem registro de quem ficou com quem')
@@ -227,7 +239,7 @@ def main():
 
     # ---- capacidade das carteiras ---------------------------------------
     cart_resumo = cart_detalhe = cart_carga = cart_sim = pd.DataFrame()
-    mov_resumo = mov_mes = pd.DataFrame()
+    mov_resumo = mov_mes = conf_carteira = pd.DataFrame()
     capacidade = None
     premissas_carteira = {}
     if len(tab_matriculas):
@@ -243,6 +255,31 @@ def main():
         cart = carteira.base_carteiras(tab_matriculas, excluir=excluidos)
         cart = carteira.aplicar_destinos(cart, destinos=destinos, diluidos=diluidos,
                                          vigencia=vigencia)
+        if args.consultorias and os.path.exists(args.consultorias):
+            abas = consultoria.carteiras_por_aba(args.consultorias)
+            # A aba do consultor lista quem ele acompanha; o campo da matricula,
+            # quem foi atribuido a ele um dia. Conferir os dois e barato e mostra
+            # onde o cadastro envelheceu.
+            aut = {nome.strip(): abas.get(aba.strip(), [])
+                   for aba, nome in (x.split('=', 1) for x in args.carteira_da_aba.split(',')
+                                     if '=' in x) if aba.strip() in abas}
+            if aut:
+                ent = consultoria.entradas_por_aba(args.consultorias)
+                cart, conf_carteira = carteira.reconciliar(
+                    cart, aut, {nome: ent.get(aba.strip(), {})
+                                for aba, nome in (x.split('=', 1)
+                                                  for x in args.carteira_da_aba.split(',')
+                                                  if '=' in x)})
+            # A aba do Daniel diz, aluna a aluna, para quem ela foi.
+            for dil in diluidos:
+                dest_ind = consultoria.destinos_declarados(args.consultorias, dil)
+                if dest_ind:
+                    dest_ind = {n: NOMES_CONSULTOR.get(v.strip().lower(), v.strip())
+                                for n, v in dest_ind.items()}
+                    cart = carteira.redirecionar(
+                        cart, dest_ind,
+                        no_quadro=set(cart.loc[~cart['excluido'], 'consultor_norm'])
+                        - {'(sem consultor)'})
         # 13 meses a partir do mes corrente para alcancar agosto/27, que
         # concentra o maior lote de terminos.
         mov_resumo, mov_mes = carteira.movimentacao(cart, desde, 13)
@@ -377,6 +414,7 @@ def main():
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
         'Carteira_Resumo': cart_resumo,
+        'Carteira_Conferencia': conf_carteira,
         'Carteira_Movimentacao': mov_resumo,
         'Carteira_Movimentacao_Mes': mov_mes,
         'Carteira_Mes_a_Mes': cart_detalhe,
@@ -444,6 +482,7 @@ def main():
                                   'carteira_detalhe': cart_detalhe,
                                   'carteira_carga': cart_carga,
                                   'carteira_simulacao': cart_sim,
+                                  'carteira_conferencia': conf_carteira,
                                   'carteira_movimentacao': mov_resumo,
                                   'carteira_movimentacao_mes': mov_mes,
                                   'capacidade': capacidade,

@@ -356,3 +356,71 @@ def confronto_faturamento(base):
          'valor': int((mudou['fat_razao'] <= 0.5).sum()), 'leitura': ''},
     ]
     return pd.DataFrame(linhas)
+
+
+def carteiras_por_aba(caminho, abas=None, ignorar=('Relatório Felipe',)):
+    """Quem cada consultor diz atender, aba por aba.
+
+    O campo `consultor` da matricula registra quem foi atribuido um dia; a aba
+    registra quem ele acompanha hoje. Onde os dois discordam, a aba ganha.
+    `ignorar` tira abas que sao relatorio, nao carteira — elas repetem nomes
+    de outras abas e inflariam a conta.
+    """
+    d = carregar(caminho)
+    fora = {str(x).strip().lower() for x in ignorar}
+    d = d[~d['aba'].str.strip().str.lower().isin(fora)]
+    if abas is not None:
+        alvo = {str(x).strip().lower() for x in abas}
+        d = d[d['aba'].str.strip().str.lower().isin(alvo)]
+    return {ab.strip(): g['nome_consultoria'].dropna().tolist()
+            for ab, g in d.groupby('aba')}
+
+
+def destinos_declarados(caminho, aba):
+    """Para quem cada aluna de uma aba foi, quando a aba registra o destino.
+
+    A aba do Daniel tem uma coluna de consultor por linha: e o registro de
+    quem ficou com quem, que nao existe em lugar nenhum da matricula.
+    """
+    x = pd.ExcelFile(caminho)
+    if aba not in x.sheet_names:
+        return {}
+    d = x.parse(aba, header=None)
+    lin = _localizar_cabecalho(d)
+    if lin is None:
+        return {}
+    cab = [_cab(v) for v in d.iloc[lin]]
+    try:
+        c_nome = cab.index('aluna')
+        c_dest = cab.index('consultor')
+    except ValueError:
+        return {}
+    corpo = d.iloc[lin + 1:]
+    saida = {}
+    for _, r in corpo.iterrows():
+        nome, dest = r.iloc[c_nome], r.iloc[c_dest]
+        if pd.isna(nome) or pd.isna(dest):
+            continue
+        nome, dest = str(nome).strip(), str(dest).strip()
+        if len(nome) < 3 or len(dest) < 3 or _cab(dest) == 'consultor':
+            continue
+        saida[nome] = dest
+    return saida
+
+
+def entradas_por_aba(caminho, ignorar=('Relatório Felipe',)):
+    """Data de entrada declarada por aluna, aba por aba.
+
+    Serve de desempate no casamento de nomes: a grafia varia entre as duas
+    planilhas, a data de entrada nao.
+    """
+    d = carregar(caminho)
+    fora = {str(x).strip().lower() for x in ignorar}
+    d = d[~d['aba'].str.strip().str.lower().isin(fora)]
+    saida = {}
+    for ab, g in d.groupby('aba'):
+        m = {r['nome_consultoria']: r['entrada'] for _, r in g.iterrows()
+             if pd.notna(r.get('nome_consultoria')) and pd.notna(r.get('entrada'))}
+        if m:
+            saida[ab.strip()] = m
+    return saida

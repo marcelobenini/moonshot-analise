@@ -306,19 +306,38 @@ Três abas ficaram fora da conta por não serem turma: `MOONSHOT ELITE` (73% das
 
 ## 6f. Carteiras: quando abre vaga e se precisa de júnior
 
-Cruzamento entre **consultor estratégico** e **data de término** na planilha de matrículas. Quatro carteiras saem do quadro, e nenhuma delas some da conta — cada uma tem um destino declarado por você:
+### O campo `consultor` da matrícula não é confiável
 
-| Sai | Alunas | Destino | Situação |
-|---|---|---|---|
-| Ana Elisa | 54 | **Vinícius** | transferência definida |
-| Carol Leão | 13 | **Thiago** | transferência definida |
-| Daniel | 41 | o time | já redistribuída, sem registro de quem ficou com quem |
-| Marcelo | 46 | a definir | pool |
-| (sem consultor) | 39 | a definir | pool |
+A Carol conferiu: a carteira dela tem **7 alunas**, não 13. Confrontando a aba dela na planilha de consultorias contra o cadastro de matrículas:
 
-**Correção de uma conta anterior:** as "46 suas a redistribuir" e a carteira do Marcelo são a mesma coisa. Antes elas entravam duas vezes — uma como carteira órfã, outra como entrada nova de setembro. Agora entram uma vez só, no pool.
+| | |
+|---|---|
+| A matrícula atribui a ela | 13 |
+| A aba dela lista | 7 |
+| Batem nas duas | **5** |
+| Só no cadastro | **8** |
+| Só na aba, sem linha datada na matrícula | 2 |
 
-**As 41 do Daniel entram como carga do time, não de uma pessoa.** Sei que foram absorvidas; não sei por quem. Atribuir um dono aqui seria inventar dado, então elas pesam no total e não aparecem em nenhuma linha individual.
+As 8 que só existem no cadastro são alunas reais, em turmas reais — 3 pendentes de pagamento na JunJulAgo, 4 ativas na PC-Alphaville SetOut e 1 na Janeiro26. Elas existem; só não são da Carol. **Foram para o pool**, porque o dono é desconhecido, não porque sumiram.
+
+As 2 da aba sem linha datada são **Priscilla Duprat** (só em "Alunas antigas", sem datas) e **Elaine Cavalcante** (linha da Janeiro26 marcada como CANCELADO, mas ela segue em atendimento). Ambas existem e a data de término não dá para projetar.
+
+**Isso não é um problema só da Carol.** Confrontando cada consultor contra a própria aba, a concordância fica entre 65% e 87% — e a Carol, o único caso que você verificou diretamente, é o pior (38%). Não apliquei a correção aos outros porque as abas deles misturam Pró e Club e o cadastro é só Club: a diferença pode ser real ou pode ser recorte. **Se a taxa da Carol valer para os demais, todas as carteiras individuais deste relatório estão infladas.** Vale conferir com dois ou três consultores antes de decidir contratação em cima destes números.
+
+### O destino das alunas do Daniel estava escrito, e eu não tinha lido
+
+A aba do Daniel tem uma coluna de consultor por linha — é o registro de quem ficou com quem, que não existe em lugar nenhum da matrícula. Das 41:
+
+| Destino | Alunas |
+|---|---|
+| Anaméli | 10 |
+| Hiago | 3 |
+| Andressa | 3 |
+| Vinícius | 2 |
+| Thiago | 1 |
+| Keren | 1 |
+| Pool (destino era Marcelo ou Ana Elisa, que também saem) | 2 |
+| Sem registro na aba — seguem diluídas | **19** |
 
 ### As transferências têm data, e a data muda o número
 

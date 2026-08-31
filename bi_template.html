@@ -348,7 +348,8 @@ td.wrapok{white-space:normal; min-width:210px}
       pool à espera de dono — junto das linhas sem consultor na planilha. A carteira da Ana Elisa
       só vira em out/26, depois de o Vinícius perder 22 das dele em setembro: a substituição
       aparece no mês certo, não como soma imediata. Os campos abaixo são premissas suas; os
-      destinos e as datas não, esses são dado.</p>
+      destinos e as datas não, esses são dado. Onde a aba do próprio consultor está disponível,
+      ela manda sobre o campo da matrícula: quem o consultor não lista vai para o pool.</p>
 
     <div class="calc">
       <div class="calc-head">
@@ -362,6 +363,7 @@ td.wrapok{white-space:normal; min-width:210px}
     </div>
 
     <div class="callouts" id="cart-orfas" style="margin-top:18px"></div>
+    <div class="callouts" id="cart-confer" style="margin-top:12px" hidden></div>
     <div class="callouts" id="cart-veredito" style="margin-top:12px"></div>
 
     <h3 style="font-size:16px; margin:28px 0 0">Carga do time, mês a mês</h3>
@@ -1238,6 +1240,7 @@ function renderCarteira() {
   const carga = (REF.carteira_carga || []);
   const sim = (REF.carteira_simulacao || []);
   const mov = (REF.carteira_movimentacao || []);
+  const conf = (REF.carteira_conferencia || []);
   const prem = REF.premissas_carteira || {};
   if (!resumo.length || !carga.length) { $('#sec-carteira').hidden = true; return; }
   if (cenario.capacidade == null) cenario.capacidade = prem.capacidade || META.capacidade_carteira || 46;
@@ -1309,10 +1312,21 @@ function renderCarteira() {
       <p>${pool0.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ')}. São alunas ativas
          hoje que precisam de consultor — não é demanda futura, é carga presente.</p></div>
     <div class="callout warn"><h4>Já diluída no time</h4><span class="big">${nDil}</span>
-      <p>${dil.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ')}. Foram redistribuídas
-         sem registro de quem ficou com quem: entram na carga do time, não na de uma pessoa.
-         ${vencidas ? `Outras <b>${vencidas}</b> em toda a movimentação têm data de término já
-         vencida com status ainda ativo — ou a planilha está velha, ou renovaram.` : ''}</p></div>`;
+      <p>${dil.map(m => `${m.consultor_saindo} (${m.alunas})`).join(', ') || '—'}. Sem registro de
+         quem ficou com quem: entram na carga do time, não na de uma pessoa. As demais têm destino
+         escrito, aluna a aluna, na aba de quem saiu.</p></div>`;
+
+  if (conf.length) {
+    $('#cart-confer').innerHTML = `
+      <div class="callout gap"><h4>O cadastro discorda do consultor</h4>
+        <span class="big">${conf.reduce((s, r) => s + r.so_na_matricula, 0)}</span>
+        <p>${conf.map(r => `<b>${r.consultor}</b>: a matrícula atribui ${r.na_matricula}, a aba
+           dela lista ${r.na_aba_do_consultor}; batem ${r.confirmadas_nos_dois}`).join('. ')}.
+           As que só existem no cadastro foram para o pool — são alunas reais, em turmas reais,
+           de dono desconhecido. ${conf.reduce((s, r) => s + r.sem_linha_datada, 0)} da aba não têm
+           linha datada na matrícula: existem, mas o término não dá para projetar.</p></div>`;
+    $('#cart-confer').hidden = false;
+  }
 
   /* veredito */
   const faltam = Math.ceil(hoje.total / cap) - nCons;
