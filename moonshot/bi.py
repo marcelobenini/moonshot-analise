@@ -8,6 +8,7 @@ import json
 import numpy as np
 import pandas as pd
 
+from .matriculas import ROTULO_SITUACAO
 from .taxonomia import (DEFINICOES, FRENTES_PRODUTO, FRENTES_ROTULO, ROTULOS_DOR,
                         ROTULOS_TEMA, TEMAS_LATENTES)
 
@@ -56,6 +57,7 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
               'justificativa_inferencia', 'processos_mapeados', 'usa_sistema_gestao',
               'faz_trafego', 'usa_crm', 'usa_ia_automacao', 'fat_por_pessoa',
               'tem_acompanhamento', 'consultor', 'programa', 'engajamento', 'em_risco',
+              'situacao_contrato', 'status_cadastro', 'turma_matricula',
               'resultado_relatado', 'consultorias_feitas', 'fat_mes_consultor', 'fat_delta',
               'fat_razao', 'fat_confirmado_igual',
               'sinal_quer_aprender', 'sinal_expansao', 'sinal_produto', 'ja_vende_produto',
@@ -101,6 +103,7 @@ def exportar(base, rank, div_tab, div_resumo, eq_tab, fat_tab, fat_prod,
             'quadrantes': {k: {'rotulo': v[0], 'definicao': v[1]} for k, v in QUADRANTES.items()},
             'rotulos_engajamento': ROTULO_ENGAJAMENTO,
             'capacidade_carteira': _limpo(extras.get('capacidade')) if extras else None,
+            'rotulos_situacao': ROTULO_SITUACAO,
         },
         'alunas': linhas,
         'referencia': {

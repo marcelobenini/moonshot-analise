@@ -227,6 +227,16 @@ Outras limitações:
 
 Esse último ponto é o mais importante: **se metade renovar, metade do alívio projetado para maio/27 não existe** — e aí o excedente de hoje não é um pico, é o novo normal.
 
+## 25b. A situação de contrato mistura duas fontes de propósito
+
+O filtro de situação combina o cadastro de matrículas com o relato livre do consultor, e as duas fontes discordam com frequência. A regra está escrita para poder ser contestada:
+
+- **Cancelada** (99) e **Finalizou o programa** (46) vêm só do cadastro. São registro, não leitura.
+- **Em processo de cancelamento** (55) é interpretação: contrato vivo no cadastro, mas ou inadimplente (pendente de pagamento, bloqueado — 7 casos) ou com pedido de saída / ausência de contato relatados pelo consultor (48). **Não é um campo de nenhuma planilha.** Se o consultor não escreveu nada, a aluna não entra aqui mesmo que esteja saindo.
+- **Sem matrícula localizada** (203, 29% do radar) não significa que a aluna saiu. Significa que ela não foi encontrada no cadastro do Club — a maioria é do Pró, e parte é nome que não casou entre as planilhas. **Não trate esse grupo como perda.**
+
+Quando uma aluna tem várias linhas de matrícula (reentrou numa turma nova, está em turma e no Elite), vale a mais viva: ativo > pendente > bloqueado > encerrado > cancelado. Quem cancelou em 2025 e voltou em 2026 conta como ativa.
+
 ## 26. Dados pessoais
 
 As abas do relatório contêm nome, e-mail, telefone e empresa de 708 pessoas. O arquivo Excel e a base bruta estão fora do versionamento. Para gerar uma versão circulável sem identificação: `python3 pipeline.py --sem-nomes` — vale para o Excel, o JSON e o BI.

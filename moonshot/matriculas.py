@@ -386,3 +386,80 @@ def projecao_detalhada(cruzado, inicio, meses=18, abas_turma=None):
     g['mes'] = g['mes'].astype(str)
     g['pct_do_total'] = (100 * g['nao_canceladas'] / len(v)).round(1)
     return g
+
+
+# Precedencia: uma aluna pode ter varias linhas de matricula (reentrou numa
+# turma nova, esta em turma e no Elite). Quem cancelou em 2025 e voltou em 2026
+# e aluna ativa; o inverso nao vale.
+_ORDEM_STATUS = ['ativo', 'pendente de pagamento', 'bloqueado', 'encerrado', 'cancelado']
+
+ROTULO_SITUACAO = {
+    'ativa': 'Ativa',
+    'em_cancelamento': 'Em processo de cancelamento',
+    'finalizada': 'Finalizou o programa',
+    'cancelada': 'Cancelada',
+    'sem_matricula': 'Sem matrícula localizada',
+}
+
+
+def situacao_por_aluna(matriculas, base, casar_fn):
+    """Situacao de contrato de cada aluna do estudo, das duas fontes.
+
+    `status_cadastro` e o que a planilha de matriculas declara. `sinal_consultor`
+    e o que o consultor relatou em texto livre. Os dois ficam em colunas
+    separadas de proposito: um e registro, o outro e leitura de quem acompanha,
+    e eles discordam com frequencia.
+
+    `situacao_contrato` combina os dois com uma regra explicita:
+
+    - cancelada: o cadastro diz cancelado
+    - finalizada: o cadastro diz encerrado / encerrou plano
+    - em_cancelamento: contrato vivo no cadastro, mas ou esta inadimplente
+      (pendente de pagamento, bloqueado) ou o consultor relatou pedido de saida
+      ou ausencia de contato. Nao e cancelamento; e o caminho ate ele.
+    - ativa: contrato vivo e sem sinal de saida
+    - sem_matricula: nao encontrada no cadastro. Nao quer dizer que saiu —
+      quer dizer que e do Pro, ou que o nome nao casou.
+    """
+    d = matriculas.rename(columns={'nome': 'nome_consultoria'})
+    d = casar_fn(d, base)
+    d = d.dropna(subset=['id_aluna'])
+    if not len(d):
+        return pd.DataFrame(columns=['id_aluna', 'status_cadastro', 'situacao_contrato'])
+    ordem = {s: i for i, s in enumerate(_ORDEM_STATUS)}
+    d['_ord'] = d['status_norm'].map(ordem).fillna(len(ordem))
+    melhor = d.sort_values('_ord').groupby('id_aluna').first()
+
+    sinal = base.set_index('id_aluna')['engajamento'] if 'engajamento' in base.columns \
+        else pd.Series(dtype=object)
+    saida = {'risco_saida', 'sem_contato'}
+    linhas = []
+    for ident, r in melhor.iterrows():
+        st = r['status_norm']
+        eng = sinal.get(ident) if len(sinal) else None
+        if st == 'cancelado':
+            sit = 'cancelada'
+        elif st == 'encerrado':
+            sit = 'finalizada'
+        elif st in ('pendente de pagamento', 'bloqueado') or (eng in saida):
+            sit = 'em_cancelamento'
+        else:
+            sit = 'ativa'
+        linhas.append({'id_aluna': ident, 'status_cadastro': st,
+                       'sinal_consultor': eng, 'situacao_contrato': sit,
+                       'turma_matricula': r.get('turma')})
+    return pd.DataFrame(linhas)
+
+
+def tabela_situacao(base):
+    """Quantas alunas do estudo em cada situacao, e o que elas valem."""
+    d = base.copy()
+    d['situacao_contrato'] = d['situacao_contrato'].fillna('sem_matricula')
+    g = d.groupby('situacao_contrato').agg(
+        alunas=('id_aluna', 'size'),
+        classe_A=('classe', lambda s: int((s == 'A').sum())),
+        score_mediano=('score_oportunidade', 'median'),
+        fat_mediano=('fat_brl', 'median')).reset_index()
+    g['pct'] = (100 * g['alunas'] / len(d)).round(1)
+    g['rotulo'] = g['situacao_contrato'].map(ROTULO_SITUACAO)
+    return g.sort_values('alunas', ascending=False)

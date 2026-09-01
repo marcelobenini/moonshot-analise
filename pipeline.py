@@ -245,7 +245,7 @@ def main():
     # Quando esta planilha existe ela manda: o termino e declarado, nao inferido.
     # A projecao a partir do controle de consultorias fica so como conferencia.
     tab_matriculas = proj_matriculas = res_matriculas = pd.DataFrame()
-    class_abas = proj_mes = proj_turma = pd.DataFrame()
+    class_abas = proj_mes = proj_turma = tab_situacao = pd.DataFrame()
     ped_cancel = conf_cancel = divg_cancel = pd.DataFrame()
     desde = args.projecao_desde or datetime.now().strftime('%Y-%m')
     if args.matriculas and os.path.exists(args.matriculas):
@@ -256,6 +256,14 @@ def main():
         ped_cancel = matriculas.pedidos_cancelamento(args.matriculas)
         conf_cancel, divg_cancel = matriculas.conferir_cancelamentos(tab_matriculas, ped_cancel)
         cruz_m = matriculas.cruzar_com_base(tab_matriculas, base, consultoria.casar)
+        # Situacao de contrato: cadastro e relato do consultor, em colunas
+        # separadas, mais a combinacao dos dois numa regra explicita.
+        sit = matriculas.situacao_por_aluna(tab_matriculas, base, consultoria.casar)
+        if len(sit):
+            base = base.merge(sit, on='id_aluna', how='left')
+        base['situacao_contrato'] = base.get(
+            'situacao_contrato', pd.Series(index=base.index, dtype=object)).fillna('sem_matricula')
+        tab_situacao = matriculas.tabela_situacao(base)
         proj_matriculas = matriculas.projecao_detalhada(cruz_m, desde, abas_turma=abas_turma)
         res_matriculas = matriculas.resumo(matriculas.deduplicar(tab_matriculas), desde)
         print(f'Matriculas: {len(tab_matriculas)} linhas em {len(class_abas)} abas '
@@ -455,6 +463,7 @@ def main():
         'Divergencia_Resumo': div_resumo,
         'Clustering': rel_cluster,
         'Carteira_Resumo': cart_resumo,
+        'Situacao_Contrato': tab_situacao,
         'Carteira_Conferencia': conf_carteira,
         'Carteira_Saidas': cart_saidas,
         'Carteira_Remanejamento': plano_rem,
@@ -527,6 +536,7 @@ def main():
                                   'carteira_detalhe': cart_detalhe,
                                   'carteira_carga': cart_carga,
                                   'carteira_simulacao': cart_sim,
+                                  'situacao_contrato': tab_situacao,
                                   'carteira_conferencia': conf_carteira,
                                   'carteira_saidas': cart_saidas,
                                   'carteira_remanejamento': plano_rem,

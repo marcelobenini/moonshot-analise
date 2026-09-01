@@ -291,7 +291,16 @@ td.wrapok{white-space:normal; min-width:210px}
     <p class="foot">Ordenado por quantas alunas citam a dor de algum modo. A porcentagem à direita é a
       fatia latente — quanto da menção só existe porque a pergunta sugeriu o tema.</p>
 
-    <h3 style="font-size:16px; margin:30px 0 0">Bolsões por linha de negócio do grupo NB</h3>
+    <h3 style="font-size:16px; margin:32px 0 0">Situação do contrato de quem está no radar</h3>
+    <p class="sec-note">Nem toda oportunidade é aluna ativa. O cadastro de matrículas diz o estado do
+      contrato; o relato do consultor diz o que ele vê. As duas fontes ficam em colunas separadas
+      porque discordam com frequência — <b>em processo de cancelamento</b> é leitura combinada:
+      contrato vivo, mas inadimplente ou com pedido de saída relatado. O filtro no topo da página
+      recorta toda a análise por esses estados.</p>
+    <div class="callouts" id="sit-callouts"></div>
+    <div class="tblwrap" style="margin-top:16px"><table id="tb-situacao"></table></div>
+
+    <h3 style="font-size:16px; margin:32px 0 0">Bolsões por linha de negócio do grupo NB</h3>
     <p class="sec-note">O formulário <b>nunca perguntou</b> sobre curso, clínica, franquia ou produto.
       Cada bolsão abaixo é qualificado por sinais indiretos, e a regra está escrita no próprio cartão
       para você contestar. Não é demanda declarada — é público elegível.</p>
@@ -512,6 +521,9 @@ const FILTROS = [
   { id: 'consultor', lab: 'Consultor', campo: 'consultor' },
   { id: 'engajamento', lab: 'Engajamento', campo: 'engajamento',
     rot: v => (META.rotulos_engajamento || {})[v] || v },
+  { id: 'situacao', lab: 'Situação do contrato', campo: 'situacao_contrato',
+    ordem: ['ativa', 'em_cancelamento', 'cancelada', 'finalizada', 'sem_matricula'],
+    rot: v => (META.rotulos_situacao || {})[v] || v },
 ];
 const estado = { painel: 'esp', metricaMapa: 'alunas',
                  ordenar: 'score_oportunidade', desc: true };
@@ -1002,8 +1014,58 @@ const SERIES_Q = [
 const premissas = {};
 Object.keys(META.linhas_nb).forEach(k => premissas[k] = { ticket: '', conv: '' });
 
+const ORDEM_SIT = ['ativa', 'em_cancelamento', 'cancelada', 'finalizada', 'sem_matricula'];
+
+function renderSituacao(f) {
+  const rot = META.rotulos_situacao || {};
+  const med = xs => { if (!xs.length) return null;
+    const v = xs.slice().sort((a, b) => a - b); const m = v.length >> 1;
+    return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
+  const linhas = ORDEM_SIT.map(k => {
+    const g = f.filter(a => a.situacao_contrato === k);
+    return { k, rotulo: rot[k] || k, alunas: g.length,
+             pct: f.length ? 100 * g.length / f.length : 0,
+             classeA: g.filter(a => a.classe === 'A').length,
+             score: med(g.map(a => a.score_oportunidade).filter(v => v != null)),
+             fat: med(g.map(a => a.fat_brl).filter(v => v != null)) };
+  }).filter(r => r.alunas);
+  if (!linhas.length) { $('#sit-callouts').innerHTML = ''; $('#tb-situacao').innerHTML = ''; return; }
+
+  const de = k => linhas.find(r => r.k === k) || { alunas: 0, classeA: 0, score: null };
+  const canc = de('cancelada'), proc = de('em_cancelamento'), fim = de('finalizada');
+  const semM = de('sem_matricula');
+  const pctA = r => r.alunas ? Math.round(100 * r.classeA / r.alunas) : 0;
+  $('#sit-callouts').innerHTML = `
+    <div class="callout gap"><h4>Já cancelaram</h4><span class="big">${canc.alunas}</span>
+      <p>Contrato marcado como cancelado no cadastro. ${canc.classeA} são classe A.
+         Continuam no radar porque o negócio delas não deixou de existir — mudou o vínculo.</p></div>
+    <div class="callout warn"><h4>Em processo de cancelamento</h4><span class="big">${proc.alunas}</span>
+      <p>Contrato vivo, mas inadimplente ou com pedido de saída relatado pelo consultor.
+         É leitura combinada das duas fontes, não um campo da planilha.</p></div>
+    <div class="callout op"><h4>Finalizaram o programa</h4><span class="big">${fim.alunas}</span>
+      <p>${pctA(fim)}% delas são classe A, contra ${pctA(de('ativa'))}% entre as ativas${
+        fim.score != null ? `, com score mediano ${fim.score.toFixed(0)}` : ''}.
+         <b>É o grupo mais qualificado do radar</b> — terminaram, têm resultado e não têm contrato.</p></div>
+    <div class="callout"><h4>Sem matrícula localizada</h4><span class="big">${semM.alunas}</span>
+      <p>Não encontradas no cadastro do Club. Não quer dizer que saíram: a maioria é do Pró, e
+         parte é nome que não casou entre as duas planilhas.</p></div>`;
+
+  tabela($('#tb-situacao'), [
+    { lab: 'Situação', render: r => `<b>${r.rotulo}</b>` },
+    { lab: 'Alunas', num: true, render: r => `<b>${r.alunas}</b>` },
+    { lab: '% do recorte', num: true, render: r =>
+        f.length >= MIN_PCT ? r.pct.toFixed(1) + '%' : '—' },
+    { lab: 'Classe A', num: true, render: r => r.classeA || '—' },
+    { lab: '% classe A', num: true, render: r =>
+        r.alunas >= MIN_PCT ? pctA(r) + '%' : '—' },
+    { lab: 'Score mediano', num: true, render: r => r.score != null ? r.score.toFixed(1) : '—' },
+    { lab: 'Faturamento mediano', num: true, render: r => r.fat != null ? brl(r.fat) : '—' },
+  ], linhas);
+}
+
 function renderOportunidades(f) {
   const n = f.length;
+  renderSituacao(f);
 
   $('#quad-legend').innerHTML = ['confirmada', 'crua', 'latente'].map((q, i) =>
     `<div class="quad" style="border-left-color:${SERIES_Q[i].cor}">
