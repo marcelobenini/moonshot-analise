@@ -21,7 +21,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from moonshot import (analise, bi, carteira, cluster, consultoria, contrato, geo,
+from moonshot import (analise, bi, cancelamento, carteira, cluster, consultoria, contrato, geo,
                       matriculas, oportunidade, produto, score)
 from moonshot.base import DORES, ESCALAS_PRO, unificar
 from moonshot.taxonomia import DEFINICOES, TAXONOMIA
@@ -246,6 +246,7 @@ def main():
     # A projecao a partir do controle de consultorias fica so como conferencia.
     tab_matriculas = proj_matriculas = res_matriculas = pd.DataFrame()
     class_abas = proj_mes = proj_turma = tab_situacao = pd.DataFrame()
+    tab_saida = lista_saida = pd.DataFrame()
     ped_cancel = conf_cancel = divg_cancel = pd.DataFrame()
     desde = args.projecao_desde or datetime.now().strftime('%Y-%m')
     if args.matriculas and os.path.exists(args.matriculas):
@@ -264,6 +265,12 @@ def main():
         base['situacao_contrato'] = base.get(
             'situacao_contrato', pd.Series(index=base.index, dtype=object)).fillna('sem_matricula')
         tab_situacao = matriculas.tabela_situacao(base)
+        # 'Em processo de cancelamento' junta situacoes com acao diferente.
+        # O estagio separa pedido de saida, inadimplencia e sumico, com o
+        # trecho do relato que classificou cada um.
+        base = cancelamento.classificar(base)
+        tab_saida = cancelamento.resumo(base)
+        lista_saida = cancelamento.lista_nominal(base)
         proj_matriculas = matriculas.projecao_detalhada(cruz_m, desde, abas_turma=abas_turma)
         res_matriculas = matriculas.resumo(matriculas.deduplicar(tab_matriculas), desde)
         print(f'Matriculas: {len(tab_matriculas)} linhas em {len(class_abas)} abas '
@@ -464,6 +471,8 @@ def main():
         'Clustering': rel_cluster,
         'Carteira_Resumo': cart_resumo,
         'Situacao_Contrato': tab_situacao,
+        'Estagio_Saida': tab_saida,
+        'Saindo_Nominal': lista_saida,
         'Carteira_Conferencia': conf_carteira,
         'Carteira_Saidas': cart_saidas,
         'Carteira_Remanejamento': plano_rem,
@@ -537,6 +546,7 @@ def main():
                                   'carteira_carga': cart_carga,
                                   'carteira_simulacao': cart_sim,
                                   'situacao_contrato': tab_situacao,
+                                  'estagio_saida': tab_saida,
                                   'carteira_conferencia': conf_carteira,
                                   'carteira_saidas': cart_saidas,
                                   'carteira_remanejamento': plano_rem,

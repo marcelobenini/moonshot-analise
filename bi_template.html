@@ -300,6 +300,16 @@ td.wrapok{white-space:normal; min-width:210px}
     <div class="callouts" id="sit-callouts"></div>
     <div class="tblwrap" style="margin-top:16px"><table id="tb-situacao"></table></div>
 
+    <h3 style="font-size:16px; margin:32px 0 0">Quem está saindo, nome a nome</h3>
+    <p class="sec-note">"Em processo de cancelamento" juntava três situações com ação diferente:
+      quem pediu para sair, quem parou de pagar e quem só sumiu. Aqui elas ficam separadas, cada
+      uma com <b>o trecho literal do relato do consultor</b> que a classificou — para você
+      contestar caso a caso. Quando o relato conta a história inteira ("pediu, voltou atrás, pediu
+      de novo"), vale o último sinal.</p>
+    <div class="tblwrap"><table id="tb-saindo"></table></div>
+    <p class="foot">Ordenado por estágio e depois por score. Só contrato vivo: quem já cancelou ou
+      já finalizou não aparece aqui.</p>
+
     <h3 style="font-size:16px; margin:32px 0 0">Bolsões por linha de negócio do grupo NB</h3>
     <p class="sec-note">O formulário <b>nunca perguntou</b> sobre curso, clínica, franquia ou produto.
       Cada bolsão abaixo é qualificado por sinais indiretos, e a regra está escrita no próprio cartão
@@ -521,6 +531,9 @@ const FILTROS = [
   { id: 'consultor', lab: 'Consultor', campo: 'consultor' },
   { id: 'engajamento', lab: 'Engajamento', campo: 'engajamento',
     rot: v => (META.rotulos_engajamento || {})[v] || v },
+  { id: 'estagio', lab: 'Estágio de saída', campo: 'estagio_saida',
+    ordem: ['pedido_de_saida', 'inadimplente', 'sem_contato', 'risco_revertido', 'saiu_do_elite'],
+    rot: v => (META.rotulos_estagio_saida || {})[v] || v },
   { id: 'situacao', lab: 'Situação do contrato', campo: 'situacao_contrato',
     ordem: ['ativa', 'em_cancelamento', 'cancelada', 'finalizada', 'sem_matricula'],
     rot: v => (META.rotulos_situacao || {})[v] || v },
@@ -1015,6 +1028,8 @@ const premissas = {};
 Object.keys(META.linhas_nb).forEach(k => premissas[k] = { ticket: '', conv: '' });
 
 const ORDEM_SIT = ['ativa', 'em_cancelamento', 'cancelada', 'finalizada', 'sem_matricula'];
+const ORDEM_SAIDA = ['pedido_de_saida', 'inadimplente', 'sem_contato',
+                     'risco_revertido', 'saiu_do_elite'];
 
 function renderSituacao(f) {
   const rot = META.rotulos_situacao || {};
@@ -1040,8 +1055,11 @@ function renderSituacao(f) {
       <p>Contrato marcado como cancelado no cadastro. ${canc.classeA} são classe A.
          Continuam no radar porque o negócio delas não deixou de existir — mudou o vínculo.</p></div>
     <div class="callout warn"><h4>Em processo de cancelamento</h4><span class="big">${proc.alunas}</span>
-      <p>Contrato vivo, mas inadimplente ou com pedido de saída relatado pelo consultor.
-         É leitura combinada das duas fontes, não um campo da planilha.</p></div>
+      <p>Contrato vivo, mas inadimplente ou com pedido de saída relatado. Destes,
+         <b>${f.filter(a => a.estagio_saida === 'pedido_de_saida').length} pediram para sair</b>,
+         ${f.filter(a => a.estagio_saida === 'inadimplente').length} estão inadimplentes e
+         ${f.filter(a => a.estagio_saida === 'sem_contato').length} só sumiram — situações com
+         ação diferente, separadas na tabela abaixo.</p></div>
     <div class="callout op"><h4>Finalizaram o programa</h4><span class="big">${fim.alunas}</span>
       <p>${pctA(fim)}% delas são classe A, contra ${pctA(de('ativa'))}% entre as ativas${
         fim.score != null ? `, com score mediano ${fim.score.toFixed(0)}` : ''}.
@@ -1049,6 +1067,28 @@ function renderSituacao(f) {
     <div class="callout"><h4>Sem matrícula localizada</h4><span class="big">${semM.alunas}</span>
       <p>Não encontradas no cadastro do Club. Não quer dizer que saíram: a maioria é do Pró, e
          parte é nome que não casou entre as duas planilhas.</p></div>`;
+
+  const saindo = f.filter(a => a.estagio_saida)
+    .sort((a, b) => (ORDEM_SAIDA.indexOf(a.estagio_saida) - ORDEM_SAIDA.indexOf(b.estagio_saida))
+      || (b.score_oportunidade ?? -1) - (a.score_oportunidade ?? -1));
+  const rotE = META.rotulos_estagio_saida || {};
+  const CORES_SAIDA = { pedido_de_saida: 'var(--crit)', inadimplente: 'var(--warn)',
+                        sem_contato: 'var(--s2)', risco_revertido: 'var(--good)',
+                        saiu_do_elite: 'var(--ink-2)' };
+  tabela($('#tb-saindo'), [
+    { lab: 'Aluna', render: a => `<b>${a.nome || '—'}</b>${a.empresa
+        ? `<br><span style="color:var(--ink-3);font-size:11.5px">${a.empresa}</span>` : ''}` },
+    { lab: 'Consultor', render: a => a.consultor || '—' },
+    { lab: 'Estágio', render: a => `<b style="color:${CORES_SAIDA[a.estagio_saida] || 'var(--ink)'}">${
+        rotE[a.estagio_saida] || a.estagio_saida}</b>` },
+    { lab: 'O que o consultor escreveu', render: a => a.evidencia_saida
+        ? `<span style="color:var(--ink-2);font-size:12px">${a.evidencia_saida}</span>`
+        : '<span style="color:var(--ink-3)">sem relato — veio do cadastro</span>' },
+    { lab: 'Classe', render: a => a.classe || '—' },
+    { lab: 'Score', num: true, render: a => a.score_oportunidade != null
+        ? a.score_oportunidade.toFixed(1) : '—' },
+    { lab: 'Faturamento', num: true, render: a => brl(a.fat_brl) },
+  ], saindo);
 
   tabela($('#tb-situacao'), [
     { lab: 'Situação', render: r => `<b>${r.rotulo}</b>` },

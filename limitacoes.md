@@ -235,6 +235,18 @@ O filtro de situação combina o cadastro de matrículas com o relato livre do c
 - **Em processo de cancelamento** (55) é interpretação: contrato vivo no cadastro, mas ou inadimplente (pendente de pagamento, bloqueado — 7 casos) ou com pedido de saída / ausência de contato relatados pelo consultor (48). **Não é um campo de nenhuma planilha.** Se o consultor não escreveu nada, a aluna não entra aqui mesmo que esteja saindo.
 - **Sem matrícula localizada** (203, 29% do radar) não significa que a aluna saiu. Significa que ela não foi encontrada no cadastro do Club — a maioria é do Pró, e parte é nome que não casou entre as planilhas. **Não trate esse grupo como perda.**
 
+### O estágio de saída é lido do texto livre, e o texto conta histórias inteiras
+
+As 55 "em processo de cancelamento" foram reabertas em quatro estágios, porque juntavam situações com ação diferente. A classificação sai de expressão regular sobre o relato do consultor, e cada linha carrega o trecho literal que a disparou — a evidência viaja junto do rótulo justamente para poder ser derrubada caso a caso.
+
+Três armadilhas que precisei tratar e que ainda podem morder:
+
+- **O relato narra a sequência inteira numa frase.** "Pediu cancelamento, voltou atrás, pediu de novo" tem os dois sinais. Vale o **último**, não o primeiro. Sem essa regra, 3 pedidos abertos apareciam como revertidos.
+- **"Voltou" nem sempre é voltar para nós.** "Voltou para o CLT porque se separou do marido" tinha sido lido como retenção. Exijo agora "voltou atrás" ou equivalente explícito.
+- **Cancelar o Elite não é cancelar a Moonshot.** Cai o upsell, o contrato base continua. 1 caso está separado como `saiu_do_elite`.
+
+**Quem não tem relato não entra.** Se o consultor não escreveu nada, a aluna não aparece em nenhum estágio, mesmo estando saindo. Dos 17 inadimplentes, só 10 têm evidência textual — os outros 7 vêm do status do cadastro. **Os números são piso, não total.**
+
 Quando uma aluna tem várias linhas de matrícula (reentrou numa turma nova, está em turma e no Elite), vale a mais viva: ativo > pendente > bloqueado > encerrado > cancelado. Quem cancelou em 2025 e voltou em 2026 conta como ativa.
 
 ## 26. Dados pessoais
