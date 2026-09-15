@@ -84,9 +84,15 @@ CREATE TABLE IF NOT EXISTS fato_matricula (
     consultor      TEXT,
     consultor_norm TEXT,
     status      TEXT,
+    status_financeiro TEXT,
+    status_contrato   TEXT,
+    telefone    TEXT,
+    email       TEXT,
     inicio      TEXT,
     termino     TEXT
 );
+-- CPF fica so na camada bruta (`registro`). Ele nao serve para contato e nao
+-- precisa estar numa tabela que se exporta para trabalhar lista.
 
 CREATE TABLE IF NOT EXISTS fato_consultoria (
     id            INTEGER PRIMARY KEY,
@@ -103,6 +109,21 @@ CREATE TABLE IF NOT EXISTS fato_consultoria (
     ramo          TEXT,
     fat_mes       REAL,
     fat_ano       REAL
+);
+
+CREATE TABLE IF NOT EXISTS fato_cancelamento (
+    id           INTEGER PRIMARY KEY,
+    fonte_id     INTEGER NOT NULL REFERENCES fonte(id),
+    pessoa_id    INTEGER REFERENCES pessoa(id),
+    aba          TEXT,
+    solicitante  TEXT,
+    data_pedido  TEXT,
+    prazo        TEXT,
+    motivo       TEXT,
+    observacoes  TEXT,
+    desfecho     TEXT,
+    email        TEXT,
+    contato      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS fato_formulario (
@@ -359,9 +380,13 @@ def ingerir_matriculas(con, caminho, observacao=None):
         pid = resolver_pessoa(con, r.get('nome'), fonte_id, cache)
         con.execute(
             'INSERT INTO fato_matricula (fonte_id, pessoa_id, turma, produto, periodo,'
-            ' consultor, consultor_norm, status, inicio, termino) VALUES (?,?,?,?,?,?,?,?,?,?)',
+            ' consultor, consultor_norm, status, status_financeiro, status_contrato,'
+            ' telefone, email, inicio, termino)'
+            ' VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (fonte_id, pid, r.get('turma'), r.get('produto'), r.get('periodo'),
              r.get('consultor'), consultor_canonico(r.get('consultor')), r.get('status'),
+             _texto(r.get('status_financeiro')), _texto(r.get('status_contrato')),
+             _texto(r.get('telefone')), _texto(r.get('email')),
              _data(r.get('inicio')), _data(r.get('termino_efetivo'))))
     con.execute('UPDATE fonte SET linhas = ? WHERE id = ?', (n, fonte_id))
     con.commit()
@@ -391,6 +416,38 @@ def ingerir_consultorias(con, caminho, observacao=None):
     con.execute('UPDATE fonte SET linhas = ? WHERE id = ?', (n, fonte_id))
     con.commit()
     return fonte_id, n, 'ok'
+
+
+def ingerir_cancelamentos(con, caminho, observacao=None):
+    """Planilha de pedidos de cancelamento, seis abas."""
+    from . import cancelamento_planilha as mod
+    fonte_id, existia = registrar_fonte(con, caminho, 'cancelamentos', observacao)
+    if existia:
+        return fonte_id, 0, 'ja ingerido'
+    d = mod.carregar(caminho)
+    cache = {}
+    n = guardar_bruto(con, fonte_id, d, coluna_nome='nome', cache=cache)
+    for _, r in d.iterrows():
+        pid = resolver_pessoa(con, r.get('nome'), fonte_id, cache)
+        con.execute(
+            'INSERT INTO fato_cancelamento (fonte_id, pessoa_id, aba, solicitante,'
+            ' data_pedido, prazo, motivo, observacoes, desfecho, email, contato)'
+            ' VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+            (fonte_id, pid, r.get('aba'), _texto(r.get('solicitante')),
+             _data(r.get('data_pedido')), _texto(r.get('prazo')), _texto(r.get('motivo')),
+             _texto(r.get('observacoes')), r.get('desfecho'),
+             _texto(r.get('email')), _texto(r.get('contato'))))
+    con.execute('UPDATE fonte SET linhas = ? WHERE id = ?', (n, fonte_id))
+    con.commit()
+    return fonte_id, n, 'ok'
+
+
+def _texto(v):
+    """Celula de planilha vira texto ou None — nunca a string 'nan'."""
+    if v is None or (not isinstance(v, str) and pd.isna(v)):
+        return None
+    s = re.sub(r'\s+', ' ', str(v)).strip()
+    return s or None
 
 
 def ingerir_formulario(con, caminho, origem, observacao=None):
@@ -470,6 +527,7 @@ def _coluna_de_nome(df):
 TIPOS = {
     'matriculas': ingerir_matriculas,
     'consultorias': ingerir_consultorias,
+    'cancelamentos': ingerir_cancelamentos,
 }
 
 
@@ -491,6 +549,8 @@ def detectar_tipo(caminho):
             for v in linha:
                 if isinstance(v, str):
                     cabecalhos.add(v.strip().lower())
+    if {'motivo do cancelamento', 'reponsavel por seguir', 'responsavel por seguir'} & cabecalhos:
+        return 'cancelamentos'
     if {'consultorias', 'situação aluna', 'situacao aluna'} & cabecalhos or \
             any('consult' in a for a in abas):
         if 'ramo atividade' in cabecalhos or '1. consultoria' in cabecalhos:
@@ -531,6 +591,7 @@ def resumo(con):
         UNION ALL SELECT 'matriculas', COUNT(*) FROM fato_matricula
         UNION ALL SELECT 'consultorias', COUNT(*) FROM fato_consultoria
         UNION ALL SELECT 'formularios', COUNT(*) FROM fato_formulario
+        UNION ALL SELECT 'pedidos de cancelamento', COUNT(*) FROM fato_cancelamento
         UNION ALL SELECT 'identidades a revisar',
                   COUNT(*) FROM revisao_identidade WHERE decidido = 0""")
     cobertura = consultar(con, 'SELECT * FROM vw_cobertura')

@@ -55,109 +55,87 @@ aluna nova.
 
 ---
 
-## 4. A carga mês a mês — e o penhasco de maio/27
+## 4. CORREÇÃO IMPORTANTE — a taxa de renovação existe, e inverte a conclusão
 
-Inclui a turma nova de dezembro (premissa: 40 alunas, contrato de 12 meses):
+A versão anterior deste documento dizia que o time ficaria com 3 a 4 posições
+excedentes a partir de maio de 2027. **Isso estava errado**, e o erro tinha uma
+causa única: eu tratava "fim de contrato" como "saída da carteira", por não ter
+nenhum dado de renovação.
 
-| Mês | Alunas a atender | Média por carteira | Excedente sobre 322 |
-|---|---|---|---|
-| ago/26 | **516** | 73,7 | 194 |
-| set/26 | 471 | 67,3 | 149 |
-| out/26 | 466 | 66,6 | 144 |
-| nov/26 | 412 | 58,9 | 90 |
-| dez/26 | 450 | 64,3 | 128 |
-| jan/27 | 450 | 64,3 | 128 |
-| fev/27 | 396 | 56,6 | 74 |
-| mar/27 | 363 | 51,9 | 41 |
-| abr/27 | 350 | 50,0 | 28 |
-| **mai/27** | **170** | **24,3** | **0** |
-| jun–jul/27 | 170 | 24,3 | 0 |
-| ago/27 | 54 | 7,7 | 0 |
+O dado existe. A planilha de pedidos de cancelamento registra 378 pedidos com
+o desfecho de cada um. Descontando a aba "Cancelamento 7 dias" — que é direito
+de arrependimento do CDC, não retenção — o resultado é:
 
-**Este é o fato que governa qualquer plano de folha.** A carteira não decresce
-suavemente: ela despenca em maio de 2027, quando **180 contratos terminam no
-mesmo mês**. Agosto/27 leva outros 116.
+| Desfecho | Pedidos |
+|---|---|
+| **Pediu e ficou** | **74** |
+| Pediu e saiu | 42 |
+| Em aberto | 120 |
+| Sem desfecho registrado | 106 |
 
-Términos por mês, todos os blocos somados:
+**Taxa de retenção: 64%** sobre os 116 pedidos com desfecho definido.
 
-| set/26 | out/26 | nov/26 | dez/26 | jan/27 | fev/27 | mar/27 | abr/27 | **mai/27** | jun–jul | **ago/27** |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 45 | 5 | 54 | 2 | 0 | 54 | 33 | 13 | **180** | 0 | **116** |
+### O que muda na carga
 
-Das 516 alunas vivas hoje, **502 terminam dentro dos próximos 13 meses**. A base
-inteira gira no período.
+| Mês | Sem renovação | **Com 64% renovando** | Capacidade | Excedente |
+|---|---|---|---|---|
+| set/26 | 456 | 456 | 315 | 141 |
+| out/26 | 451 | 454 | 315 | 139 |
+| nov/26 | 404 | 437 | 315 | 122 |
+| dez/26 | 443 | **477** | 315 | **162** |
+| jan/27 | 443 | 477 | 315 | 162 |
+| fev/27 | 389 | 457 | 315 | 142 |
+| mar/27 | 356 | 446 | 315 | 131 |
+| abr/27 | 343 | 441 | 315 | 126 |
+| **mai/27** | 170 | **379** | 315 | **64** |
+| ago/27 | 54 | 337 | 315 | 22 |
 
----
+**Não existe penhasco em maio de 2027.** Ele era um artefato de assumir que
+ninguém renova. Com 64% de retenção, a carteira nunca cai abaixo da capacidade
+do time dentro da janela.
 
-## 5. Quantos consultores a carteira sustenta
+### A conclusão correta para folha
 
-O número de consultores necessários depende inteiramente da régua de carteira
-adotada. Por isso a tabela abaixo mostra o mesmo mês sob réguas diferentes:
+| | Versão anterior (errada) | Com renovação |
+|---|---|---|
+| Situação até abr/27 | subdimensionado | subdimensionado |
+| Situação a partir de mai/27 | **3 a 4 posições sobrando** | **ainda faltam 1 a 2** |
+| Consultores necessários a 45 | 4 em mai/27 | **9 em mai/27** |
 
-| Mês | Alunas | a 46 | a 55 | a 60 | a 70 | a 80 |
-|---|---|---|---|---|---|---|
-| ago/26 | 516 | 12 | 10 | 9 | 8 | 7 |
-| set/26 | 471 | 11 | 9 | 8 | 7 | 6 |
-| out/26 | 466 | 11 | 9 | 8 | 7 | 6 |
-| nov/26 | 412 | 9 | 8 | 7 | 6 | 6 |
-| dez/26 | 450 | 10 | 9 | 8 | 7 | 6 |
-| jan/27 | 450 | 10 | 9 | 8 | 7 | 6 |
-| fev/27 | 396 | 9 | 8 | 7 | 6 | 5 |
-| mar/27 | 363 | 8 | 7 | 7 | 6 | 5 |
-| abr/27 | 350 | 8 | 7 | 6 | 5 | 5 |
-| **mai/27** | **170** | **4** | **4** | **3** | **3** | **3** |
-| jun–jul/27 | 170 | 4 | 4 | 3 | 3 | 3 |
-| ago/27 | 54 | 2 | 1 | 1 | 1 | 1 |
+**Não há folha excedente a recuperar.** O time de 7 opera acima da capacidade
+durante toda a janela de 12 meses. Um plano de economia de folha construído
+sobre o cenário anterior cortaria posições que serão necessárias.
 
-**Leitura para folha:**
+Onde ainda há economia possível: elevar a carteira média (a régua de 45 é
+mediana observada, não teto medido) e reduzir o custo de aquisição do
+excedente — não em headcount.
 
-- **Até abr/27 o time de 7 está subdimensionado em qualquer régua abaixo de 80.**
-  Não há economia a fazer nesse período sem elevar a carteira média.
-- **A partir de mai/27 o time de 7 fica superdimensionado em qualquer régua.**
-  A carteira sustenta 3 a 4 pessoas. **São 3 a 4 posições excedentes.**
-- A janela entre as duas situações é de **um único mês**. Não há transição suave.
+## 5. O que move a retenção
 
----
+Dos 335 pedidos com motivo escrito:
 
-## 6. A armadilha do plano
+| Motivo | Pedidos |
+|---|---|
+| **Financeiro** (sem condições, dívida, desemprego) | **94** |
+| **Insatisfação com a entrega** (demora, expectativa, não se adaptou) | **65** |
+| Saúde ou questão pessoal | 14 |
+| Falta de tempo | 9 |
+| Fechou ou vendeu o negócio | 4 |
 
-O impulso natural diante do excedente de 194 é contratar. **Qualquer contratação
-feita agora vira folga em maio de 2027** — nove meses depois, no máximo. Um
-consultor contratado em setembro para o aperto de dezembro estará sem carteira em
-maio.
+Os dois primeiros respondem por quase metade dos pedidos e pedem ações opostas:
+financeiro se resolve com renegociação ou plano menor; insatisfação, não.
 
-As três saídas, e nenhuma é gratuita:
+**A alavanca que funciona está medida:** a aba `Downsell` registra 26 casos de
+migração para plano menor em vez de cancelamento — **20 ficaram, nenhum saiu**.
+É 77% de retenção contra 64% da média. Migrar de plano retém melhor do que
+segurar no plano atual.
 
-1. **Elevar a régua de carteira.** Se a carteira sustentável for 70 em vez de 46,
-   o time de 7 comporta a operação atual sem contratar ninguém, e o excedente de
-   mai/27 sobe de 3 para 4 posições. É a alavanca de maior efeito e a de maior
-   risco: ninguém mediu qual é o teto real.
-2. **Contratação temporária ou terceirizada até abr/27.** Resolve o aperto sem
-   criar posição permanente. Custa mais por cabeça e exige onboarding para um
-   ciclo curto.
-3. **Segurar a entrada da turma nova.** A turma de dezembro pesa 40 na carteira
-   por 12 meses. Adiar ou escalonar a entrada reduz o pico sem mexer na folha —
-   mas empurra receita.
+## 6. Qualidade do dado desta fonte
 
-**Ordem de decisão sugerida:** definir a régua de carteira primeiro. Todo o resto
-depende dela, e ela é a única variável que muda a resposta de "faltam 5" para
-"sobra 1".
-
----
-
-## 7. O que fazer com o excedente de mai/27
-
-Três posições a mais do que a carteira sustenta, a partir de maio de 2027,
-sustentadas por dois blocos de término em massa (180 em mai/27, 116 em ago/27).
-Isso é folha ociosa a menos que:
-
-- **Entrem turmas novas nesse intervalo.** Cada turma de 40 sustenta ~1 carteira.
-  Para manter as 7 posições a 46, seriam necessárias ~5 turmas de 40 entre
-  mai/27 e ago/27. É uma meta comercial, não um dado.
-- **A taxa de renovação seja alta.** Ver a seção seguinte — este é o ponto cego
-  mais grave de toda a análise.
-
----
+- 378 pedidos; **335 com motivo escrito** (89%)
+- **226 sem desfecho conclusivo** (120 em aberto + 106 sem registro) — 60%
+- A taxa de 64% vale sobre os 116 com desfecho. Se os 226 se comportarem
+  diferente, a taxa muda. **É a melhor estimativa disponível, não um censo.**
 
 ## 8. O que NÃO está no dado (leia antes de calcular qualquer coisa)
 
