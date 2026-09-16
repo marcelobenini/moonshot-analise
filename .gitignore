@@ -4,3 +4,4 @@ scratch/
 bi_dados.json
 bi_moonshot.html
 __pycache__/
+supabase/csv/
