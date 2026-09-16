@@ -5,3 +5,6 @@ bi_dados.json
 bi_moonshot.html
 __pycache__/
 supabase/csv/
+# Pacote de carga: empacota os CSV de supabase/csv/, que carregam nome,
+# telefone, e-mail, faturamento e CPF. Ignorado pelo mesmo motivo que eles.
+entregaveis/carga_supabase.zip
