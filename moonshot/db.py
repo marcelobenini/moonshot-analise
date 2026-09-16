@@ -20,6 +20,7 @@ Desenho em quatro decisoes, cada uma respondendo a um jeito de perder dado:
 O arquivo do banco fica em `dados/`, que nao vai para o git: ele carrega nome,
 telefone, faturamento e relato do consultor sobre pessoas reais.
 """
+import difflib
 import hashlib
 import re
 import json
@@ -265,6 +266,31 @@ def registrar_fonte(con, caminho, tipo, observacao=None):
 # --------------------------------------------------------------------------
 CORTE_AUTOMATICO = 0.80
 CORTE_REVISAO = 0.55
+# Digitacao errada no sobrenome nao muda quase nada dos caracteres, mas muda o
+# token inteiro — 'Fideli' e 'Fidelis' tem Jaccard 0.5 e criavam duas pessoas.
+CORTE_DIGITACAO = 0.92
+
+# Linhas que nao sao nome de gente. A planilha mistura rotulo de secao, titulo
+# de coluna e recado no meio dos nomes; sem este filtro, 'FRANQUIAS' e
+# 'reuniao 05/06' viram aluna.
+RX_NAO_E_PESSOA = re.compile(
+    r"^(franquias?|inadimplentes?|reuniao|total|geral|alunas?\s|alunos?\s|moonshot"
+    r"|consultor|status|obs|nome|cliente|pendentes?$|cancelad|ativ[oa]s?$|elite$"
+    r"|club$|pro$|clientes?\s)")
+
+
+def e_nome_de_pessoa(chave):
+    """Filtro conservador: derruba rotulo de planilha, mantem nome duvidoso.
+
+    Errar para o lado de manter e proposital — nome estranho ainda pode ser
+    gente, rotulo de secao nunca e.
+    """
+    if not chave or len(chave) < 3:
+        return False
+    if RX_NAO_E_PESSOA.match(chave):
+        return False
+    # Precisa ter pelo menos uma sequencia de letras de tamanho de nome.
+    return bool(re.search(r"[a-z]{3}", chave))
 
 
 def _similaridade(tokens_a, tokens_b):
@@ -286,7 +312,7 @@ def resolver_pessoa(con, nome, fonte_id=None, cache=None):
     if not nome or not str(nome).strip():
         return None
     ch = _chave(nome)
-    if not ch:
+    if not ch or not e_nome_de_pessoa(ch):
         return None
     if cache is not None and ch in cache:
         return cache[ch]
@@ -298,15 +324,29 @@ def resolver_pessoa(con, nome, fonte_id=None, cache=None):
         return r['pessoa_id']
 
     tk = _tokens(nome)
-    melhor, escore = None, 0.0
+    primeiro = ch.split()[0] if ch else ''
+    melhor, escore, via = None, 0.0, 'tokens'
     if len(tk) >= 2:
         for p in con.execute('SELECT id, nome_canonico FROM pessoa'):
-            s = _similaridade(tk, _tokens(p['nome_canonico']))
+            ch2 = _chave(p['nome_canonico'])
+            tk2 = _tokens(p['nome_canonico'])
+            s = _similaridade(tk, tk2)
+            marca = 'tokens'
+            # Digitacao: quase todos os caracteres iguais, token diferente.
+            d = difflib.SequenceMatcher(None, ch, ch2).ratio()
+            if d >= CORTE_DIGITACAO and d > s:
+                s, marca = d, 'digitacao'
+            # Nome parcial: um contem o outro E o primeiro nome bate. Sem exigir
+            # o primeiro nome, 'Thays Lopes' casaria com 'Claudia Thays ... Lopes',
+            # que sao pessoas diferentes.
+            elif len(tk2) >= 2 and (tk < tk2 or tk2 < tk) \
+                    and ch2.split() and primeiro == ch2.split()[0]:
+                s, marca = max(s, CORTE_AUTOMATICO), 'nome parcial'
             if s > escore:
-                melhor, escore = p, s
+                melhor, escore, via = p, s, marca
 
     if melhor is not None and escore >= CORTE_REVISAO:
-        pid, metodo = melhor['id'], 'tokens'
+        pid, metodo = melhor['id'], via
         if escore < CORTE_AUTOMATICO:
             con.execute(
                 'INSERT INTO revisao_identidade (fonte_id, nome_novo, pessoa_id, nome_atual,'
