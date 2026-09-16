@@ -145,3 +145,32 @@ from vw_potencial v
 join regra_potencial r on r.potencial = v.potencial;
 
 alter view vw_potencial_explicado set (security_invoker = true);
+
+
+-- ---------------------------------------------------------------------------
+-- Regras de ingestao como dado. Aplicado por migracao no projeto moonshot-base;
+-- reproduzido aqui para que um deploy novo nasca com elas.
+-- O conteudo canonico esta em REGRAS.md, na raiz do repositorio.
+-- ---------------------------------------------------------------------------
+create table if not exists regra_ingestao (
+    id      integer primary key,
+    dominio text not null,
+    ordem   integer not null,
+    regra   text not null,
+    corte   text,
+    porque  text not null,
+    onde    text
+);
+comment on table regra_ingestao is
+  'Como o dado das planilhas do Drive vira linha no banco. Mudar aqui nao muda o comportamento — muda o codigo em moonshot/db.py e atualize esta tabela junto. Ela existe para a regra poder ser contestada por quem nao le Python.';
+
+alter table regra_ingestao enable row level security;
+
+create or replace view vw_regras as
+select dominio, ordem, regra, corte as parametro, porque, onde from regra_ingestao
+union all
+select 'potencial', ordem, rotulo || ': ' || condicao, null,
+       coalesce(cuidado, acao), 'regra_potencial' from regra_potencial
+order by dominio, ordem;
+
+alter view vw_regras set (security_invoker = true);
