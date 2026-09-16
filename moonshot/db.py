@@ -127,12 +127,17 @@ CREATE TABLE IF NOT EXISTS fato_cancelamento (
 );
 
 CREATE TABLE IF NOT EXISTS fato_formulario (
-    id         INTEGER PRIMARY KEY,
-    fonte_id   INTEGER NOT NULL REFERENCES fonte(id),
-    pessoa_id  INTEGER REFERENCES pessoa(id),
-    origem     TEXT,
-    empresa    TEXT,
-    respostas  TEXT
+    id            INTEGER PRIMARY KEY,
+    fonte_id      INTEGER NOT NULL REFERENCES fonte(id),
+    pessoa_id     INTEGER REFERENCES pessoa(id),
+    origem        TEXT,
+    empresa       TEXT,
+    -- Faturamento ja parseado. Deixar so no `respostas` em bruto obrigava
+    -- reparsear texto livre a cada consulta, e na pratica significava nao usar:
+    -- 21 alunas ficavam de fora de upsell e reconquista por isso.
+    fat_declarado REAL,
+    fat_confianca TEXT,
+    respostas     TEXT
 );
 
 -- Casamentos que passaram perto do corte. Existem para serem conferidos por
@@ -454,6 +459,7 @@ def ingerir_formulario(con, caminho, origem, observacao=None):
     """Respostas cruas do formulario. Guarda a resposta inteira, nao a
     classificacao: a taxonomia muda, a resposta nao."""
     from .base import COMUM
+    from .texto import parse_faturamento
     fonte_id, existia = registrar_fonte(con, caminho, f'formulario_{origem}', observacao)
     if existia:
         return fonte_id, 0, 'ja ingerido'
@@ -463,14 +469,23 @@ def ingerir_formulario(con, caminho, origem, observacao=None):
     mapa = COMUM.get(str(origem).upper(), {})
     col_nome = mapa.get('nome')
     col_emp = mapa.get('empresa')
+    col_fat = mapa.get('faturamento')
     cache = {}
     n = guardar_bruto(con, fonte_id, d, coluna_nome=col_nome, cache=cache)
     for _, r in d.iterrows():
         pid = resolver_pessoa(con, r.get(col_nome) if col_nome else None, fonte_id, cache)
+        fat, conf = None, None
+        if col_fat and col_fat in d.columns:
+            valor, _moeda, _regra, confianca = parse_faturamento(r.get(col_fat))
+            # So faturamento que o parser conseguiu ler com seguranca entra na
+            # coluna. Faixa ambigua e valor implausivel ficam so no bruto.
+            if valor is not None and confianca in ('alta', 'media', 'inferida_milhar'):
+                fat, conf = float(valor), confianca
         con.execute(
-            'INSERT INTO fato_formulario (fonte_id, pessoa_id, origem, empresa, respostas)'
-            ' VALUES (?,?,?,?,?)',
-            (fonte_id, pid, origem, r.get(col_emp) if col_emp else None, _json(r)))
+            'INSERT INTO fato_formulario (fonte_id, pessoa_id, origem, empresa,'
+            ' fat_declarado, fat_confianca, respostas) VALUES (?,?,?,?,?,?,?)',
+            (fonte_id, pid, origem, r.get(col_emp) if col_emp else None,
+             fat, conf, _json(r)))
     con.execute('UPDATE fonte SET linhas = ? WHERE id = ?', (n, fonte_id))
     con.commit()
     return fonte_id, n, 'ok'

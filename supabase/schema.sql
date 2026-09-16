@@ -116,13 +116,20 @@ create index if not exists ix_can_pessoa   on fato_cancelamento(pessoa_id);
 create index if not exists ix_can_desfecho on fato_cancelamento(desfecho);
 
 create table if not exists fato_formulario (
-    id        bigint generated always as identity primary key,
-    fonte_id  bigint not null references fonte(id) on delete cascade,
-    pessoa_id bigint references pessoa(id),
-    origem    text,
-    empresa   text,
-    respostas jsonb
+    id            bigint generated always as identity primary key,
+    fonte_id      bigint not null references fonte(id) on delete cascade,
+    pessoa_id     bigint references pessoa(id),
+    origem        text,
+    empresa       text,
+    -- Faturamento ja parseado na ingestao. Deixar so no `respostas` em bruto
+    -- obrigava reparsear texto livre a cada consulta, e na pratica significava
+    -- nao usar: 21 alunas ficavam de fora de upsell e reconquista por isso.
+    fat_declarado numeric(14,2),
+    fat_confianca text,
+    respostas     jsonb
 );
+comment on column fato_formulario.fat_declarado is
+  'Faturamento mensal em BRL lido do texto livre. So entra com confianca alta, media ou inferida_milhar; faixa ambigua e valor implausivel ficam so no bruto.';
 create index if not exists ix_for_pessoa on fato_formulario(pessoa_id);
 
 -- Casamentos que passaram perto do corte. Existem para serem conferidos por
