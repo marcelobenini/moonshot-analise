@@ -5,11 +5,17 @@ Criterio, na ordem em que e aplicado:
 1. Produto = Moonshot Club, e nao ha registro dela em PRO ou Elite.
 2. Data de entrada a partir de 08/2026 - regra do Marcelo: entrada no Club
    so passou a existir nesse mes.
-3. Nenhum corte por faturamento. O recorte de 20k nao foi usado como filtro
-   porque so 63 das 116 tem faturamento registrado; cortar em 20k nao
-   separa quem fatura pouco de quem nao foi medido.
+3. Corte do Marcelo: fora quem fatura abaixo de 15k.
 
-Faturamento vazio sai como 'nao informado', nunca como zero.
+Faturamento vazio nao e faturamento abaixo de 15k - e faturamento nao medido,
+e nao da para cortar por um numero que ninguem escreveu. Por isso a planilha
+tem duas abas:
+
+  'Club -> Pro'      quem tem faturamento registrado de 15k para cima
+  'Sem faturamento'  quem nao tem faturamento em nenhuma das duas planilhas
+
+A segunda aba nao foi cortada porque nao ha como saber se ela cumpre ou nao
+o corte. Preencher o faturamento dessas alunas decide para qual lado elas vao.
 """
 import re
 import unicodedata
@@ -24,6 +30,7 @@ CONSULTORIAS = 'dados/controle_consultorias_live.xlsx'
 MATRICULAS = 'dados/matriculados_club_live.xlsx'
 SAIDA = 'entregaveis/ascensao_club_para_pro.xlsx'
 CORTE_CLUB = pd.Timestamp('2026-08-01')
+CORTE_FAT = 15000
 
 
 def chave(n):
@@ -127,9 +134,11 @@ S = pd.DataFrame({
 # Faturamento desconhecido vai para o fim, nao para o meio como se fosse zero.
 S = S.sort_values('Faturamento', ascending=False, na_position='last').reset_index(drop=True)
 
+ACIMA = S[S.Faturamento >= CORTE_FAT].reset_index(drop=True)
+SEM = S[S.Faturamento.isna()].drop(columns='Faturamento').reset_index(drop=True)
+
 with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
-    S.to_excel(xw, sheet_name='Club → Pró', index=False)
-    wb, ws = xw.book, xw.sheets['Club → Pró']
+    wb = xw.book
     cab = wb.add_format({'bold': True, 'bg_color': '#1F2937', 'font_color': 'white',
                          'border': 1, 'align': 'center', 'valign': 'vcenter',
                          'text_wrap': True})
@@ -141,32 +150,34 @@ with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
     larg = {'Aluna': 38, 'Contato': 20, 'Consultor Responsável': 18, 'Faturamento': 15,
             'Data de Entrada': 15, 'Cidade': 22, 'Ramo': 24,
             'Observações sobre a aluna': 55}
-    for j, nome in enumerate(S.columns):
-        ws.write(0, j, nome, cab)
-        ws.set_column(j, j, larg[nome])
-    for i, row in S.iterrows():
-        for j, nome in enumerate(S.columns):
-            v = row[nome]
-            if nome == 'Faturamento':
-                if pd.isna(v):
-                    ws.write(i + 1, j, 'não informado', vazio)
-                else:
-                    ws.write_number(i + 1, j, float(v), din)
-            elif v == '' or pd.isna(v):
-                ws.write(i + 1, j, '—', vazio)
-            else:
-                ws.write(i + 1, j, str(v),
-                         wrap if nome == 'Observações sobre a aluna' else txt)
-    ws.set_row(0, 32)
-    ws.freeze_panes(1, 1)
-    ws.autofilter(0, 0, len(S), len(S.columns) - 1)
 
-print('alunas', len(S))
-print('faturamento preenchido', int(S.Faturamento.notna().sum()))
-print('  >= 20k', int((S.Faturamento >= 20000).sum()))
-print('  10k a 20k', int(((S.Faturamento >= 10000) & (S.Faturamento < 20000)).sum()))
-print('  < 10k', int((S.Faturamento < 10000).sum()))
-print('telefone', int((S.Contato != '').sum()))
-print('cidade', int((S.Cidade != '').sum()), '| ramo', int((S.Ramo != '').sum()))
-print('observacao', int((S['Observações sobre a aluna'] != '').sum()))
-print(S.groupby('Consultor Responsável').size().sort_values(ascending=False).to_string())
+    for aba, D in (('Club → Pró', ACIMA), ('Sem faturamento', SEM)):
+        ws = wb.add_worksheet(aba)
+        for j, nome in enumerate(D.columns):
+            ws.write(0, j, nome, cab)
+            ws.set_column(j, j, larg[nome])
+        for i, row in D.iterrows():
+            for j, nome in enumerate(D.columns):
+                v = row[nome]
+                if nome == 'Faturamento':
+                    ws.write_number(i + 1, j, float(v), din)
+                elif v == '' or pd.isna(v):
+                    ws.write(i + 1, j, '—', vazio)
+                else:
+                    ws.write(i + 1, j, str(v),
+                             wrap if nome == 'Observações sobre a aluna' else txt)
+        ws.set_row(0, 32)
+        ws.freeze_panes(1, 1)
+        ws.autofilter(0, 0, max(len(D), 1), len(D.columns) - 1)
+
+print('Club entrando a partir de 08/2026:', len(S))
+print('  >= 15k (aba Club -> Pro):', len(ACIMA))
+print('  < 15k (cortadas):', int((S.Faturamento < CORTE_FAT).sum()))
+print('  sem faturamento (aba Sem faturamento):', len(SEM))
+for aba, D in (('Club -> Pro', ACIMA), ('Sem faturamento', SEM)):
+    print(f'\n[{aba}] {len(D)} alunas'
+          f' | telefone {int((D.Contato != "").sum())}'
+          f' | cidade {int((D.Cidade != "").sum())}'
+          f' | ramo {int((D.Ramo != "").sum())}'
+          f' | observacao {int((D["Observações sobre a aluna"] != "").sum())}')
+    print(D.groupby('Consultor Responsável').size().sort_values(ascending=False).to_string())
