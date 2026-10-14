@@ -29,11 +29,12 @@ warnings.filterwarnings('ignore')
 
 MATRICULAS = 'dados/matriculados_club_live.xlsx'
 CONSULTORIAS = 'dados/controle_consultorias_live.xlsx'
-CORTE = pd.Timestamp('2026-05-31')
+MAIO = (pd.Timestamp('2026-05-01'), pd.Timestamp('2026-05-31'))
 
 # aba -> linha do cabecalho. Cada turma foi montada por uma pessoa diferente.
 TURMAS = {
     'MOONSHOT ELITE': 1,
+    'PB-ALPHAVILLE Agosto26': 1,
     'PB-ALPHAVILLE Maio26': 1,
     ' PB-CURITIBA Maio26': 1,
     'PB-PORTUGAL Abril26': 1,
@@ -232,7 +233,7 @@ m.to_pickle('/tmp/claude-0/-home-user-moonshot-analise/'
 print('matriculas unicas lidas:', len(m))
 print('\ncom data de entrada:', int(m.entrada.notna().sum()),
       '| sem data:', int(m.entrada.isna().sum()))
-print('\nate 31/05/2026:', int((m.entrada <= CORTE).sum()))
+print('\nate 31/05/2026:', int((m.entrada <= MAIO[1]).sum()))
 print('\npor produto (todas):'); print(m.produto.value_counts().to_string())
 print('\npor turma:'); print(m.turma.value_counts().to_string())
 print('\nsituacao do contrato:'); print(m.situacao_contrato.value_counts().head(12).to_string())
@@ -271,7 +272,18 @@ m['grupo'] = m.situacao.map(grupo)
 ORDEM = {n: i for i, (n, _) in enumerate(GRUPO)}
 ORDEM['(situação não registrada)'] = len(GRUPO)
 
-alvo = m[(m.entrada <= CORTE) | m.entrada.isna()].copy()
+def periodo(d):
+    if pd.isna(d):
+        return 'Entrada não registrada'
+    if d < MAIO[0]:
+        return 'Antes de maio/26'
+    if d <= MAIO[1]:
+        return 'Maio/26'
+    return 'Pós maio/26'
+
+
+m['periodo'] = m.entrada.map(periodo)
+alvo = m.copy()
 
 
 def engajamento(r):
@@ -286,6 +298,7 @@ S = pd.DataFrame({
     'Produto': alvo.produto,
     'Situação': alvo.situacao,
     'Grupo': alvo.grupo,
+    'Período de entrada': alvo.periodo,
     'Entrada': alvo.entrada.dt.strftime('%d/%m/%Y').fillna('(não registrada)'),
     'Término previsto': alvo.termino.dt.strftime('%d/%m/%Y').fillna(''),
     'Pagamento': alvo.pagamento,
@@ -300,12 +313,11 @@ S = pd.DataFrame({
 S['_o'] = alvo.grupo.map(ORDEM)
 S = S.sort_values(['_o', 'Produto', 'Aluna']).drop(columns='_o')
 
-ABAS = [
-    ('Moonshot Elite', S[S.Produto == 'Moonshot Elite']),
-    ('Moonshot Pró', S[S.Produto == 'Moonshot Pró']),
-    ('Produto não registrado', S[S.Produto == '(não registrado)']),
-    ('Boleto NB', S[S['Boleto NB'] == 'SIM']),
-]
+ABAS = [(p, S[S['Período de entrada'] == p]) for p in
+        ('Antes de maio/26', 'Maio/26', 'Pós maio/26', 'Entrada não registrada')]
+ABAS.append(('Boleto NB', S[S['Boleto NB'] == 'SIM']))
+# A barra e proibida em nome de aba no Excel.
+ABAS = [(a.replace('/', '-'), D) for a, D in ABAS]
 
 SAIDA = 'entregaveis/resgate_contratos_nb.xlsx'
 with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
@@ -323,52 +335,61 @@ with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
     ws = wb.add_worksheet('Critério')
     ws.set_column(0, 0, 110)
     linhas_txt = [
-        'Quem entrou na Moonshot até 31/05/2026 — pedido do Felipe em 14/10/2026.',
+        'Quem entrou na Moonshot, separado por período de entrada.',
+        'Pedido do Felipe em 14/10/2026, com o recorte de maio pedido pelo Marcelo.',
         '',
-        'CRITÉRIO',
-        '• Data de início do plano menor ou igual a 31/05/2026.',
-        '• Quem não tem data de início registrada entrou mesmo assim: são 39 pessoas,'
-        ' 31 delas da aba "Alunas antigas", que é anterior a maio por definição.'
-        ' A coluna Entrada diz "(não registrada)" nessas linhas.',
-        '• Moonshot Club ficou de fora porque o Felipe pediu Elite, Máquina de Vendas'
-        ' e Pró. São 170 pessoas no Club nesse período, disponíveis se ele quiser.',
+        'OS TRÊS PERÍODOS',
+        '• Antes de maio/26 — entrada até 30/04/2026.',
+        '• Maio/26 — entrada entre 01/05/2026 e 31/05/2026.',
+        '• Pós maio/26 — entrada a partir de 01/06/2026.',
+        '• Entrada não registrada — 39 pessoas sem data de início no cadastro,'
+        ' 31 delas da aba "Alunas antigas". Não dá pra dizer em que período'
+        ' entraram, então não foram jogadas em nenhum: têm aba própria. Pelo nome'
+        ' da aba são anteriores a maio, mas isso é o nome da aba, não um dado.',
+        '',
+        'MOONSHOT CLUB ENTROU NESTA VERSÃO',
+        'O Felipe pediu Elite, Máquina de Vendas e Pró. Mas a única turma posterior'
+        ' a maio/26 é a de agosto, e ela é 114 Club para 2 Pró: sem o Club, a aba'
+        ' "Pós maio/26" teria 2 linhas e não responderia nada. O Club está dentro,'
+        ' identificado na coluna Produto — filtre por ela para voltar ao recorte'
+        ' original do Felipe.',
         '',
         'O QUE A BASE NÃO RESPONDE',
-        '1. "Máquina de Vendas" não existe como produto em nenhuma planilha que temos.'
-        ' As turmas de 2025 (PC-ALPHAVILLE, Alunas JunJulAgo, Alunas antigas) não têm'
-        ' coluna de produto nenhuma — elas estão na aba "Produto não registrado".'
-        ' Se Máquina de Vendas é o nome antigo desse programa, essa aba é a lista;'
+        '1. "Máquina de Vendas" não existe como produto em nenhuma planilha que'
+        ' temos. As turmas de 2025 (PC-ALPHAVILLE, Alunas JunJulAgo, Alunas antigas)'
+        ' não têm coluna de produto nenhuma — aparecem como "(não registrado)".'
+        ' Se Máquina de Vendas é o nome antigo desse programa, são essas as linhas;'
         ' se não é, falta a planilha.',
         '2. Nenhum campo diz "o dinheiro está na NB". O que existe é a aba'
         ' "Alunos Boleto NB" da planilha de matrículas, com 10 nomes, e a forma de'
-        ' pagamento. Os 9 que consegui casar estão todos em BOLETO PARCELADO, e 8 dos'
-        ' 9 são da turma Jun/Jul/Ago 2025. Isso sugere que BOLETO PARCELADO é o'
+        ' pagamento. Os 9 que consegui casar estão todos em BOLETO PARCELADO, e 8'
+        ' dos 9 são da turma Jun/Jul/Ago 2025. Isso sugere que BOLETO PARCELADO é o'
         ' contrato antigo e BOLETO TMB o novo — mas é leitura minha, não um campo.'
         ' Confirmar com o Felipe antes de usar como filtro.',
-        '3. "Engajamento" não é um campo. A coluna "Consultorias feitas" conta as datas'
-        ' de consultoria preenchidas na aba do consultor (0 a 5). "Sem registro em aba'
-        ' de consultor" quer dizer que a aluna não aparece em nenhuma aba — não quer'
-        ' dizer que ela não foi atendida.',
+        '3. "Engajamento" não é um campo. A coluna "Consultorias feitas" conta as'
+        ' datas de consultoria preenchidas na aba do consultor (0 a 5). "Sem registro'
+        ' em aba de consultor" quer dizer que a aluna não aparece em aba nenhuma —'
+        ' não quer dizer que ela não foi atendida.',
         '',
         'COMO A SITUAÇÃO FOI MONTADA',
-        'Vale "Status Contrato", que é o campo que a equipe mantém hoje. Só quando ele'
-        ' está vazio vale o "Status" antigo. As linhas estão ordenadas por grupo:'
-        ' primeiro inadimplente e pagamento pendente, depois processo de cancelamento,'
-        ' cancelado, plano encerrado e ativo.',
+        'Vale "Status Contrato", que é o campo que a equipe mantém hoje. Só quando'
+        ' ele está vazio vale o "Status" antigo. Dentro de cada aba as linhas estão'
+        ' ordenadas por grupo: primeiro inadimplente e pagamento pendente, depois'
+        ' processo de cancelamento, cancelado, plano encerrado e ativo.',
         '',
-        'UMA RESSALVA DE NOME',
+        'DUAS RESSALVAS DE NOME',
         '• "Raisa Teixeira Esparza", da aba Boleto NB, não tem par na base de'
         ' matrículas. O mais parecido é "Raisa M Teixeira" — não casei porque o'
         ' sobrenome não bate.',
         '• "BENESSERE CONDICIONAMENTO (Maria Claudia)" foi casada com "Maria Claudia"'
         ' pelo nome entre parênteses. É a mais frágil das 9.',
     ]
-    ws.write(0, 0, 'Resgate de contratos — base até maio/2026', tit)
+    ws.write(0, 0, 'Matrículas por período de entrada', tit)
     for i, t in enumerate(linhas_txt):
         ws.write(i + 2, 0, t, nor)
 
     larg = {'Aluna': 36, 'Contato': 19, 'Produto': 18, 'Situação': 22, 'Grupo': 26,
-            'Entrada': 14, 'Término previsto': 15, 'Pagamento': 18, 'Boleto NB': 10,
+            'Período de entrada': 18, 'Entrada': 14, 'Término previsto': 15, 'Pagamento': 18, 'Boleto NB': 10,
             'Consultorias feitas': 22, 'Consultor': 16, 'CS': 16,
             'Turma de entrada': 34, 'Motivo do cancelamento': 45, 'Observação': 45}
     for aba, D in ABAS:
@@ -392,7 +413,7 @@ with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
 print('\n--- entregue em', SAIDA)
 for aba, D in ABAS:
     print(f'{aba:26s} {len(D):4d}')
-print('\nquebra por grupo:')
-print(S.groupby(['Produto', 'Grupo']).size().to_string())
-print('\nBoleto NB por situacao:')
-print(S[S['Boleto NB'] == 'SIM'].Situação.value_counts().to_string())
+print('\nperiodo x produto:')
+print(pd.crosstab(S['Período de entrada'], S.Produto, margins=True).to_string())
+print('\nperiodo x grupo:')
+print(pd.crosstab(S['Período de entrada'], S.Grupo, margins=True).to_string())
