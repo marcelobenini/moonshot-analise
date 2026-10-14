@@ -417,3 +417,102 @@ print('\nperiodo x produto:')
 print(pd.crosstab(S['Período de entrada'], S.Produto, margins=True).to_string())
 print('\nperiodo x grupo:')
 print(pd.crosstab(S['Período de entrada'], S.Grupo, margins=True).to_string())
+
+
+# ============================================================ planilha enxuta
+# Pedido do Marcelo: maio e pos maio numa aba so, uma coluna de TMB para
+# marcar a mao, uma aba vazia para a Jessica preencher Maquina de Vendas e
+# uma aba com as 40 sem data de inicio.
+COLS = ['Aluna', 'Contato', 'Produto', 'TMB?', 'Pagamento (planilha)', 'Situação',
+        'Período de entrada', 'Entrada', 'Término previsto', 'Consultorias feitas',
+        'Consultor', 'Motivo do cancelamento', 'Observação']
+
+
+def enxuta(D):
+    E = pd.DataFrame({
+        'Aluna': D.Aluna, 'Contato': D.Contato, 'Produto': D.Produto,
+        # So marca TMB onde a planilha escreve TMB. 'PAGOU TOTAL' e vazio nao
+        # dizem em que contrato a aluna esta - fica em branco para preencher.
+        'TMB?': D.Pagamento.str.contains('TMB', case=False, na=False)
+                 .map({True: 'TMB', False: ''}),
+        'Pagamento (planilha)': D.Pagamento,
+        'Situação': D['Situação'],
+        'Período de entrada': D['Período de entrada'],
+        'Entrada': D.Entrada, 'Término previsto': D['Término previsto'],
+        'Consultorias feitas': D['Consultorias feitas'],
+        'Consultor': D.Consultor,
+        'Motivo do cancelamento': D['Motivo do cancelamento'],
+        'Observação': D['Observação'],
+    })
+    return E[COLS].replace('—', '')
+
+
+maio_pos = enxuta(S[S['Período de entrada'].isin(['Maio/26', 'Pós maio/26'])])
+sem_data = enxuta(S[S['Período de entrada'] == 'Entrada não registrada'])
+
+SAIDA2 = 'entregaveis/alunas_maio_em_diante.xlsx'
+LARG = {'Aluna': 36, 'Contato': 19, 'Produto': 17, 'TMB?': 9,
+        'Pagamento (planilha)': 19, 'Situação': 22, 'Período de entrada': 17,
+        'Entrada': 13, 'Término previsto': 15, 'Consultorias feitas': 22,
+        'Consultor': 15, 'Motivo do cancelamento': 45, 'Observação': 45}
+
+with pd.ExcelWriter(SAIDA2, engine='xlsxwriter') as xw:
+    wb = xw.book
+    cab = wb.add_format({'bold': True, 'bg_color': '#1F2937', 'font_color': 'white',
+                         'border': 1, 'align': 'center', 'valign': 'vcenter',
+                         'text_wrap': True})
+    cabj = wb.add_format({'bold': True, 'bg_color': '#7C3AED', 'font_color': 'white',
+                          'border': 1, 'align': 'center', 'valign': 'vcenter',
+                          'text_wrap': True})
+    txt = wb.add_format({'valign': 'top', 'border': 1})
+    wrap = wb.add_format({'valign': 'top', 'border': 1, 'text_wrap': True})
+    vaz = wb.add_format({'valign': 'top', 'border': 1, 'font_color': '#9CA3AF',
+                         'align': 'center'})
+    livre = wb.add_format({'border': 1, 'bg_color': '#FAF5FF'})
+
+    def escrever(w, D, cabecalho):
+        for j, c in enumerate(COLS):
+            w.write(0, j, c, cabecalho)
+            w.set_column(j, j, LARG[c])
+        for i, (_, row) in enumerate(D.iterrows()):
+            for j, c in enumerate(COLS):
+                v = row[c]
+                if v == '' or pd.isna(v):
+                    w.write(i + 1, j, '—', vaz)
+                else:
+                    w.write(i + 1, j, str(v),
+                            wrap if c in ('Motivo do cancelamento', 'Observação')
+                            else txt)
+        w.set_row(0, 30)
+        w.freeze_panes(1, 1)
+        w.autofilter(0, 0, max(len(D), 1), len(COLS) - 1)
+
+    w = wb.add_worksheet('Maio e pós maio')
+    escrever(w, maio_pos, cab)
+    w.data_validation(1, COLS.index('TMB?'), len(maio_pos), COLS.index('TMB?'),
+                      {'validate': 'list', 'source': ['TMB', 'Não TMB', 'Não sei']})
+
+    # Aba em branco: a Jessica preenche. Produto ja vem escrito para nao virar
+    # mais um campo de digitacao livre.
+    LINHAS_J = 200
+    w = wb.add_worksheet('Máquina de Vendas (Jessica)')
+    escrever(w, pd.DataFrame(columns=COLS), cabj)
+    for i in range(1, LINHAS_J + 1):
+        for j, c in enumerate(COLS):
+            w.write(i, j, 'Máquina de Vendas' if c == 'Produto' else '', livre)
+    w.data_validation(1, COLS.index('TMB?'), LINHAS_J, COLS.index('TMB?'),
+                      {'validate': 'list', 'source': ['TMB', 'Não TMB', 'Não sei']})
+    w.autofilter(0, 0, LINHAS_J, len(COLS) - 1)
+
+    w = wb.add_worksheet('Sem data de início')
+    escrever(w, sem_data, cab)
+    w.data_validation(1, COLS.index('TMB?'), len(sem_data), COLS.index('TMB?'),
+                      {'validate': 'list', 'source': ['TMB', 'Não TMB', 'Não sei']})
+
+print('\n--- entregue em', SAIDA2)
+print('maio e pos maio:', len(maio_pos), '| sem data:', len(sem_data))
+print('\nTMB? ja preenchido na aba maio e pos maio:')
+print(maio_pos['TMB?'].replace('', '(em branco)').value_counts().to_string())
+print('\npagamento das que ficaram em branco:')
+print(maio_pos[maio_pos['TMB?'] == '']['Pagamento (planilha)']
+      .replace('', '(vazio na origem)').value_counts().to_string())
