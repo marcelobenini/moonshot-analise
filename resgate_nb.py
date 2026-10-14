@@ -400,7 +400,9 @@ with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
         for i, (_, row) in enumerate(D.iterrows()):
             for j, c in enumerate(D.columns):
                 v = row[c]
-                if v == '' or pd.isna(v):
+                if c == 'Validação':
+                    w.write(i + 1, j, '', livre)
+                elif v == '' or pd.isna(v):
                     w.write(i + 1, j, '—', vaz)
                 else:
                     w.write(i + 1, j, str(v),
@@ -423,9 +425,11 @@ print(pd.crosstab(S['Período de entrada'], S.Grupo, margins=True).to_string())
 # Pedido do Marcelo: maio e pos maio numa aba so, uma coluna de TMB para
 # marcar a mao, uma aba vazia para a Jessica preencher Maquina de Vendas e
 # uma aba com as 40 sem data de inicio.
-COLS = ['Aluna', 'Contato', 'Produto', 'TMB?', 'Pagamento (planilha)', 'Situação',
+COLS = ['Aluna', 'Contato', 'Produto', 'TMB?', 'Validação', 'Pagamento (planilha)',
+        'Situação',
         'Período de entrada', 'Entrada', 'Término previsto', 'Consultorias feitas',
         'Consultor', 'Motivo do cancelamento', 'Observação']
+VALIDACAO = ['Confere', 'Não confere', 'Pendente']
 
 
 def enxuta(D):
@@ -435,6 +439,8 @@ def enxuta(D):
         # dizem em que contrato a aluna esta - fica em branco para preencher.
         'TMB?': D.Pagamento.str.contains('TMB', case=False, na=False)
                  .map({True: 'TMB', False: ''}),
+        # Fica em branco de proposito: quem conferir e que preenche.
+        'Validação': '',
         'Pagamento (planilha)': D.Pagamento,
         'Situação': D['Situação'],
         'Período de entrada': D['Período de entrada'],
@@ -451,7 +457,7 @@ maio_pos = enxuta(S[S['Período de entrada'].isin(['Maio/26', 'Pós maio/26'])])
 sem_data = enxuta(S[S['Período de entrada'] == 'Entrada não registrada'])
 
 SAIDA2 = 'entregaveis/alunas_maio_em_diante.xlsx'
-LARG = {'Aluna': 36, 'Contato': 19, 'Produto': 17, 'TMB?': 9,
+LARG = {'Aluna': 36, 'Contato': 19, 'Produto': 17, 'TMB?': 9, 'Validação': 13,
         'Pagamento (planilha)': 19, 'Situação': 22, 'Período de entrada': 17,
         'Entrada': 13, 'Término previsto': 15, 'Consultorias feitas': 22,
         'Consultor': 15, 'Motivo do cancelamento': 45, 'Observação': 45}
@@ -477,7 +483,9 @@ with pd.ExcelWriter(SAIDA2, engine='xlsxwriter') as xw:
         for i, (_, row) in enumerate(D.iterrows()):
             for j, c in enumerate(COLS):
                 v = row[c]
-                if v == '' or pd.isna(v):
+                if c == 'Validação':
+                    w.write(i + 1, j, '', livre)
+                elif v == '' or pd.isna(v):
                     w.write(i + 1, j, '—', vaz)
                 else:
                     w.write(i + 1, j, str(v),
@@ -487,10 +495,16 @@ with pd.ExcelWriter(SAIDA2, engine='xlsxwriter') as xw:
         w.freeze_panes(1, 1)
         w.autofilter(0, 0, max(len(D), 1), len(COLS) - 1)
 
+    def listas(w, n):
+        for coluna, fonte in (('TMB?', ['TMB', 'Não TMB', 'Não sei']),
+                              ('Validação', VALIDACAO)):
+            j = COLS.index(coluna)
+            w.data_validation(1, j, max(n, 1), j,
+                              {'validate': 'list', 'source': fonte})
+
     w = wb.add_worksheet('Maio e pós maio')
     escrever(w, maio_pos, cab)
-    w.data_validation(1, COLS.index('TMB?'), len(maio_pos), COLS.index('TMB?'),
-                      {'validate': 'list', 'source': ['TMB', 'Não TMB', 'Não sei']})
+    listas(w, len(maio_pos))
 
     # Aba em branco: a Jessica preenche. Produto ja vem escrito para nao virar
     # mais um campo de digitacao livre.
@@ -500,14 +514,12 @@ with pd.ExcelWriter(SAIDA2, engine='xlsxwriter') as xw:
     for i in range(1, LINHAS_J + 1):
         for j, c in enumerate(COLS):
             w.write(i, j, 'Máquina de Vendas' if c == 'Produto' else '', livre)
-    w.data_validation(1, COLS.index('TMB?'), LINHAS_J, COLS.index('TMB?'),
-                      {'validate': 'list', 'source': ['TMB', 'Não TMB', 'Não sei']})
+    listas(w, LINHAS_J)
     w.autofilter(0, 0, LINHAS_J, len(COLS) - 1)
 
     w = wb.add_worksheet('Sem data de início')
     escrever(w, sem_data, cab)
-    w.data_validation(1, COLS.index('TMB?'), len(sem_data), COLS.index('TMB?'),
-                      {'validate': 'list', 'source': ['TMB', 'Não TMB', 'Não sei']})
+    listas(w, len(sem_data))
 
 print('\n--- entregue em', SAIDA2)
 print('maio e pos maio:', len(maio_pos), '| sem data:', len(sem_data))
