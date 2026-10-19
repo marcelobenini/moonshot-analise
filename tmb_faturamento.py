@@ -9,11 +9,30 @@ Corte: fica quem tem TMB escrito na coluna TMB?, nas tres grafias que ela
 usou ('TMB', 'TMB Nbaw', 'TMB Natalia'). A grafia e preservada: Nbaw e
 Natalia sao pessoas juridicas diferentes.
 
-Faturamento: vem da coluna FATURAMENTO MÊS da aba do consultor. Quem nao tem
-linha em aba de consultor, ou tem a linha e a celula vazia, sai como
-'nao informado' - nunca como zero. 'FATURAMENTO ANO' nao e uma segunda
-medida: nas abas e sempre o mes vezes doze, entao nao viria informacao nova.
+Faturamento: vem da coluna FATURAMENTO MÊS da aba do consultor. Quando so o
+FATURAMENTO ANO esta preenchido, vale ano/12 - nas abas o ano e sempre o mes
+vezes doze, entao e a propria aritmetica da planilha, nao um palpite meu.
+Quem nao tem nenhum dos dois sai como 'nao informado', nunca como zero.
+
+Tres coisas que o campo de nome da aba do consultor faz e que atrapalham o
+casamento, tratadas de proposito:
+
+1. O consultor cola anotacao no nome: 'Priscila Abreu Brandão - ALUNA DANIEL X',
+   'Ana Paula Sarbok - Plano de ação entregue', 'Bruna Carol de Souza - OK'.
+   Sao 89 das 577 linhas. O corte e no hifen seguido de um marcador conhecido,
+   nunca em qualquer hifen - nome com hifen existe.
+2. Uma linha as vezes e um casal ou uma sociedade: 'Amanda Cristina da Silva /
+   Deleon Marido', 'Maisa ferreira / Gabriela Macrina'. Cada lado da barra
+   entra como chave propria, porque o faturamento e da mesma empresa.
+3. Nome digitado diferente: 'Claudia thais' na aba contra 'Claudia thays' na
+   matricula. Entra a passada de digitacao do REGRAS.md, com o mesmo corte de
+   0.92 de similaridade.
+
+O que NAO foi casado de proposito: linha que nomeia duas alunas ligadas por
+' e ' ('fabiana vieira e beatriz matos'), porque nao da para saber de qual
+das duas e o numero.
 """
+import difflib
 import re
 import sys
 import unicodedata
@@ -29,9 +48,24 @@ CONSULTORIAS = 'dados/controle_consultorias_live.xlsx'
 SAIDA = 'entregaveis/tmb_faturamento.xlsx'
 
 
+# Marcadores que o consultor cola depois do hifen. Sem 'e' nem iniciais:
+# o corte tem que ser inequivoco.
+RX_ANOTACAO = re.compile(
+    r'\s*[-–]\s*(alun[ao]\b|ok\b|pediu\b|plano\b|pausa\b|soci[ao]\b)', re.I)
+CORTE_DIGITACAO = 0.92
+
+
 def ch(n):
     n = unicodedata.normalize('NFKD', str(n)).encode('ascii', 'ignore').decode()
     return re.sub(r'\s+', ' ', re.sub(r'[^a-z ]', ' ', n.lower())).strip()
+
+
+def pessoas(bruto):
+    """Devolve as chaves que uma celula de nome contem: o nome sem a anotacao
+    do consultor, e cada lado da barra quando a linha e de casal/sociedade."""
+    limpo = RX_ANOTACAO.split(str(bruto))[0]
+    partes = [limpo] + (limpo.split('/') if '/' in limpo else [])
+    return [k for k in (ch(x) for x in partes) if k and 'moonshot' not in k]
 
 
 def dinheiro(v):
@@ -67,15 +101,19 @@ for aba in openpyxl.load_workbook(CONSULTORIAS, read_only=True).sheetnames:
     cm = next((v for k, v in cols.items() if 'faturamento mes' in k), None)
     if not cn or cm is None:
         continue
+    ca = next((v for k, v in cols.items() if 'faturamento ano' in k), None)
     for _, r in d.iterrows():
-        k = ch(r[cn])
         val = dinheiro(r[cm])
-        if not k or 'moonshot' in k or val is None:
+        anual = dinheiro(r[ca]) if ca is not None else None
+        if val is None and anual is not None:
+            val = anual / 12
+        if val is None:
             continue
-        # A mesma aluna pode estar em duas abas. Fica o maior valor e o nome
-        # da aba, para dar para rastrear de onde veio.
-        if k not in FAT or val > FAT[k][0]:
-            FAT[k] = (val, re.sub(r'\s+Geral\s*$', '', aba.strip()))
+        for k in pessoas(r[cn]):
+            # A mesma aluna pode estar em duas abas. Fica o maior valor e o
+            # nome da aba, para dar para rastrear de onde veio.
+            if k not in FAT or val > FAT[k][0]:
+                FAT[k] = (val, re.sub(r'\s+Geral\s*$', '', aba.strip()))
 
 CHAVES = list(FAT)
 
@@ -99,6 +137,15 @@ def faturamento(nome):
             continue
         if (t <= tu or tu <= t) and k.split()[0] == u.split()[0]:
             return FAT[u] + ('nome parcial',)
+    # Ultima passada: erro de digitacao. Corte alto, e o primeiro nome ainda
+    # tem de bater, senao 'Natalia Rodrigues' casaria com 'Amanda Rodrigues'.
+    melhor, nota = None, 0.0
+    for u in CHAVES:
+        r = difflib.SequenceMatcher(None, k, u).ratio()
+        if r > nota and r >= CORTE_DIGITACAO and k.split()[0][:3] == u.split()[0][:3]:
+            melhor, nota = u, r
+    if melhor:
+        return FAT[melhor] + ('digitação',)
     return None
 
 
