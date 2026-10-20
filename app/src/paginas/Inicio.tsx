@@ -12,6 +12,8 @@ type Resumo = { funil_id: string; etapa: string; ordem: number; cards: number; p
 type Carteira = { consultor_id: string; consultor: string; alunas: number; em_risco: number; sem_consultoria_recente: number; faturamento_carteira: number | null }
 type Mes = { mes: string; contratos: number; faturamento_mensal: number | null }
 type Retencao = { prazo: string; desfecho: string; tipo: string; pedidos: number }
+type AgendaItem = { id: number; aluna_id: number; nome: string; numero: number; data_prevista: string; consultor: string | null; atrasada: boolean; consultor_id: string | null }
+type Inadimplente = { aluna_id: number; nome: string; consultor: string | null; consultor_id: string | null; produto_contrato: string }
 
 export function Inicio() {
   const { eu, funis } = useSessao()
@@ -22,6 +24,8 @@ export function Inicio() {
   const [carteira, setCarteira] = useState<Carteira[]>([])
   const [meses, setMeses] = useState<Mes[]>([])
   const [retencao, setRetencao] = useState<Retencao[]>([])
+  const [agenda, setAgenda] = useState<AgendaItem[]>([])
+  const [inadimplentes, setInadimplentes] = useState<Inadimplente[]>([])
   const coord = eu?.papel === 'coordenador'
 
   useEffect(() => {
@@ -37,7 +41,13 @@ export function Inicio() {
       supabase.from('vw_carteira').select('*').order('consultor'),
       supabase.from('vw_renovacao_mes').select('*').order('mes').limit(6),
       coord ? supabase.from('vw_retencao_sistema').select('*') : Promise.resolve({ data: [] }),
-    ]).then(([c, d, r, fr, ca, m, rt]) => {
+      // A visao respeita a RLS: consultor ve a agenda da propria carteira.
+      supabase.from('vw_agenda_proxima').select('*').order('data_prevista').limit(40),
+      coord || eu.papel === 'cs' ? supabase.from('vw_inadimplentes').select('*').order('consultor')
+        : supabase.from('vw_inadimplentes').select('*').eq('consultor_id', eu.id),
+    ]).then(([c, d, r, fr, ca, m, rt, ag, ina]) => {
+      setAgenda((ag.data ?? []) as AgendaItem[])
+      setInadimplentes((ina.data ?? []) as Inadimplente[])
       setMeusCards((c.data ?? []) as CardEtapa[])
       setDemandas((d.data ?? []) as Demanda[])
       setRisco((r.data ?? []) as Aluna[])
@@ -95,6 +105,31 @@ export function Inicio() {
               sub={`última consultoria ${data(a.ultima_consultoria)} · ${reais(a.faturamento_mensal)}/mês`}
               direita={a.saude && <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo>} />
           ))}
+        </Bloco>
+
+        <Bloco titulo="Consultorias dos próximos 14 dias">
+          {agenda.length === 0 ? <Nada>Nada marcado na agenda.</Nada> : agenda.slice(0, 10).map((g) => (
+            <Linha key={g.id} para={`/alunas/${g.aluna_id}`} titulo={g.nome}
+              sub={`${g.numero === 0 ? 'Entrada' : `${g.numero}ª consultoria`}${coord ? ` · ${g.consultor ?? 'sem consultor'}` : ''}`}
+              direita={<span className={`text-xs font-medium ${g.atrasada ? 'text-red-600' : 'text-slate-600'}`}>{g.atrasada ? 'atrasada · ' : ''}{data(g.data_prevista)}</span>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo={`Inadimplentes${inadimplentes.length ? ` (${inadimplentes.length})` : ''}`} link="/alunas">
+          {inadimplentes.length === 0 ? <Nada>Nenhum contrato inadimplente.</Nada> : (
+            <div className="p-4 text-sm">
+              {Object.entries(inadimplentes.reduce<Record<string, Inadimplente[]>>((g, i) => {
+                const k = i.consultor ?? 'Sem consultor'; (g[k] ??= []).push(i); return g
+              }, {})).map(([consultor, lista]) => (
+                <details key={consultor} className="border-b border-slate-50 py-1.5">
+                  <summary className="flex cursor-pointer justify-between"><span className="font-medium">{consultor}</span><span className="text-red-600">{lista.length}</span></summary>
+                  <ul className="mt-1 space-y-0.5 pl-3">
+                    {lista.map((i) => <li key={i.aluna_id + i.produto_contrato}><Link to={`/alunas/${i.aluna_id}`} className="text-indigo-700 hover:underline">{i.nome}</Link> <span className="text-xs text-slate-500">{i.produto_contrato}</span></li>)}
+                  </ul>
+                </details>
+              ))}
+            </div>
+          )}
         </Bloco>
 
         <Bloco titulo="Vencimentos dos próximos meses" link="/funis/renovacao" icone={<CalendarClock size={16} />}>

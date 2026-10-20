@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
@@ -11,6 +11,10 @@ export function Equipe() {
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const pendentes = equipe.filter((p) => !p.ativo)
+  const [nomes, setNomes] = useState<{ papel: string; exemplo: string; alunas: number; vinculadas: number }[]>([])
+  useEffect(() => {
+    supabase.from('vw_nomes_planilha').select('*').order('alunas', { ascending: false }).then(({ data }) => setNomes((data ?? []) as never))
+  }, [aviso])
 
   async function mudar(p: Perfil, campos: Partial<Perfil>) {
     setErro(null); setAviso(null)
@@ -35,8 +39,8 @@ export function Equipe() {
           A pessoa aparece aqui como <b>pendente</b>; escolha o papel e libere.
         </p>
         <p>
-          <b>Nome na planilha</b> é como o consultor aparecia no Controle Consultorias (ex.: “carol”). Preencha e clique em
-          “Vincular carteiras” para as alunas importadas irem para a carteira certa.
+          <b>Nome na planilha</b> é como a pessoa aparece nas planilhas — consultor ou CS. Aceita vários, separados por vírgula
+          (ex.: “Thiago, Tiago”). Preencha e clique em “Vincular carteiras” para as alunas importadas irem para a carteira certa.
         </p>
       </div>
       <Erro msg={erro} />
@@ -64,8 +68,8 @@ export function Equipe() {
                   </select>
                 </td>
                 <td className="px-4 py-2.5">
-                  {p.papel === 'consultor' ? (
-                    <input className="entrada" placeholder="ex.: carol" defaultValue={p.consultor_norm ?? ''}
+                  {p.papel === 'consultor' || p.papel === 'cs' || p.papel === 'coordenador' ? (
+                    <input className="entrada" placeholder="ex.: Thiago, Tiago" defaultValue={p.consultor_norm ?? ''}
                       onBlur={(e) => e.target.value !== (p.consultor_norm ?? '') && mudar(p, { consultor_norm: e.target.value.trim() || null })} />
                   ) : <span className="text-slate-400">—</span>}
                 </td>
@@ -81,6 +85,27 @@ export function Equipe() {
           </tbody>
         </table>
       </div>
+
+      {nomes.length > 0 && (
+        <div className="painel mt-6 overflow-x-auto">
+          <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Nomes que vieram das planilhas</h2>
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs text-slate-500">
+              <tr><th className="px-4 py-2">Como aparece</th><th className="px-4 py-2">Papel</th><th className="px-4 py-2">Alunas</th><th className="px-4 py-2">Ligadas a alguém da equipe</th></tr>
+            </thead>
+            <tbody>
+              {nomes.map((n) => (
+                <tr key={n.papel + n.exemplo} className="border-t border-slate-100">
+                  <td className="px-4 py-2 font-medium">{n.exemplo}</td>
+                  <td className="px-4 py-2">{n.papel === 'cs' ? 'CS' : 'Consultor'}</td>
+                  <td className="px-4 py-2">{n.alunas}</td>
+                  <td className={`px-4 py-2 ${n.vinculadas < n.alunas ? 'text-amber-700' : 'text-emerald-700'}`}>{n.vinculadas} de {n.alunas}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

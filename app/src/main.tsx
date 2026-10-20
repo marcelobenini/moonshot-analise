@@ -15,6 +15,8 @@ import { Demandas } from './paginas/Demandas'
 import { DemandaDetalhe } from './paginas/DemandaDetalhe'
 import { Notificacoes } from './paginas/Notificacoes'
 import { Equipe } from './paginas/Equipe'
+import { Eventos, EventoDetalhe } from './paginas/Eventos'
+import { Importar } from './paginas/Importar'
 
 function Rotas() {
   const { carregando, sessao, eu } = useSessao()
@@ -60,6 +62,9 @@ function Rotas() {
         <Route path="demandas" element={<Demandas />} />
         <Route path="demandas/:id" element={<DemandaDetalhe />} />
         <Route path="notificacoes" element={<Notificacoes />} />
+        <Route path="eventos" element={<Eventos />} />
+        <Route path="eventos/:id" element={<EventoDetalhe />} />
+        {eu.papel === 'coordenador' && <Route path="importar" element={<Importar />} />}
         {eu.papel === 'coordenador' && <Route path="equipe" element={<Equipe />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -39,6 +39,24 @@ export const TIPO_DEMANDA: Record<Demanda['tipo'], string> = {
   aviso: 'Aviso',
 }
 
+export const FINANCEIRO: Record<string, { rotulo: string; cor: string }> = {
+  adimplente: { rotulo: 'Adimplente', cor: 'bg-emerald-100 text-emerald-800' },
+  quitado: { rotulo: 'Quitado', cor: 'bg-emerald-100 text-emerald-800' },
+  parcelado: { rotulo: 'Parcelado', cor: 'bg-sky-100 text-sky-800' },
+  pendente: { rotulo: 'Pagamento pendente', cor: 'bg-amber-100 text-amber-800' },
+  inadimplente: { rotulo: 'Inadimplente', cor: 'bg-red-100 text-red-800' },
+}
+
+export const PRODUTOS = ['Moonshot Club', 'Moonshot Pró', 'Moonshot Elite', 'Moonshot Private', 'Moonshot In Company', 'Máquina de Vendas']
+
+export const NOTA: Record<string, string> = {
+  nota: 'Anotação',
+  situacao: 'Situação (planilha do consultor)',
+  obs_cs: 'Observação da CS',
+  obs_consultor: 'Observação do consultor',
+  potencial: 'Potencial',
+}
+
 export const PRAZO_RETENCAO: Record<string, string> = {
   dentro_7_dias: 'Dentro dos 7 dias',
   fora_7_dias: 'Fora dos 7 dias',

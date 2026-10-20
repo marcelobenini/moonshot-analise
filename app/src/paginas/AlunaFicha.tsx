@@ -4,11 +4,12 @@ import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail } from 'lucide-re
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda, Etapa, Funil, RegistroConsultoria, Saude } from '../lib/tipos'
-import { SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
+import { FINANCEIRO, SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
 import { Campo, Carregando, Erro, Modal, Selo, Vazio } from '../componentes/ui'
 import { AlunaForm } from './Alunas'
 import { NovoCard } from './CardGaveta'
 import { NovaDemanda } from './Demandas'
+import { Agenda, Contratos, EventosDaAluna, Notas } from './FichaExtras'
 
 export function AlunaFicha() {
   const { id } = useParams()
@@ -69,20 +70,27 @@ export function AlunaFicha() {
           <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : '—'}</Dado>
           <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : '—'}</Dado>
           <Dado rotulo="Consultor">{aluna.consultor_id ? nomeDe(aluna.consultor_id) : aluna.consultor_planilha ? `${aluna.consultor_planilha} (planilha)` : '—'}</Dado>
-          <Dado rotulo="CS">{nomeDe(aluna.cs_id)}</Dado>
+          <Dado rotulo="CS">{aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ? `${aluna.cs_planilha} (planilha)` : '—'}</Dado>
           <Dado rotulo="Faturamento">{reais(aluna.faturamento_mensal)}/mês</Dado>
           <Dado rotulo="Funcionários">{aluna.funcionarios ?? '—'}</Dado>
           <Dado rotulo="Início">{data(aluna.inicio)}</Dado>
           <Dado rotulo="Término">{data(aluna.termino)}</Dado>
           <Dado rotulo="Última consultoria">{data(aluna.ultima_consultoria)}</Dado>
-          <Dado rotulo="Financeiro">{aluna.status_financeiro ?? '—'}</Dado>
+          <Dado rotulo="Financeiro">{aluna.status_financeiro && FINANCEIRO[aluna.status_financeiro]
+            ? <Selo cor={FINANCEIRO[aluna.status_financeiro].cor}>{FINANCEIRO[aluna.status_financeiro].rotulo}</Selo> : aluna.status_financeiro ?? '—'}</Dado>
+          <Dado rotulo="Pagamento">{aluna.forma_pagamento ?? '—'}</Dado>
+          <Dado rotulo="Kit">{[aluna.tamanho_kit && `pijama ${aluna.tamanho_kit}`, aluna.jaqueta && `jaqueta ${aluna.jaqueta}`].filter(Boolean).join(' · ') || '—'}</Dado>
+          <Dado rotulo="Onboarding">{[aluna.onboarding_status, aluna.acesso_plataforma && `acesso ${aluna.acesso_plataforma.toLowerCase()}`].filter(Boolean).join(' · ') || '—'}</Dado>
+          <Dado rotulo="Cadastro">{aluna.cadastro_preenchido ? (aluna.link_notion ? <a className="text-indigo-700" href={aluna.link_notion} target="_blank" rel="noreferrer">preenchido · Notion</a> : 'preenchido') : '—'}</Dado>
           <Dado rotulo="Cidade">{[aluna.cidade, aluna.uf].filter(Boolean).join(' / ') || '—'}</Dado>
           <Dado rotulo="Ramo">{aluna.ramo ?? '—'}</Dado>
         </dl>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        <section className="space-y-3 lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
+        <Agenda aluna={aluna} podeEditar={podeRegistrar || eu?.papel === 'cs'} />
+        <section className="space-y-3">
           <h2 className="font-semibold">Consultorias</h2>
           {registros.length === 0 ? (
             <Vazio>{podeRegistrar ? 'Nenhuma consultoria registrada ainda.' : 'Nenhuma consultoria visível para você — o relato fica com quem atende a aluna e com a coordenação.'}</Vazio>
@@ -109,7 +117,11 @@ export function AlunaFicha() {
           ))}
         </section>
 
+        <Notas aluna={aluna} />
+        </div>
+
         <aside className="space-y-5">
+          <Contratos aluna={aluna} mudou={carregar} />
           <section>
             <h2 className="mb-3 font-semibold">Nos funis</h2>
             <div className="painel divide-y divide-slate-100">
@@ -145,6 +157,7 @@ export function AlunaFicha() {
               ))}
             </div>
           </section>
+          <EventosDaAluna aluna={aluna} />
         </aside>
       </div>
 

@@ -4,7 +4,7 @@ import { Plus, Search, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna } from '../lib/tipos'
-import { SAUDE, data, mensagemErro, reais } from '../lib/util'
+import { FINANCEIRO, PRODUTOS, SAUDE, data, mensagemErro, reais } from '../lib/util'
 import { Campo, Carregando, Erro, EscolherPessoa, Modal, Selo, Titulo, Vazio } from '../componentes/ui'
 
 const POR_PAGINA = 50
@@ -17,12 +17,14 @@ export function Alunas() {
   const [termo, setTermo] = useState('')
   const [status, setStatus] = useState('vivos')
   const [saude, setSaude] = useState('')
+  const [produto, setProduto] = useState('')
+  const [financeiro, setFinanceiro] = useState('')
   const [minhas, setMinhas] = useState(eu?.papel === 'consultor' || eu?.papel === 'cs')
   const [pagina, setPagina] = useState(0)
   const [nova, setNova] = useState(false)
   const podeCriar = ['coordenador', 'cs', 'comercial', 'retencao'].includes(eu?.papel ?? '')
 
-  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas])
+  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro])
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -32,12 +34,14 @@ export function Alunas() {
       if (status === 'vivos') q = q.not('status_contrato', 'in', '(cancelado,encerrado)')
       else if (status) q = q.eq('status_contrato', status)
       if (saude) q = q.eq('saude', saude)
+      if (produto) q = q.eq('produto', produto)
+      if (financeiro) q = q.eq('status_financeiro', financeiro)
       if (minhas && eu) q = q.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
       const { data: d, count } = await q.order('nome').range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1)
       setLista((d ?? []) as Aluna[]); setTotal(count ?? 0)
     }, 200)
     return () => clearTimeout(t)
-  }, [termo, status, saude, minhas, pagina, eu])
+  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro])
 
   return (
     <div>
@@ -62,6 +66,14 @@ export function Alunas() {
         <select className="entrada w-auto" value={saude} onChange={(e) => setSaude(e.target.value)}>
           <option value="">Qualquer saúde</option>
           {Object.entries(SAUDE).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
+        </select>
+        <select className="entrada w-auto" value={produto} onChange={(e) => setProduto(e.target.value)}>
+          <option value="">Qualquer produto</option>
+          {PRODUTOS.map((p) => <option key={p}>{p}</option>)}
+        </select>
+        <select className="entrada w-auto" value={financeiro} onChange={(e) => setFinanceiro(e.target.value)}>
+          <option value="">Qualquer financeiro</option>
+          {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
         </select>
         <label className="flex items-center gap-2 text-sm text-slate-600">
           <input type="checkbox" checked={minhas} onChange={(e) => setMinhas(e.target.checked)} /> Minha carteira
@@ -117,7 +129,7 @@ export function Alunas() {
 // `nome_norm`, que e coluna gerada e o Postgres recusa.
 const EDITAVEIS: (keyof Aluna)[] = ['nome', 'telefone', 'email', 'empresa', 'ramo', 'cidade', 'uf', 'produto', 'turma',
   'inicio', 'termino', 'status_contrato', 'status_financeiro', 'faturamento_mensal', 'funcionarios',
-  'consultor_id', 'cs_id', 'tamanho_kit']
+  'consultor_id', 'cs_id', 'tamanho_kit', 'telefone2', 'jaqueta', 'link_notion', 'forma_pagamento']
 
 type Duplicata = { id: number; nome: string; email: string | null; telefone: string | null; motivo: string }
 
@@ -181,6 +193,8 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <div className="sm:col-span-2"><Campo rotulo="Nome completo *"><input className="entrada" required value={f.nome ?? ''} onChange={(e) => muda('nome', e.target.value)} /></Campo></div>
           <Campo rotulo="Telefone"><input className="entrada" value={f.telefone ?? ''} onChange={(e) => muda('telefone', e.target.value)} /></Campo>
           <Campo rotulo="E-mail"><input className="entrada" type="email" value={f.email ?? ''} onChange={(e) => muda('email', e.target.value)} /></Campo>
+          <Campo rotulo="Telefone secundário"><input className="entrada" value={f.telefone2 ?? ''} onChange={(e) => muda('telefone2', e.target.value)} /></Campo>
+          <Campo rotulo="Forma de pagamento"><input className="entrada" value={f.forma_pagamento ?? ''} onChange={(e) => muda('forma_pagamento', e.target.value)} /></Campo>
           <Campo rotulo="Empresa"><input className="entrada" value={f.empresa ?? ''} onChange={(e) => muda('empresa', e.target.value)} /></Campo>
           <Campo rotulo="Ramo"><input className="entrada" value={f.ramo ?? ''} onChange={(e) => muda('ramo', e.target.value)} /></Campo>
           <Campo rotulo="Cidade"><input className="entrada" value={f.cidade ?? ''} onChange={(e) => muda('cidade', e.target.value)} /></Campo>
@@ -188,8 +202,8 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <Campo rotulo="Produto">
             <select className="entrada" value={f.produto ?? ''} onChange={(e) => muda('produto', e.target.value)}>
               <option value="">—</option>
-              {['Club', 'Pro', 'Elite', 'Private', 'Presencial', 'Clínica'].map((p) => <option key={p}>{p}</option>)}
-              {f.produto && !['Club', 'Pro', 'Elite', 'Private', 'Presencial', 'Clínica'].includes(f.produto) && <option>{f.produto}</option>}
+              {PRODUTOS.map((p) => <option key={p}>{p}</option>)}
+              {f.produto && !PRODUTOS.includes(f.produto) && <option>{f.produto}</option>}
             </select>
           </Campo>
           <Campo rotulo="Turma"><input className="entrada" value={f.turma ?? ''} onChange={(e) => muda('turma', e.target.value)} /></Campo>
@@ -211,10 +225,12 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
             {redistribui ? <EscolherPessoa valor={f.cs_id ?? null} mudar={(v) => muda('cs_id', v)} papeis={['cs', 'coordenador']} />
               : <input className="entrada" disabled value="Definido pela coordenação/CS" />}
           </Campo>
-          <Campo rotulo="Tamanho do kit">
+          <Campo rotulo="Jaqueta"><input className="entrada" placeholder="Tamanho ou entregue" value={f.jaqueta ?? ''} onChange={(e) => muda('jaqueta', e.target.value)} /></Campo>
+          <Campo rotulo="Link do Notion"><input className="entrada" value={f.link_notion ?? ''} onChange={(e) => muda('link_notion', e.target.value)} /></Campo>
+          <Campo rotulo="Tamanho do pijama">
             <select className="entrada" value={f.tamanho_kit ?? ''} onChange={(e) => muda('tamanho_kit', e.target.value)}>
               <option value="">—</option>
-              {['PP', 'P', 'M', 'G', 'GG', 'XG'].map((t) => <option key={t}>{t}</option>)}
+              {['PP', 'P', 'M', 'G', 'GG', 'GGG', 'XG', 'XXG'].map((t) => <option key={t}>{t}</option>)}
             </select>
           </Campo>
         </div>

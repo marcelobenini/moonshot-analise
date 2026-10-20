@@ -105,8 +105,9 @@ No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
    2. `supabase/sistema.sql`
    3. `supabase/sistema_funis.sql`
    4. `supabase/sistema_importar.sql`
+   5. `supabase/sistema_planilhas.sql`
 
-   Os quatro podem ser reaplicados sem perder dado.
+   Os cinco podem ser reaplicados sem perder dado.
 3. Se a base histórica estiver carregada, rode:
    ```sql
    select importar_base_historica();  -- alunas, ciclos e pedidos em aberto
@@ -158,6 +159,38 @@ deve trazer `"ok": true`.
 4. Distribua a CS das alunas importadas (a planilha de matrículas não tem esse
    campo): pela ficha da aluna, ou em lote no SQL Editor.
 
+### 5. Trazer as planilhas
+
+Tela **Importar planilha** (só coordenação). Baixe cada planilha do Drive como
+`.xlsx` (Arquivo → Fazer download → Microsoft Excel) e solte na tela. O sistema
+reconhece o tipo pelo conteúdo; dá para trocar se errar. Importar de novo a
+mesma planilha atualiza, não duplica.
+
+Ordem recomendada (as primeiras criam as alunas; as outras completam):
+
+| # | Planilha | Vira no sistema |
+|---|----------|-----------------|
+| 1 | Matrículas (abas PB-, PC-, Elite, Privaty, In Company) | alunas, contratos, cards de onboarding |
+| 2 | Controle Consultorias | carteira do consultor, agenda das 6 consultorias, anotações |
+| 3 | Máquina de Vendas (alunas_maio) | contratos do produto Máquina |
+| 4 | Cancelamentos | status, motivo e cards no funil de retenção |
+| 5 | Kit / Pijamas | jaqueta e kit entregue |
+| 6 | Cadastro | telefone, e-mail e dados de cadastro |
+| 7 | Inadimplentes | status financeiro e a lista no Início |
+| 8 | Eventos | tela Eventos, com confirmados, presença e potencial |
+
+Cada nome é procurado na base por e-mail, telefone e nome (com tolerância a
+erro de digitação e nome incompleto). Quando o sistema não tem certeza, cria
+uma **pendência** em vez de juntar: confira no fim da importação e use
+**"É a mesma pessoa"** para unir duas fichas.
+
+Depois de importar, vá em **Equipe**, preencha o *nome na planilha* de cada
+consultor e CS (aceita apelidos: "Thiago, Tiago") e clique em **Vincular
+carteiras**. A tabela "Nomes que vieram das planilhas" mostra o que ainda não
+está ligado a ninguém.
+
+Fica para depois: **Orçamentos** (viagens e reembolsos).
+
 ---
 
 ## Desenvolvimento
@@ -176,8 +209,8 @@ Teste do banco, contra qualquer Postgres 16 vazio:
 PGHOST=... PGUSER=postgres supabase/testar_sistema.sh
 ```
 
-São 67 verificações: o que cada papel vê e não vê, cada automação, a
-importação e a rotina diária. Rode sempre que mexer em `sistema*.sql`.
+Mais de 110 verificações: o que cada papel vê e não vê, cada automação, a
+importação das planilhas e a rotina diária. Rode sempre que mexer em `sistema*.sql`.
 
 ---
 

@@ -37,6 +37,96 @@ export interface Aluna {
   saude: Saude | null
   ultima_consultoria: string | null
   tamanho_kit: string | null
+  telefone2: string | null
+  forma_pagamento: string | null
+  plano_meses: number | null
+  contrato_assinatura: string | null
+  acesso_plataforma: string | null
+  onboarding_status: string | null
+  grupo_avisos: string | null
+  cadastro_preenchido: boolean
+  link_notion: string | null
+  jaqueta: string | null
+  cs_planilha: string | null
+}
+
+export type StatusFinanceiro = 'adimplente' | 'inadimplente' | 'parcelado' | 'quitado' | 'pendente'
+
+export interface Contrato {
+  id: number
+  aluna_id: number
+  produto: string
+  turma: string | null
+  inicio: string | null
+  termino: string | null
+  plano_meses: number | null
+  status: Aluna['status_contrato']
+  status_financeiro: StatusFinanceiro | null
+  forma_pagamento: string | null
+  assinatura: string | null
+  observacao: string | null
+}
+
+export interface AgendaConsultoria {
+  id: number
+  aluna_id: number
+  numero: number
+  data_prevista: string | null
+  realizada_em: string | null
+  observacao: string | null
+}
+
+export interface NotaAluna {
+  id: number
+  aluna_id: number
+  autor_id: string | null
+  tipo: string
+  texto: string
+  origem: string | null
+  criado_em: string
+}
+
+export interface Evento {
+  id: number
+  nome: string
+  data: string | null
+  local: string | null
+  descricao: string | null
+}
+
+export interface Participante {
+  id: number
+  evento_id: number
+  aluna_id: number | null
+  nome: string
+  contato: string | null
+  tipo: 'aluna' | 'socio' | 'convidado'
+  confirmado: boolean | null
+  presente: boolean | null
+  programa_informado: string | null
+  faturamento_informado: string | null
+  potencial: 'alto' | 'medio' | 'baixo' | null
+  potencial_obs: string | null
+}
+
+export interface Importacao {
+  id: number
+  tipo: string
+  arquivo: string
+  status: 'recebendo' | 'processada' | 'erro'
+  resumo: Record<string, unknown> | null
+  criado_em: string
+}
+
+export interface Pendencia {
+  id: number
+  importacao_id: number
+  aba: string | null
+  linha: number | null
+  nome: string | null
+  motivo: string
+  candidatos: { nova?: number; parecidas?: { id: number; nome: string; similaridade: number }[] } | { id: number; nome: string; similaridade: number }[] | null
+  resolvida: boolean
 }
 
 export interface CampoFunil {
