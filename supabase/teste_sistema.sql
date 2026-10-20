@@ -238,6 +238,9 @@ select ok(conta_como(:carol, 'select * from notificacao') =
           (select count(*) from notificacao where usuario_id = :carol), 'cada um ve so as proprias notificacoes');
 select ok(barrado(:carol, $$insert into notificacao (usuario_id, tipo, titulo) values (auth.uid(), 'x', 'x')$$),
           'notificacao nao se insere na mao');
+select ok(barrado(:carol, $$select notificar('00000000-0000-0000-0000-0000000000a1', 'x', 'Aviso falso')$$),
+          'funcao de notificar nao e chamavel pela API');
+select ok(barrado(:carol, $$select abrir_retencao(1, 'x')$$), 'automacao de retencao nao e chamavel pela API');
 
 -- Rotina diaria ---------------------------------------------------------------
 update aluna set cs_id = :cs where nome = 'Claudia Benati';

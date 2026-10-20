@@ -112,8 +112,7 @@ begin
   on conflict (id) do nothing;
   return new;
 end $$;
-drop trigger if exists tg_perfil_novo on auth.users;
-create trigger tg_perfil_novo after insert on auth.users
+create or replace trigger tg_perfil_novo after insert on auth.users
   for each row execute function perfil_novo();
 
 create or replace function meu_papel() returns text
@@ -143,8 +142,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_perfil_protege on perfil;
-create trigger tg_perfil_protege before update on perfil
+create or replace trigger tg_perfil_protege before update on perfil
   for each row execute function perfil_protege();
 
 -- ---------------------------------------------------------------------------
@@ -212,8 +210,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_aluna_protege on aluna;
-create trigger tg_aluna_protege before insert or update on aluna
+create or replace trigger tg_aluna_protege before insert or update on aluna
   for each row execute function aluna_protege();
 
 -- Antes de cadastrar: ja existe? Ordem da especificacao: e-mail, telefone, nome.
@@ -395,8 +392,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_card_antes on card;
-create trigger tg_card_antes before insert or update on card
+create or replace trigger tg_card_antes before insert or update on card
   for each row execute function card_antes();
 
 -- O coracao das automacoes. Cada gatilho e o nome de uma regra da especificacao
@@ -531,8 +527,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_card_depois on card;
-create trigger tg_card_depois after insert or update on card
+create or replace trigger tg_card_depois after insert or update on card
   for each row execute function card_depois();
 
 -- Comentario no card avisa o responsavel.
@@ -547,8 +542,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_evento_comentario on card_evento;
-create trigger tg_evento_comentario after insert on card_evento
+create or replace trigger tg_evento_comentario after insert on card_evento
   for each row execute function evento_comentario();
 
 -- ---------------------------------------------------------------------------
@@ -611,8 +605,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_consultoria_depois on registro_consultoria;
-create trigger tg_consultoria_depois after insert on registro_consultoria
+create or replace trigger tg_consultoria_depois after insert on registro_consultoria
   for each row execute function consultoria_depois();
 
 -- ---------------------------------------------------------------------------
@@ -662,8 +655,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_demanda_antes on demanda;
-create trigger tg_demanda_antes before insert or update on demanda
+create or replace trigger tg_demanda_antes before insert or update on demanda
   for each row execute function demanda_antes();
 
 create or replace function demanda_depois() returns trigger
@@ -693,8 +685,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists tg_demanda_depois on demanda;
-create trigger tg_demanda_depois after insert or update on demanda
+create or replace trigger tg_demanda_depois after insert or update on demanda
   for each row execute function demanda_depois();
 
 create or replace function demanda_comentario_depois() returns trigger
@@ -709,8 +700,7 @@ begin
   update demanda set atualizado_em = now() where id = d.id;
   return new;
 end $$;
-drop trigger if exists tg_demanda_comentario on demanda_comentario;
-create trigger tg_demanda_comentario after insert on demanda_comentario
+create or replace trigger tg_demanda_comentario after insert on demanda_comentario
   for each row execute function demanda_comentario_depois();
 
 -- ---------------------------------------------------------------------------
@@ -950,6 +940,50 @@ grant select on vw_funil_resumo, vw_renovacao_mes, vw_carteira, vw_retencao_sist
 grant execute on function possiveis_duplicatas(text, text, text) to authenticated;
 -- A rotina roda pelo agendador, nao pelo navegador.
 revoke execute on function rotina_diaria() from public, authenticated, anon;
+
+-- Toda funcao em `public` vira endpoint /rest/v1/rpc/. As de automacao so
+-- podem rodar pelos gatilhos (security definer, dono postgres): sem isto,
+-- qualquer um logado chamava notificar() e mandava aviso falso a um colega.
+revoke execute on function notificar(uuid, text, text, text, text, text, boolean) from public, anon, authenticated;
+revoke execute on function notificar_papel(text, text, text, text, text, text) from public, anon, authenticated;
+revoke execute on function abrir_retencao(bigint, text, bigint) from public, anon, authenticated;
+revoke execute on function card_automacoes(card, etapa) from public, anon, authenticated;
+revoke execute on function perfil_novo() from public, anon, authenticated;
+revoke execute on function perfil_protege() from public, anon, authenticated;
+revoke execute on function aluna_protege() from public, anon, authenticated;
+revoke execute on function card_antes() from public, anon, authenticated;
+revoke execute on function card_depois() from public, anon, authenticated;
+revoke execute on function evento_comentario() from public, anon, authenticated;
+revoke execute on function consultoria_depois() from public, anon, authenticated;
+revoke execute on function demanda_depois() from public, anon, authenticated;
+revoke execute on function demanda_comentario_depois() from public, anon, authenticated;
+-- As que as politicas chamam: so para quem esta logado. Respondem apenas sobre
+-- o proprio usuario (meu papel, se atendo esta aluna), entao podem ficar expostas.
+revoke execute on function meu_papel() from public, anon;
+revoke execute on function eh_coordenador() from public, anon;
+revoke execute on function ativo() from public, anon;
+revoke execute on function param(text) from public, anon;
+revoke execute on function pode_ver_funil(text) from public, anon;
+revoke execute on function pode_editar_funil(text) from public, anon;
+revoke execute on function card_visivel(card, boolean) from public, anon;
+revoke execute on function atende_aluna(bigint) from public, anon;
+revoke execute on function demanda_minha(demanda) from public, anon;
+grant execute on function meu_papel(), eh_coordenador(), ativo(), param(text), pode_ver_funil(text),
+  pode_editar_funil(text), card_visivel(card, boolean), atende_aluna(bigint), demanda_minha(demanda)
+  to authenticated;
+alter function carteira_minha(aluna) set search_path = public;
+alter function possiveis_duplicatas(text, text, text) set search_path = public;
+alter function etapa_de(text, integer) set search_path = public;
+alter function norm_nome(text) set search_path = public;
+alter function norm_fone(text) set search_path = public;
+alter function demanda_antes() set search_path = public;
+
+-- O plano gratuito pausa o projeto apos dias sem acesso, e pg_cron interno nao
+-- conta como acesso. O Cron da Vercel (app/api/manter-ativo.js) chama esta
+-- funcao pela API todo dia. Nao le nem grava dado nenhum, por isso pode ser anon.
+create or replace function manter_ativo() returns timestamptz
+language sql stable set search_path = public as $$ select now() $$;
+grant execute on function manter_ativo() to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Tempo real (sino de notificacoes e Kanban atualizando sozinho) e agendamento.

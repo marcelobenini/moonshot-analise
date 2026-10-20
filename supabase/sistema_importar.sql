@@ -117,3 +117,5 @@ begin
 end $$;
 
 revoke execute on function importar_base_historica() from public, authenticated, anon;
+revoke execute on function vincular_equipe() from public, anon;
+grant execute on function vincular_equipe() to authenticated;

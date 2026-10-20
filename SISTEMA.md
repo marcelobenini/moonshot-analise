@@ -96,6 +96,9 @@ sem mexer em código.
 
 No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
 
+> Já aplicado no projeto `moonshot-base` em 20/10/2026. Os passos abaixo
+> servem para um projeto novo ou para reaplicar depois de mudar os arquivos.
+
 1. **Database → Extensions**: ative `pg_cron`. É ele que roda a rotina diária.
 2. **SQL Editor**: execute, nesta ordem:
    1. `supabase/schema.sql` (se a base histórica ainda não estiver lá)
@@ -129,8 +132,16 @@ Qualquer hospedagem de site estático serve. Com a Vercel:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY` (a chave **pública**; nunca a `service_role`)
 
-Netlify e Cloudflare Pages funcionam igual. O `public/_redirects` e o
-`vercel.json` já cuidam das rotas.
+O `vercel.json` já cuida das rotas e agenda o **Cron que impede o Supabase de
+pausar**: todo dia às 8h17 de Brasília, a Vercel chama `/api/manter-ativo`, que
+faz uma chamada leve ao banco (`manter_ativo()`). O plano gratuito do Supabase
+pausa o projeto depois de dias sem acesso pela API, e o `pg_cron` interno não
+conta como acesso. Opcional: defina `CRON_SECRET` nas variáveis da Vercel para
+que só ela consiga disparar essa rota.
+
+Para conferir se o Cron está funcionando, veja em **Vercel → Settings → Cron
+Jobs**, ou abra `https://<seu-app>/api/manter-ativo` no navegador. A resposta
+deve trazer `"ok": true`.
 
 ### 4. Equipe
 
@@ -165,7 +176,7 @@ Teste do banco, contra qualquer Postgres 16 vazio:
 PGHOST=... PGUSER=postgres supabase/testar_sistema.sh
 ```
 
-São 65 verificações: o que cada papel vê e não vê, cada automação, a
+São 67 verificações: o que cada papel vê e não vê, cada automação, a
 importação e a rotina diária. Rode sempre que mexer em `sistema*.sql`.
 
 ---
