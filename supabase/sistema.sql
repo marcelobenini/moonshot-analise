@@ -35,7 +35,7 @@ begin
   if not exists (select 1 from pg_namespace where nspname = 'auth') then
     execute 'create schema auth';
     execute 'create table auth.users (id uuid primary key, email text,
-               raw_user_meta_data jsonb default ''{}''::jsonb)';
+               raw_user_meta_data jsonb default ''{}''::jsonb, encrypted_password text)';
     -- Mesma definicao do Supabase: aceita o claim avulso e o JSON do PostgREST.
     execute $f$create function auth.uid() returns uuid language sql stable as
       $b$ select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
@@ -98,6 +98,9 @@ create table if not exists perfil (
     consultor_norm text,
     criado_em      timestamptz not null default now()
 );
+-- Conta criada com senha provisoria: ate trocar, nao ve dado nenhum (ver
+-- meu_papel) e o app so mostra a tela de nova senha.
+alter table perfil add column if not exists trocar_senha boolean not null default false;
 comment on table perfil is
   'Quem usa o sistema. Conta nova nasce inativa e sem papel; a coordenacao libera na tela Equipe.';
 
@@ -117,8 +120,20 @@ create or replace trigger tg_perfil_novo after insert on auth.users
 
 create or replace function meu_papel() returns text
 language sql stable security definer set search_path = public as $$
-  select papel from perfil where id = auth.uid() and ativo
+  select papel from perfil where id = auth.uid() and ativo and not trocar_senha
 $$;
+
+-- A marca de senha provisoria so cai quando a senha muda de verdade no Auth.
+-- Um botao "ja troquei" no app poderia ser chamado sem trocar nada.
+create or replace function senha_alterada() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  update perfil set trocar_senha = false where id = new.id and trocar_senha;
+  return new;
+end $$;
+create or replace trigger tg_senha_alterada after update of encrypted_password on auth.users
+  for each row when (new.encrypted_password is distinct from old.encrypted_password)
+  execute function senha_alterada();
 
 create or replace function eh_coordenador() returns boolean
 language sql stable security definer set search_path = public as $$
@@ -137,7 +152,10 @@ begin
   if auth.uid() is not null and not eh_coordenador()
      and (new.papel is distinct from old.papel or new.ativo is distinct from old.ativo
           or new.consultor_norm is distinct from old.consultor_norm
-          or new.email is distinct from old.email) then
+          or new.email is distinct from old.email
+          -- Nem ligar nem desligar: quem tira a marca e o gatilho do Auth
+          -- (roda sem usuario logado), ao ver a senha mudar de verdade.
+          or new.trocar_senha is distinct from old.trocar_senha) then
     raise exception 'so a coordenacao altera papel, acesso e vinculo de planilha';
   end if;
   return new;
@@ -949,6 +967,7 @@ revoke execute on function notificar_papel(text, text, text, text, text, text) f
 revoke execute on function abrir_retencao(bigint, text, bigint) from public, anon, authenticated;
 revoke execute on function card_automacoes(card, etapa) from public, anon, authenticated;
 revoke execute on function perfil_novo() from public, anon, authenticated;
+revoke execute on function senha_alterada() from public, anon, authenticated;
 revoke execute on function perfil_protege() from public, anon, authenticated;
 revoke execute on function aluna_protege() from public, anon, authenticated;
 revoke execute on function card_antes() from public, anon, authenticated;

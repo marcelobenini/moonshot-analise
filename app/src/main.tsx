@@ -37,6 +37,9 @@ function Rotas() {
       </Routes>
     )
   }
+  // Senha provisoria: o banco ja nao entrega dado nenhum ate a troca; a tela
+  // so deixa fazer isso.
+  if (eu?.trocar_senha) return <DefinirSenha obrigatoria />
   if (!eu?.ativo || !eu.papel) {
     return (
       <Routes>

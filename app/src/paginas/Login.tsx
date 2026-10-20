@@ -55,30 +55,56 @@ export function Login() {
   )
 }
 
-export function DefinirSenha() {
+// Senha de acesso: exatamente 8 digitos.
+const SENHA_VALIDA = /^\d{8}$/
+
+export function DefinirSenha({ obrigatoria = false }: { obrigatoria?: boolean }) {
   const nav = useNavigate()
-  const { sessao } = useSessao()
+  const { sessao, recarregar, sair } = useSessao()
   const [senha, setSenha] = useState('')
+  const [confirma, setConfirma] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
 
   async function salvar(e: FormEvent) {
     e.preventDefault()
-    if (senha.length < 8) { setErro('Use pelo menos 8 caracteres.'); return }
+    setErro(null)
+    if (!SENHA_VALIDA.test(senha)) { setErro('A senha precisa ter exatamente 8 números.'); return }
+    if (senha !== confirma) { setErro('As duas senhas não são iguais.'); return }
+    setSalvando(true)
     const { error } = await supabase.auth.updateUser({ password: senha })
-    if (error) setErro(mensagemErro(error))
-    else nav('/')
+    setSalvando(false)
+    if (error) {
+      setErro(error.message.includes('different from the old') ? 'Use uma senha diferente da atual.' : mensagemErro(error))
+      return
+    }
+    // O banco tira a marca de senha provisoria ao ver a senha mudar; recarrega o perfil.
+    await recarregar()
+    nav('/')
   }
+
+  const soNumeros = (v: string) => v.replace(/\D/g, '').slice(0, 8)
 
   if (!sessao) return <Tela><p className="text-sm text-slate-600">O link expirou. Volte ao login e peça outro.</p></Tela>
   return (
     <Tela>
       <form onSubmit={salvar} className="space-y-4">
-        <p className="text-sm text-slate-600">Crie sua senha de acesso para <b>{sessao.user.email}</b>.</p>
-        <Campo rotulo="Nova senha" dica="Mínimo de 8 caracteres.">
-          <input className="entrada" type="password" autoFocus value={senha} onChange={(e) => setSenha(e.target.value)} />
+        <p className="text-sm text-slate-600">
+          {obrigatoria
+            ? <>Você entrou com uma senha provisória. Para continuar, defina sua senha definitiva para <b>{sessao.user.email}</b>.</>
+            : <>Crie sua senha de acesso para <b>{sessao.user.email}</b>.</>}
+        </p>
+        <Campo rotulo="Nova senha" dica="Exatamente 8 números.">
+          <input className="entrada tracking-widest" type="password" inputMode="numeric" autoComplete="new-password"
+            autoFocus maxLength={8} value={senha} onChange={(e) => setSenha(soNumeros(e.target.value))} />
+        </Campo>
+        <Campo rotulo="Repita a nova senha">
+          <input className="entrada tracking-widest" type="password" inputMode="numeric" autoComplete="new-password"
+            maxLength={8} value={confirma} onChange={(e) => setConfirma(soNumeros(e.target.value))} />
         </Campo>
         <Erro msg={erro} />
-        <button className="btn-primario w-full">Salvar senha</button>
+        <button className="btn-primario w-full" disabled={salvando}>Salvar senha</button>
+        {obrigatoria && <button type="button" className="w-full text-center text-sm text-slate-500 hover:underline" onClick={sair}>Sair</button>}
       </form>
     </Tela>
   )

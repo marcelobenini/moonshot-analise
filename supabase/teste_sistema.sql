@@ -259,6 +259,18 @@ select ok((select count(*) = 1 from notificacao where tipo = 'sem_consultoria' a
 select como(:cs, $$update card set etapa_id = etapa_de('renovacao', 5) where funil_id = 'renovacao'$$);
 select ok((select (rotina_diaria()->>'renovacoes_criadas')::int = 0), 'renovada nao renasce para o mesmo contrato');
 
+-- Senha provisoria ------------------------------------------------------------
+update perfil set trocar_senha = true where id = :carol;
+select ok(conta_como(:carol, 'select * from aluna') = 0, 'senha provisoria bloqueia todo dado');
+select ok(conta_como(:carol, 'select * from perfil where id = auth.uid() and trocar_senha') = 1,
+          'mas a pessoa ve o proprio perfil para o app saber que precisa trocar');
+-- Em dois passos: num OR so, o Postgres avalia a subconsulta antes da tentativa.
+select barrado(:carol, $$update perfil set trocar_senha = false where id = auth.uid()$$);
+select ok((select trocar_senha from perfil where id = :carol), 'nao da para pular a troca pela API');
+update auth.users set encrypted_password = 'nova' where id = :carol;
+select ok((select not trocar_senha from perfil where id = :carol), 'trocar a senha no Auth libera o acesso');
+select ok(conta_como(:carol, 'select * from aluna') > 0, 'depois da troca ve os dados de novo');
+
 -- Acompanhamento
 select ok(conta_como(:carol, 'select * from vw_carteira') = 1, 'consultor ve a propria linha da carteira');
 select ok(conta_como(:coord, 'select * from vw_carteira') = 2, 'coordenacao ve todas as carteiras');

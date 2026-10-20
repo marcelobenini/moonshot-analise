@@ -11,6 +11,7 @@ export interface Perfil {
   papel: Papel | null
   ativo: boolean
   consultor_norm: string | null
+  trocar_senha: boolean
 }
 
 export interface Aluna {
