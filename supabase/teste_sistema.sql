@@ -249,9 +249,10 @@ select ok((select responsavel_id = :cs and prazo = current_date + 60 from card w
           'renovacao vai para a CS com o termino como prazo');
 select ok((select count(*) = 1 from notificacao where tipo = 'parado' and usuario_id = :coord),
           'pedido parado alerta a coordenacao, uma vez so');
--- Joana (120 dias) e Elizabeth (nunca teve, entrou ha 300); a Nova Aluna entrou hoje.
-select ok((select count(*) = 2 from notificacao where tipo = 'sem_consultoria' and usuario_id = :bia),
-          'sem consultoria ha 90 dias alerta o consultor');
+-- So a Joana (120 dias). Elizabeth nunca teve registro, mas acabou de entrar no
+-- sistema pela importacao: ganha os 90 dias a partir de hoje.
+select ok((select count(*) = 1 from notificacao where tipo = 'sem_consultoria' and usuario_id = :bia),
+          'sem consultoria ha 90 dias alerta o consultor, sem alarmar a base importada');
 select como(:cs, $$update card set etapa_id = etapa_de('renovacao', 5) where funil_id = 'renovacao'$$);
 select ok((select (rotina_diaria()->>'renovacoes_criadas')::int = 0), 'renovada nao renasce para o mesmo contrato');
 

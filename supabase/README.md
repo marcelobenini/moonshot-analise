@@ -101,3 +101,9 @@ ambiente remoto — **não commitada**.
 `carregar.py` insere linha a linha para conseguir remapear as chaves. São 7.614
 linhas e leva segundos; se a base crescer uma ordem de grandeza, vale trocar
 por `COPY` com os ids já resolvidos antes.
+
+## Sistema operacional
+
+Os arquivos `sistema*.sql` são o sistema que substitui as planilhas: funis,
+demandas, notificações e permissões por papel. Eles se aplicam depois deste
+esquema. Implantação e uso estão em `../SISTEMA.md`.

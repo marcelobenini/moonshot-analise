@@ -1,5 +1,9 @@
 # Regras da base Moonshot
 
+> **Com o sistema operacional no ar, esta regra se inverte por planilha, a partir
+> da data de corte de cada uma.** Ver `SISTEMA.md`. O que segue vale para a base
+> histórica e para as planilhas que ainda não migraram.
+
 **As planilhas no Google Drive são a verdade. O banco é derivado.** Nada é
 digitado direto no banco; tudo entra por ingestão. Se um número no banco está
 errado, ou a planilha está errada, ou uma regra abaixo está errada — e as duas

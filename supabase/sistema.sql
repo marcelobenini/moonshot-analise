@@ -36,8 +36,11 @@ begin
     execute 'create schema auth';
     execute 'create table auth.users (id uuid primary key, email text,
                raw_user_meta_data jsonb default ''{}''::jsonb)';
+    -- Mesma definicao do Supabase: aceita o claim avulso e o JSON do PostgREST.
     execute $f$create function auth.uid() returns uuid language sql stable as
-      $b$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $b$ $f$;
+      $b$ select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
+                          (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'))::uuid $b$ $f$;
+    execute 'grant usage on schema auth to authenticated, anon';
   end if;
 end $$;
 
@@ -758,11 +761,14 @@ begin
     parados := parados + 1;
   end loop;
 
-  -- 3. Aluna ativa sem consultoria ha mais de N dias.
+  -- 3. Aluna ativa sem consultoria ha mais de N dias. Sem registro, conta a
+  --    partir de quando ela entrou no sistema: a planilha nao traz a data da
+  --    ultima consultoria, e contar do inicio do contrato faria a importacao
+  --    disparar alerta para a base inteira no primeiro dia.
   for r in
     select a.* from aluna a
     where a.status_contrato = 'ativo' and a.consultor_id is not null
-      and coalesce(a.ultima_consultoria, a.inicio, a.criado_em::date)
+      and coalesce(a.ultima_consultoria, greatest(a.criado_em::date, coalesce(a.inicio, a.criado_em::date)))
           < current_date - param('dias_sem_consultoria')::int
   loop
     perform notificar(r.consultor_id, 'sem_consultoria', 'Sem consultoria há mais de '
@@ -812,8 +818,9 @@ create or replace view vw_carteira with (security_invoker = true) as
 select p.id as consultor_id, p.nome as consultor,
        count(a.id) as alunas,
        count(a.id) filter (where a.saude in ('risco_saida','sem_contato')) as em_risco,
-       count(a.id) filter (where a.ultima_consultoria is null
-                           or a.ultima_consultoria < current_date - param('dias_sem_consultoria')::int) as sem_consultoria_recente,
+       -- Mesma regra do alerta da rotina diaria, para o painel e o sino nao discordarem.
+       count(a.id) filter (where coalesce(a.ultima_consultoria, greatest(a.criado_em::date, coalesce(a.inicio, a.criado_em::date)))
+                           < current_date - param('dias_sem_consultoria')::int) as sem_consultoria_recente,
        sum(a.faturamento_mensal) as faturamento_carteira
 from perfil p join aluna a on a.consultor_id = p.id and a.status_contrato = 'ativo'
 where p.papel = 'consultor'

@@ -1,0 +1,210 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { useSessao } from '../lib/sessao'
+import type { Aluna, Card, Demanda } from '../lib/tipos'
+import { PRIORIDADE, SAUDE, data, diasDesde, reais } from '../lib/util'
+import { Carregando, Selo } from '../componentes/ui'
+
+type CardEtapa = Card & { etapa: { nome: string; alerta_dias: number | null } }
+type Resumo = { funil_id: string; etapa: string; ordem: number; cards: number; parados: number; valor: number | null }
+type Carteira = { consultor_id: string; consultor: string; alunas: number; em_risco: number; sem_consultoria_recente: number; faturamento_carteira: number | null }
+type Mes = { mes: string; contratos: number; faturamento_mensal: number | null }
+type Retencao = { prazo: string; desfecho: string; tipo: string; pedidos: number }
+
+export function Inicio() {
+  const { eu, funis } = useSessao()
+  const [meusCards, setMeusCards] = useState<CardEtapa[] | null>(null)
+  const [demandas, setDemandas] = useState<Demanda[]>([])
+  const [risco, setRisco] = useState<Aluna[]>([])
+  const [resumo, setResumo] = useState<Resumo[]>([])
+  const [carteira, setCarteira] = useState<Carteira[]>([])
+  const [meses, setMeses] = useState<Mes[]>([])
+  const [retencao, setRetencao] = useState<Retencao[]>([])
+  const coord = eu?.papel === 'coordenador'
+
+  useEffect(() => {
+    if (!eu) return
+    let qRisco = supabase.from('aluna').select('*').in('saude', ['risco_saida', 'sem_contato'])
+      .not('status_contrato', 'in', '(cancelado,encerrado)').order('ultima_consultoria', { ascending: true, nullsFirst: true }).limit(8)
+    if (!coord) qRisco = qRisco.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+    Promise.all([
+      supabase.from('card').select('*, etapa(nome, alerta_dias)').eq('responsavel_id', eu.id).is('fechado_em', null).order('etapa_desde').limit(100),
+      supabase.from('demanda').select('*').eq('responsavel_id', eu.id).not('status', 'in', '(concluida,cancelada)').order('prazo', { nullsFirst: false }).limit(6),
+      qRisco,
+      supabase.from('vw_funil_resumo').select('*'),
+      supabase.from('vw_carteira').select('*').order('consultor'),
+      supabase.from('vw_renovacao_mes').select('*').order('mes').limit(6),
+      coord ? supabase.from('vw_retencao_sistema').select('*') : Promise.resolve({ data: [] }),
+    ]).then(([c, d, r, fr, ca, m, rt]) => {
+      setMeusCards((c.data ?? []) as CardEtapa[])
+      setDemandas((d.data ?? []) as Demanda[])
+      setRisco((r.data ?? []) as Aluna[])
+      setResumo((fr.data ?? []) as Resumo[])
+      setCarteira((ca.data ?? []) as Carteira[])
+      setMeses((m.data ?? []) as Mes[])
+      setRetencao((rt.data ?? []) as Retencao[])
+    })
+  }, [eu, coord])
+
+  if (meusCards === null) return <Carregando />
+
+  const parados = meusCards.filter((c) => c.etapa.alerta_dias != null && diasDesde(c.etapa_desde) > c.etapa.alerta_dias)
+  const hora = new Date().getHours()
+  const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
+
+  // Taxa de retencao sem os 7 dias de arrependimento, como no REGRAS.md.
+  const fora7 = retencao.filter((r) => r.prazo !== 'dentro_7_dias')
+  const retidas = fora7.filter((r) => r.tipo === 'ganha').reduce((s, r) => s + r.pedidos, 0)
+  const decididas = fora7.reduce((s, r) => s + r.pedidos, 0)
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold">{saudacao}, {eu?.nome.split(' ')[0]}</h1>
+        <p className="text-sm text-slate-500">O que precisa da sua atenção hoje.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Numero rotulo="Cards comigo" valor={meusCards.length} icone={<Clock size={18} />} />
+        <Numero rotulo="Parados além do prazo" valor={parados.length} icone={<AlertTriangle size={18} />} alerta={parados.length > 0} />
+        <Numero rotulo="Demandas comigo" valor={demandas.length} icone={<MessageSquare size={18} />} />
+        <Numero rotulo={coord ? 'Alunas em risco' : 'Em risco na carteira'} valor={risco.length} icone={<AlertTriangle size={18} />} alerta={risco.length > 0} />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Bloco titulo="Cards parados" link="/funis">
+          {parados.length === 0 ? <Nada>Nenhum card parado. Bom trabalho.</Nada> : parados.slice(0, 8).map((c) => (
+            <Linha key={c.id} para={`/funis/${c.funil_id}?card=${c.id}`}
+              titulo={c.titulo} sub={`${funis.find((f) => f.id === c.funil_id)?.nome} · ${c.etapa.nome}`}
+              direita={<span className="text-xs font-medium text-red-600">{diasDesde(c.etapa_desde)} dias</span>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo="Demandas comigo" link="/demandas">
+          {demandas.length === 0 ? <Nada>Nenhuma demanda em aberto com você.</Nada> : demandas.map((d) => (
+            <Linha key={d.id} para={`/demandas/${d.id}`} titulo={d.titulo} sub={d.prazo ? `prazo ${data(d.prazo)}` : 'sem prazo'}
+              direita={d.prioridade !== 'normal' && <Selo cor={PRIORIDADE[d.prioridade].cor}>{PRIORIDADE[d.prioridade].rotulo}</Selo>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo="Alunas em risco ou sem contato" link="/alunas">
+          {risco.length === 0 ? <Nada>Ninguém sinalizado em risco.</Nada> : risco.map((a) => (
+            <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
+              sub={`última consultoria ${data(a.ultima_consultoria)} · ${reais(a.faturamento_mensal)}/mês`}
+              direita={a.saude && <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo="Vencimentos dos próximos meses" link="/funis/renovacao" icone={<CalendarClock size={16} />}>
+          {meses.length === 0 ? <Nada>Sem vencimentos cadastrados.</Nada> : (
+            <div className="space-y-2 p-4">
+              {meses.map((m) => {
+                const max = Math.max(...meses.map((x) => x.contratos))
+                return (
+                  <div key={m.mes} className="flex items-center gap-3 text-sm">
+                    <span className="w-20 shrink-0 text-slate-600">{new Date(m.mes + '-15').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })}</span>
+                    <div className="h-5 flex-1 rounded bg-slate-100">
+                      <div className="h-5 rounded bg-indigo-500" style={{ width: `${(m.contratos / max) * 100}%` }} />
+                    </div>
+                    <span className="w-28 shrink-0 text-right text-xs text-slate-600">{m.contratos} · {reais(m.faturamento_mensal)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </Bloco>
+      </div>
+
+      {carteira.length > 0 && (
+        <Bloco titulo={coord ? 'Carteiras' : 'Minha carteira'}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-slate-500">
+                <tr><th className="px-4 py-2">Consultor</th><th className="px-4 py-2">Alunas ativas</th><th className="px-4 py-2">Em risco</th><th className="px-4 py-2">Sem consultoria recente</th><th className="px-4 py-2">Faturamento somado</th></tr>
+              </thead>
+              <tbody>
+                {carteira.map((c) => (
+                  <tr key={c.consultor_id} className="border-t border-slate-100">
+                    <td className="px-4 py-2 font-medium">{c.consultor}</td>
+                    <td className="px-4 py-2">{c.alunas}</td>
+                    <td className={`px-4 py-2 ${c.em_risco ? 'font-medium text-red-600' : ''}`}>{c.em_risco}</td>
+                    <td className={`px-4 py-2 ${c.sem_consultoria_recente ? 'font-medium text-amber-700' : ''}`}>{c.sem_consultoria_recente}</td>
+                    <td className="px-4 py-2">{reais(c.faturamento_carteira)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Bloco>
+      )}
+
+      {coord && (
+        <>
+          {decididas > 0 && (
+            <div className="painel p-4 text-sm">
+              <b>Retenção no sistema:</b> {Math.round((retidas / decididas) * 100)}% ({retidas} de {decididas} pedidos fora dos 7 dias terminaram com a aluna ficando).
+            </div>
+          )}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {funis.map((f) => {
+              const linhas = resumo.filter((r) => r.funil_id === f.id).sort((a, b) => a.ordem - b.ordem)
+              return (
+                <Bloco key={f.id} titulo={f.nome} link={`/funis/${f.id}`}>
+                  {linhas.length === 0 ? <Nada>Sem cards abertos.</Nada> : (
+                    <div className="space-y-1 p-4 text-sm">
+                      {linhas.map((l) => (
+                        <div key={l.etapa} className="flex justify-between">
+                          <span className="text-slate-600">{l.etapa}</span>
+                          <span>{l.cards}{l.parados > 0 && <span className="ml-2 text-xs font-medium text-red-600">{l.parados} parados</span>}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Bloco>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function Numero({ rotulo, valor, icone, alerta }: { rotulo: string; valor: number; icone: React.ReactNode; alerta?: boolean }) {
+  return (
+    <div className="painel p-4">
+      <div className={`flex items-center gap-2 text-xs font-medium ${alerta ? 'text-red-600' : 'text-slate-500'}`}>{icone}{rotulo}</div>
+      <div className="mt-1 text-2xl font-semibold">{valor}</div>
+    </div>
+  )
+}
+
+function Bloco({ titulo, link, icone, children }: { titulo: string; link?: string; icone?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="painel overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">{icone}{titulo}</h2>
+        {link && <Link to={link} className="flex items-center gap-1 text-xs text-indigo-600 hover:underline">ver <ArrowRight size={12} /></Link>}
+      </div>
+      <div className="divide-y divide-slate-50">{children}</div>
+    </section>
+  )
+}
+
+function Linha({ para, titulo, sub, direita }: { para: string; titulo: string; sub: string; direita?: React.ReactNode }) {
+  return (
+    <Link to={para} className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-slate-50">
+      <div className="min-w-0">
+        <div className="truncate text-sm font-medium">{titulo}</div>
+        <div className="truncate text-xs text-slate-500">{sub}</div>
+      </div>
+      {direita}
+    </Link>
+  )
+}
+
+function Nada({ children }: { children: React.ReactNode }) {
+  return <div className="p-4 text-sm text-slate-500">{children}</div>
+}
