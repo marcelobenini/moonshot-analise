@@ -1,4 +1,4 @@
-# Sistema Moonshot
+# Moonshot System
 
 O que substitui as planilhas no dia a dia: cadastro único de alunas, funis em
 Kanban, registro de consultoria, demandas internas entre as áreas e

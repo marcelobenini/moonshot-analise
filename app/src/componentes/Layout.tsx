@@ -49,7 +49,7 @@ export function Layout() {
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-2 backdrop-blur">
           <div className="flex items-center gap-2 lg:invisible">
             <button className="btn-fantasma p-2 lg:hidden" onClick={() => setMenu(true)} aria-label="Menu"><Menu size={20} /></button>
-            <span className="font-semibold lg:hidden">Moonshot</span>
+            <span className="font-semibold lg:hidden">Moonshot System</span>
           </div>
           <Sino />
         </header>
@@ -75,7 +75,7 @@ function Marca() {
   return (
     <div className="mb-4 flex items-center gap-2 px-3 py-2">
       <img src="/icone.svg" alt="" className="h-7 w-7" />
-      <span className="font-semibold">Moonshot</span>
+      <span className="font-semibold">Moonshot System</span>
     </div>
   )
 }

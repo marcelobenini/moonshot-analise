@@ -108,7 +108,7 @@ function Tela({ children }: { children: React.ReactNode }) {
         <div className="mb-6 flex items-center gap-2">
           <img src="/icone.svg" alt="" className="h-8 w-8" />
           <div>
-            <div className="font-semibold">Moonshot</div>
+            <div className="font-semibold">Moonshot System</div>
             <div className="text-xs text-slate-500">Sistema de acompanhamento</div>
           </div>
         </div>
