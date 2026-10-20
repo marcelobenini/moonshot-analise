@@ -1106,3 +1106,17 @@ revoke execute on function achar_aluna(text, text, text) from public, anon;
 revoke execute on function unir_alunas(bigint, bigint) from public, anon;
 grant execute on function unir_alunas(bigint, bigint) to authenticated;
 grant execute on function achar_aluna(text, text, text) to authenticated;
+
+-- Funcoes auxiliares com search_path fixo (alerta do Supabase).
+alter function contrato_antes() set search_path = public;
+alter function ler(jsonb, text[]) set search_path = public;
+alter function ler_data(text) set search_path = public;
+alter function ler_valor(text) set search_path = public;
+alter function mapear_status(text) set search_path = public;
+alter function mapear_financeiro(text) set search_path = public;
+alter function mapear_produto(text, text) set search_path = public;
+alter function classificar_motivo(text) set search_path = public;
+alter function chave_nome(text) set search_path = public;
+alter function limpar_nome(text) set search_path = public;
+alter function eh_nome_de_pessoa(text) set search_path = public;
+alter function nomes_planilha(text) set search_path = public;
