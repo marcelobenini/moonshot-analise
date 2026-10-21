@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight } from 'lucide-react'
+import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight, PhoneCall } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda } from '../lib/tipos'
-import { PRIORIDADE, SAUDE, data, diasDesde, reais } from '../lib/util'
+import { PRIORIDADE, SAUDE, data, diasDesde, hoje, reais } from '../lib/util'
 import { Carregando, Selo } from '../componentes/ui'
 
 type CardEtapa = Card & { etapa: { nome: string; alerta_dias: number | null } }
@@ -16,7 +16,7 @@ type AgendaItem = { id: number; aluna_id: number; nome: string; numero: number; 
 type Inadimplente = { aluna_id: number; nome: string; consultor: string | null; consultor_id: string | null; produto_contrato: string }
 
 export function Inicio() {
-  const { eu, funis } = useSessao()
+  const { eu, funis, nomeDe } = useSessao()
   const [meusCards, setMeusCards] = useState<CardEtapa[] | null>(null)
   const [demandas, setDemandas] = useState<Demanda[]>([])
   const [risco, setRisco] = useState<Aluna[]>([])
@@ -26,6 +26,8 @@ export function Inicio() {
   const [retencao, setRetencao] = useState<Retencao[]>([])
   const [agenda, setAgenda] = useState<AgendaItem[]>([])
   const [inadimplentes, setInadimplentes] = useState<Inadimplente[]>([])
+  const [retornos, setRetornos] = useState<Aluna[]>([])
+  const [semContato, setSemContato] = useState<{ lista: Aluna[]; total: number }>({ lista: [], total: 0 })
   const coord = eu?.papel === 'coordenador'
 
   useEffect(() => {
@@ -33,6 +35,22 @@ export function Inicio() {
     let qRisco = supabase.from('aluna').select('*').in('saude', ['risco_saida', 'sem_contato'])
       .not('status_contrato', 'in', '(cancelado,encerrado)').order('ultima_consultoria', { ascending: true, nullsFirst: true }).limit(8)
     if (!coord) qRisco = qRisco.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+    // Retornos combinados ate daqui a 3 dias e quem esta ha 30 dias sem contato.
+    const em3 = new Date(); em3.setDate(em3.getDate() + 3)
+    const ha30 = new Date(); ha30.setDate(ha30.getDate() - 30)
+    let qRetorno = supabase.from('aluna').select('*').lte('proximo_contato', em3.toLocaleDateString('sv-SE'))
+      .not('status_contrato', 'in', '(cancelado,encerrado)').order('proximo_contato').limit(12)
+    let qSem = supabase.from('aluna').select('*', { count: 'exact' }).eq('status_contrato', 'ativo')
+      .or(`ultimo_contato.is.null,ultimo_contato.lt.${ha30.toLocaleDateString('sv-SE')}`)
+      .order('ultimo_contato', { ascending: true, nullsFirst: true }).limit(8)
+    if (!coord) {
+      qRetorno = qRetorno.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+      qSem = qSem.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+    }
+    Promise.all([qRetorno, qSem]).then(([rt, sc]) => {
+      setRetornos((rt.data ?? []) as Aluna[])
+      setSemContato({ lista: (sc.data ?? []) as Aluna[], total: sc.count ?? 0 })
+    })
     Promise.all([
       supabase.from('card').select('*, etapa(nome, alerta_dias)').eq('responsavel_id', eu.id).is('fechado_em', null).order('etapa_desde').limit(100),
       supabase.from('demanda').select('*').eq('responsavel_id', eu.id).not('status', 'in', '(concluida,cancelada)').order('prazo', { nullsFirst: false }).limit(6),
@@ -96,6 +114,22 @@ export function Inicio() {
           {demandas.length === 0 ? <Nada>Nenhuma demanda em aberto com você.</Nada> : demandas.map((d) => (
             <Linha key={d.id} para={`/demandas/${d.id}`} titulo={d.titulo} sub={d.prazo ? `prazo ${data(d.prazo)}` : 'sem prazo'}
               direita={d.prioridade !== 'normal' && <Selo cor={PRIORIDADE[d.prioridade].cor}>{PRIORIDADE[d.prioridade].rotulo}</Selo>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo={`Retornos combinados${retornos.length ? ` (${retornos.length})` : ''}`} icone={<PhoneCall size={16} />}>
+          {retornos.length === 0 ? <Nada>Nenhum retorno para os próximos dias.</Nada> : retornos.map((a) => (
+            <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
+              sub={`último contato ${data(a.ultimo_contato)}${coord ? ` · CS ${nomeDe(a.cs_id)}` : ''}`}
+              direita={<span className={`text-xs font-medium ${a.proximo_contato! < hoje() ? 'text-red-600' : a.proximo_contato === hoje() ? 'text-amber-700' : 'text-slate-600'}`}>
+                {a.proximo_contato! < hoje() ? 'atrasado · ' : a.proximo_contato === hoje() ? 'hoje · ' : ''}{data(a.proximo_contato)}</span>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo={`Há mais de 30 dias sem contato${semContato.total ? ` (${semContato.total})` : ''}`} link="/alunas">
+          {semContato.lista.length === 0 ? <Nada>Todas as alunas ativas tiveram contato no último mês.</Nada> : semContato.lista.map((a) => (
+            <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
+              sub={`${a.ultimo_contato ? `último contato ${data(a.ultimo_contato)}` : 'nenhum contato registrado'}${coord ? ` · CS ${nomeDe(a.cs_id)}` : ''}`} />
           ))}
         </Bloco>
 

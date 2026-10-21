@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail } from 'lucide-react'
+import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail, PhoneCall, Flag, Rocket } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda, Etapa, Funil, RegistroConsultoria, Saude } from '../lib/tipos'
-import { FINANCEIRO, SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
+import { FINANCEIRO, SAUDE, STATUS_CONTRATO, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
 import { Campo, Carregando, Erro, Modal, Selo, Vazio } from '../componentes/ui'
 import { AlunaForm } from './Alunas'
 import { NovoCard } from './CardGaveta'
 import { NovaDemanda } from './Demandas'
 import { Agenda, Contratos, EventosDaAluna, Notas } from './FichaExtras'
+import { EnviarComercial, LinhaDoTempo, MudarStatus, Panorama, PerfilNegocio, RegistrarContato } from './FichaAcoes'
 
 export function AlunaFicha() {
   const { id } = useParams()
@@ -19,10 +20,10 @@ export function AlunaFicha() {
   const [cards, setCards] = useState<Card[]>([])
   const [registros, setRegistros] = useState<RegistroConsultoria[]>([])
   const [demandas, setDemandas] = useState<Demanda[]>([])
-  const [editar, setEditar] = useState(false)
-  const [registrar, setRegistrar] = useState(false)
+  const [aba, setAba] = useState<'resumo' | 'tempo' | 'consultorias' | 'contratos'>('resumo')
+  const [modal, setModal] = useState<'editar' | 'consultoria' | 'contato' | 'status' | 'comercial' | 'demanda' | null>(null)
   const [novoCard, setNovoCard] = useState<{ funil: Funil; etapa: Etapa } | null>(null)
-  const [novaDemanda, setNovaDemanda] = useState(false)
+  const [versao, setVersao] = useState(0)
 
   const carregar = useCallback(async () => {
     const [a, c, r, d] = await Promise.all([
@@ -35,137 +36,195 @@ export function AlunaFicha() {
     setCards((c.data ?? []) as Card[])
     setRegistros((r.data ?? []) as RegistroConsultoria[])
     setDemandas((d.data ?? []) as Demanda[])
+    setVersao((v) => v + 1)
   }, [id])
   useEffect(() => { carregar() }, [carregar])
 
   if (aluna === undefined) return <Carregando />
   if (aluna === null) return <Vazio>Aluna não encontrada.</Vazio>
 
+  const papel = eu?.papel
   const minha = aluna.consultor_id === eu?.id || aluna.cs_id === eu?.id
-  const podeEditarFicha = eu?.papel === 'coordenador' || eu?.papel === 'cs' || minha
-  const podeRegistrar = eu?.papel === 'coordenador' || minha
+  const coordOuCs = papel === 'coordenador' || papel === 'cs'
+  const podeEditarFicha = coordOuCs || minha
+  const podeRegistrar = papel === 'coordenador' || aluna.consultor_id === eu?.id
+  const podeContato = coordOuCs || minha || papel === 'retencao' || papel === 'comercial'
+  const podeStatus = coordOuCs || minha || papel === 'retencao'
+  const podeEnviar = coordOuCs || minha
+  const noComercial = cards.some((c) => c.funil_id === 'comercial' && !c.fechado_em)
   const abertosPorFunil = new Set(cards.filter((c) => !c.fechado_em).map((c) => c.funil_id))
   const funisParaAbrir = funis.filter((f) => podeEditar(f.id) && !abertosPorFunil.has(f.id))
+  const fechar = () => setModal(null)
+  const salvo = () => { setModal(null); carregar() }
+  const st = STATUS_CONTRATO[aluna.status_contrato]
+  const fin = aluna.status_financeiro ? FINANCEIRO[aluna.status_financeiro] : null
 
   return (
     <div className="space-y-5">
       <div className="painel p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-semibold">{aluna.nome}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              <Selo cor={st?.cor ?? 'bg-slate-100'}>{st?.rotulo ?? aluna.status_contrato}</Selo>
+              {fin && aluna.status_financeiro !== 'adimplente' && <Selo cor={fin.cor}>{fin.rotulo}</Selo>}
               {aluna.saude && <Selo cor={SAUDE[aluna.saude].cor}>{SAUDE[aluna.saude].rotulo}</Selo>}
-              <Selo cor={aluna.status_contrato === 'ativo' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'}>{aluna.status_contrato}</Selo>
               <span>{[aluna.produto, aluna.turma, aluna.empresa].filter(Boolean).join(' · ')}</span>
+            </div>
+            <div className="mt-1 text-xs text-slate-500">
+              Consultor: {aluna.consultor_id ? nomeDe(aluna.consultor_id) : aluna.consultor_planilha ? `${aluna.consultor_planilha} (planilha)` : '—'}
+              {' · '}CS: {aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ? `${aluna.cs_planilha} (planilha)` : '—'}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {podeRegistrar && <button className="btn-primario" onClick={() => setRegistrar(true)}><ClipboardPlus size={16} /> Registrar consultoria</button>}
-            <button className="btn-secundario" onClick={() => setNovaDemanda(true)}><MessageSquarePlus size={16} /> Abrir demanda</button>
-            {podeEditarFicha && <button className="btn-secundario" onClick={() => setEditar(true)}><Pencil size={16} /> Editar</button>}
+            {podeContato && <button className="btn-primario" onClick={() => setModal('contato')}><PhoneCall size={16} /> Registrar contato</button>}
+            {podeRegistrar && <button className="btn-primario" onClick={() => setModal('consultoria')}><ClipboardPlus size={16} /> Registrar consultoria</button>}
+            {podeStatus && <button className="btn-secundario" onClick={() => setModal('status')}><Flag size={16} /> Status</button>}
+            {podeEnviar && !noComercial && <button className="btn-secundario" onClick={() => setModal('comercial')}><Rocket size={16} /> Enviar ao comercial</button>}
+            <button className="btn-secundario" onClick={() => setModal('demanda')}><MessageSquarePlus size={16} /> Demanda</button>
+            {podeEditarFicha && <button className="btn-secundario" onClick={() => setModal('editar')}><Pencil size={16} /> Editar</button>}
           </div>
         </div>
-
-        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3 lg:grid-cols-6">
-          <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : '—'}</Dado>
-          <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : '—'}</Dado>
-          <Dado rotulo="Consultor">{aluna.consultor_id ? nomeDe(aluna.consultor_id) : aluna.consultor_planilha ? `${aluna.consultor_planilha} (planilha)` : '—'}</Dado>
-          <Dado rotulo="CS">{aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ? `${aluna.cs_planilha} (planilha)` : '—'}</Dado>
-          <Dado rotulo="Faturamento">{reais(aluna.faturamento_mensal)}/mês</Dado>
-          <Dado rotulo="Funcionários">{aluna.funcionarios ?? '—'}</Dado>
-          <Dado rotulo="Início">{data(aluna.inicio)}</Dado>
-          <Dado rotulo="Término">{data(aluna.termino)}</Dado>
-          <Dado rotulo="Última consultoria">{data(aluna.ultima_consultoria)}</Dado>
-          <Dado rotulo="Financeiro">{aluna.status_financeiro && FINANCEIRO[aluna.status_financeiro]
-            ? <Selo cor={FINANCEIRO[aluna.status_financeiro].cor}>{FINANCEIRO[aluna.status_financeiro].rotulo}</Selo> : aluna.status_financeiro ?? '—'}</Dado>
-          <Dado rotulo="Pagamento">{aluna.forma_pagamento ?? '—'}</Dado>
-          <Dado rotulo="Kit">{[aluna.tamanho_kit && `pijama ${aluna.tamanho_kit}`, aluna.jaqueta && `jaqueta ${aluna.jaqueta}`].filter(Boolean).join(' · ') || '—'}</Dado>
-          <Dado rotulo="Onboarding">{[aluna.onboarding_status, aluna.acesso_plataforma && `acesso ${aluna.acesso_plataforma.toLowerCase()}`].filter(Boolean).join(' · ') || '—'}</Dado>
-          <Dado rotulo="Cadastro">{aluna.cadastro_preenchido ? (aluna.link_notion ? <a className="text-indigo-700" href={aluna.link_notion} target="_blank" rel="noreferrer">preenchido · Notion</a> : 'preenchido') : '—'}</Dado>
-          <Dado rotulo="Cidade">{[aluna.cidade, aluna.uf].filter(Boolean).join(' / ') || '—'}</Dado>
-          <Dado rotulo="Ramo">{aluna.ramo ?? '—'}</Dado>
-        </dl>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-        <Agenda aluna={aluna} podeEditar={podeRegistrar || eu?.papel === 'cs'} />
-        <section className="space-y-3">
-          <h2 className="font-semibold">Consultorias</h2>
-          {registros.length === 0 ? (
-            <Vazio>{podeRegistrar ? 'Nenhuma consultoria registrada ainda.' : 'Nenhuma consultoria visível para você — o relato fica com quem atende a aluna e com a coordenação.'}</Vazio>
-          ) : registros.map((r) => (
-            <div key={r.id} className="painel p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <div className="font-medium">
-                  {r.numero === 0 ? 'Entrada / diagnóstico' : r.numero ? `${r.numero}ª consultoria` : 'Contato'}
-                  {!r.realizada && <span className="ml-2 text-xs font-normal text-amber-700">não realizada</span>}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <Selo cor={SAUDE[r.saude].cor}>{SAUDE[r.saude].rotulo}</Selo>
-                  {data(r.data)} · {nomeDe(r.consultor_id)}
-                </div>
+      <Panorama aluna={aluna} registros={registros} cards={cards} />
+
+      <div className="flex gap-1 border-b border-slate-200">
+        {([['resumo', 'Resumo'], ['tempo', 'Linha do tempo'], ['consultorias', `Consultorias${registros.length ? ` · ${registros.length}` : ''}`], ['contratos', 'Contratos e dados']] as const).map(([k, r]) => (
+          <button key={k} onClick={() => setAba(k)}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${aba === k ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>{r}</button>
+        ))}
+      </div>
+
+      {aba === 'resumo' && (
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="space-y-5 lg:col-span-2">
+            <PerfilNegocio aluna={aluna} pode={podeEditarFicha} mudou={carregar} />
+            <section className="painel p-4">
+              <h2 className="mb-3 font-semibold">Contato e negócio</h2>
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+                <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : '—'}</Dado>
+                <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : '—'}</Dado>
+                <Dado rotulo="Cidade">{[aluna.cidade, aluna.uf].filter(Boolean).join(' / ') || '—'}</Dado>
+                <Dado rotulo="Empresa">{aluna.empresa ?? '—'}</Dado>
+                <Dado rotulo="Ramo">{aluna.ramo ?? '—'}</Dado>
+                <Dado rotulo="Faturamento">{reais(aluna.faturamento_mensal)}/mês</Dado>
+                <Dado rotulo="Funcionários">{aluna.funcionarios ?? '—'}</Dado>
+                <Dado rotulo="Última consultoria">{data(aluna.ultima_consultoria)}</Dado>
+                <Dado rotulo="Último contato">{data(aluna.ultimo_contato)}</Dado>
+              </dl>
+            </section>
+            <section>
+              <h2 className="mb-3 font-semibold">Últimos acontecimentos</h2>
+              <LinhaDoTempo aluna={aluna} versao={versao} limite={6} />
+              <button className="mt-2 text-sm text-indigo-700 hover:underline" onClick={() => setAba('tempo')}>Ver a linha do tempo inteira</button>
+            </section>
+          </div>
+          <aside className="space-y-5">
+            <section>
+              <h2 className="mb-3 font-semibold">Nos funis</h2>
+              <div className="painel divide-y divide-slate-100">
+                {cards.length === 0 && <div className="p-4 text-sm text-slate-500">Em nenhum funil.</div>}
+                {cards.map((c) => (
+                  <Link key={c.id} to={`/funis/${c.funil_id}?card=${c.id}`} className={`block px-4 py-2.5 hover:bg-slate-50 ${c.fechado_em ? 'opacity-60' : ''}`}>
+                    <div className="text-sm font-medium">{funis.find((f) => f.id === c.funil_id)?.nome ?? c.funil_id}</div>
+                    <div className="text-xs text-slate-500">{etapas.find((e) => e.id === c.etapa_id)?.nome}{c.fechado_em && ` · fechado em ${data(c.fechado_em)}`}</div>
+                  </Link>
+                ))}
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{r.situacao}</p>
-              {(r.proximo_passo || r.faturamento_mensal) && (
-                <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
-                  {r.proximo_passo && <span><b>Próximo passo:</b> {r.proximo_passo}</span>}
-                  {r.faturamento_mensal != null && <span><b>Faturamento:</b> {reais(r.faturamento_mensal)}</span>}
-                </div>
+              {funisParaAbrir.length > 0 && (
+                <select className="entrada mt-2" value="" onChange={(e) => {
+                  const f = funis.find((x) => x.id === e.target.value)
+                  const et = etapas.filter((x) => x.funil_id === f?.id).sort((a, b) => a.ordem - b.ordem)[0]
+                  if (f && et) setNovoCard({ funil: f, etapa: et })
+                }}>
+                  <option value="">+ Colocar em um funil…</option>
+                  {funisParaAbrir.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
               )}
-            </div>
-          ))}
-        </section>
-
-        <Notas aluna={aluna} />
+            </section>
+            <section>
+              <h2 className="mb-3 font-semibold">Demandas</h2>
+              <div className="painel divide-y divide-slate-100">
+                {demandas.length === 0 && <div className="p-4 text-sm text-slate-500">Nenhuma demanda.</div>}
+                {demandas.map((d) => (
+                  <Link key={d.id} to={`/demandas/${d.id}`} className="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-slate-50">
+                    <span className="truncate text-sm">{d.titulo}</span>
+                    <Selo cor={STATUS_DEMANDA[d.status].cor}>{STATUS_DEMANDA[d.status].rotulo}</Selo>
+                  </Link>
+                ))}
+              </div>
+            </section>
+            <EventosDaAluna aluna={aluna} />
+          </aside>
         </div>
+      )}
 
-        <aside className="space-y-5">
-          <Contratos aluna={aluna} mudou={carregar} />
-          <section>
-            <h2 className="mb-3 font-semibold">Nos funis</h2>
-            <div className="painel divide-y divide-slate-100">
-              {cards.length === 0 && <div className="p-4 text-sm text-slate-500">Em nenhum funil.</div>}
-              {cards.map((c) => (
-                <Link key={c.id} to={`/funis/${c.funil_id}?card=${c.id}`} className={`block px-4 py-2.5 hover:bg-slate-50 ${c.fechado_em ? 'opacity-60' : ''}`}>
-                  <div className="text-sm font-medium">{funis.find((f) => f.id === c.funil_id)?.nome ?? c.funil_id}</div>
-                  <div className="text-xs text-slate-500">{etapas.find((e) => e.id === c.etapa_id)?.nome}{c.fechado_em && ` · fechado em ${data(c.fechado_em)}`}</div>
-                </Link>
-              ))}
-            </div>
-            {funisParaAbrir.length > 0 && (
-              <select className="entrada mt-2" value="" onChange={(e) => {
-                const f = funis.find((x) => x.id === e.target.value)
-                const et = etapas.filter((x) => x.funil_id === f?.id).sort((a, b) => a.ordem - b.ordem)[0]
-                if (f && et) setNovoCard({ funil: f, etapa: et })
-              }}>
-                <option value="">+ Colocar em um funil…</option>
-                {funisParaAbrir.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
-              </select>
-            )}
+      {aba === 'tempo' && <LinhaDoTempo aluna={aluna} versao={versao} />}
+
+      {aba === 'consultorias' && (
+        <div className="space-y-6">
+          <Agenda aluna={aluna} podeEditar={podeRegistrar || papel === 'cs'} />
+          <section className="space-y-3">
+            <h2 className="font-semibold">Relatos de consultoria</h2>
+            {registros.length === 0 ? (
+              <Vazio>{podeRegistrar ? 'Nenhuma consultoria registrada ainda.' : 'Nenhuma consultoria visível para você — o relato fica com quem atende a aluna, a coordenação e quem a recebe num funil.'}</Vazio>
+            ) : registros.map((r) => (
+              <div key={r.id} className="painel p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <div className="font-medium">
+                    {r.numero === 0 ? 'Entrada / diagnóstico' : r.numero ? `${r.numero}ª consultoria` : 'Contato'}
+                    {!r.realizada && <span className="ml-2 text-xs font-normal text-amber-700">não realizada</span>}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Selo cor={SAUDE[r.saude].cor}>{SAUDE[r.saude].rotulo}</Selo>
+                    {data(r.data)} · {nomeDe(r.consultor_id)}
+                  </div>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{r.situacao}</p>
+                {(r.proximo_passo || r.faturamento_mensal) && (
+                  <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
+                    {r.proximo_passo && <span><b>Próximo passo:</b> {r.proximo_passo}</span>}
+                    {r.faturamento_mensal != null && <span><b>Faturamento:</b> {reais(r.faturamento_mensal)}</span>}
+                  </div>
+                )}
+              </div>
+            ))}
           </section>
+        </div>
+      )}
 
-          <section>
-            <h2 className="mb-3 font-semibold">Demandas</h2>
-            <div className="painel divide-y divide-slate-100">
-              {demandas.length === 0 && <div className="p-4 text-sm text-slate-500">Nenhuma demanda.</div>}
-              {demandas.map((d) => (
-                <Link key={d.id} to={`/demandas/${d.id}`} className="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-slate-50">
-                  <span className="truncate text-sm">{d.titulo}</span>
-                  <Selo cor={STATUS_DEMANDA[d.status].cor}>{STATUS_DEMANDA[d.status].rotulo}</Selo>
-                </Link>
-              ))}
-            </div>
-          </section>
-          <EventosDaAluna aluna={aluna} />
-        </aside>
-      </div>
+      {aba === 'contratos' && (
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="space-y-5 lg:col-span-2">
+            <section className="painel p-4">
+              <h2 className="mb-3 font-semibold">Dados da matrícula</h2>
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+                <Dado rotulo="Produto">{aluna.produto ?? '—'}</Dado>
+                <Dado rotulo="Turma">{aluna.turma ?? '—'}</Dado>
+                <Dado rotulo="Início">{data(aluna.inicio)}</Dado>
+                <Dado rotulo="Término">{data(aluna.termino)}</Dado>
+                <Dado rotulo="Pagamento">{aluna.forma_pagamento ?? '—'}</Dado>
+                <Dado rotulo="Financeiro">{fin ? <Selo cor={fin.cor}>{fin.rotulo}</Selo> : aluna.status_financeiro ?? '—'}</Dado>
+                <Dado rotulo="Onboarding">{[aluna.onboarding_status, aluna.acesso_plataforma && `acesso ${aluna.acesso_plataforma.toLowerCase()}`].filter(Boolean).join(' · ') || '—'}</Dado>
+                <Dado rotulo="Cadastro">{aluna.cadastro_preenchido ? (aluna.link_notion ? <a className="text-indigo-700" href={aluna.link_notion} target="_blank" rel="noreferrer">preenchido · Notion</a> : 'preenchido') : '—'}</Dado>
+                <Dado rotulo="Kit">{[aluna.tamanho_kit && `pijama ${aluna.tamanho_kit}`, aluna.jaqueta && `jaqueta ${aluna.jaqueta}`].filter(Boolean).join(' · ') || '—'}</Dado>
+              </dl>
+            </section>
+            <Notas aluna={aluna} />
+          </div>
+          <aside><Contratos aluna={aluna} mudou={carregar} /></aside>
+        </div>
+      )}
 
-      {editar && <AlunaForm aluna={aluna} fechar={() => setEditar(false)} salvo={() => carregar()} />}
-      {registrar && <RegistrarConsultoria aluna={aluna} ultimo={registros[0]} fechar={() => setRegistrar(false)} salvo={() => { setRegistrar(false); carregar() }} />}
+      {modal === 'editar' && <AlunaForm aluna={aluna} fechar={fechar} salvo={() => carregar()} />}
+      {modal === 'consultoria' && <RegistrarConsultoria aluna={aluna} ultimo={registros[0]} fechar={fechar} salvo={salvo} />}
+      {modal === 'contato' && <RegistrarContato aluna={aluna} fechar={fechar} salvo={salvo} />}
+      {modal === 'status' && <MudarStatus aluna={aluna} fechar={fechar} salvo={salvo} />}
+      {modal === 'comercial' && <EnviarComercial aluna={aluna} fechar={fechar} enviado={() => salvo()} />}
+      {modal === 'demanda' && <NovaDemanda alunaInicial={aluna} fechar={fechar} criada={(did) => nav(`/demandas/${did}`)} />}
       {novoCard && <NovoCard funil={novoCard.funil} etapa={novoCard.etapa} alunaInicial={aluna} fechar={() => setNovoCard(null)}
         criado={(cid) => nav(`/funis/${novoCard.funil.id}?card=${cid}`)} />}
-      {novaDemanda && <NovaDemanda alunaInicial={aluna} fechar={() => setNovaDemanda(false)} criada={(did) => nav(`/demandas/${did}`)} />}
     </div>
   )
 }

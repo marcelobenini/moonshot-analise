@@ -4,7 +4,7 @@ import { Plus, Search, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna } from '../lib/tipos'
-import { FINANCEIRO, PRODUTOS, SAUDE, data, mensagemErro, reais } from '../lib/util'
+import { FINANCEIRO, PRODUTOS, SAUDE, STATUS_CONTRATO, data, mensagemErro, reais } from '../lib/util'
 import { Campo, Carregando, Erro, EscolherPessoa, Modal, Selo, Titulo, Vazio } from '../componentes/ui'
 
 const POR_PAGINA = 50
@@ -91,6 +91,7 @@ export function Alunas() {
                 <th className="px-4 py-2.5">Saúde</th>
                 <th className="hidden px-4 py-2.5 sm:table-cell">Faturamento</th>
                 <th className="hidden px-4 py-2.5 lg:table-cell">Última consultoria</th>
+                <th className="hidden px-4 py-2.5 lg:table-cell">Último contato</th>
                 <th className="hidden px-4 py-2.5 sm:table-cell">Término</th>
               </tr>
             </thead>
@@ -101,11 +102,16 @@ export function Alunas() {
                     <div className="font-medium">{a.nome}</div>
                     <div className="text-xs text-slate-500">{a.empresa ?? a.email ?? ''}</div>
                   </td>
-                  <td className="px-4 py-2.5">{a.produto ?? '—'}{a.status_contrato !== 'ativo' && <div className="text-xs text-slate-500">{a.status_contrato}</div>}</td>
+                  <td className="px-4 py-2.5">{a.produto ?? '—'}
+                    <div className="mt-0.5 flex gap-1">
+                      {a.status_contrato !== 'ativo' && <Selo cor={STATUS_CONTRATO[a.status_contrato]?.cor ?? ''}>{STATUS_CONTRATO[a.status_contrato]?.rotulo}</Selo>}
+                      {a.status_financeiro === 'inadimplente' && <Selo cor={FINANCEIRO.inadimplente.cor}>Inadimplente</Selo>}
+                    </div></td>
                   <td className="hidden px-4 py-2.5 md:table-cell">{a.consultor_id ? nomeDe(a.consultor_id) : <span className="text-slate-400">{a.consultor_planilha ?? '—'}</span>}</td>
                   <td className="px-4 py-2.5">{a.saude ? <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo> : <span className="text-slate-400">—</span>}</td>
                   <td className="hidden px-4 py-2.5 sm:table-cell">{reais(a.faturamento_mensal)}</td>
                   <td className="hidden px-4 py-2.5 lg:table-cell">{data(a.ultima_consultoria)}</td>
+                  <td className="hidden px-4 py-2.5 lg:table-cell">{data(a.ultimo_contato)}</td>
                   <td className="hidden px-4 py-2.5 sm:table-cell">{data(a.termino)}</td>
                 </tr>
               ))}
@@ -214,7 +220,13 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
               {['ativo', 'pendente', 'bloqueado', 'pausado', 'encerrado', 'cancelado'].map((s) => <option key={s}>{s}</option>)}
             </select>
           </Campo>
-          <Campo rotulo="Status financeiro"><input className="entrada" value={f.status_financeiro ?? ''} onChange={(e) => muda('status_financeiro', e.target.value)} /></Campo>
+          <Campo rotulo="Status financeiro">
+            <select className="entrada" value={f.status_financeiro ?? ''} onChange={(e) => muda('status_financeiro', e.target.value)}>
+              <option value="">—</option>
+              {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
+              {f.status_financeiro && !FINANCEIRO[f.status_financeiro] && <option>{f.status_financeiro}</option>}
+            </select>
+          </Campo>
           <Campo rotulo="Faturamento mensal (R$)"><input className="entrada" type="number" min="0" value={f.faturamento_mensal ?? ''} onChange={(e) => muda('faturamento_mensal', e.target.value === '' ? null : Number(e.target.value))} /></Campo>
           <Campo rotulo="Nº de funcionários"><input className="entrada" type="number" min="0" value={f.funcionarios ?? ''} onChange={(e) => muda('funcionarios', e.target.value === '' ? null : Number(e.target.value))} /></Campo>
           <Campo rotulo="Consultor estratégico">

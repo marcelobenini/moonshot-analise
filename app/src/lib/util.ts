@@ -55,6 +55,19 @@ export const NOTA: Record<string, string> = {
   obs_cs: 'Observação da CS',
   obs_consultor: 'Observação do consultor',
   potencial: 'Potencial',
+  contato: 'Contato da CS',
+  status: 'Mudança de status',
+}
+
+export const CANAIS = ['WhatsApp', 'Ligação', 'Reunião online', 'Presencial', 'E-mail']
+
+export const STATUS_CONTRATO: Record<string, { rotulo: string; cor: string }> = {
+  ativo: { rotulo: 'Ativa', cor: 'bg-emerald-100 text-emerald-800' },
+  pendente: { rotulo: 'Pendente', cor: 'bg-amber-100 text-amber-800' },
+  bloqueado: { rotulo: 'Bloqueada', cor: 'bg-red-100 text-red-800' },
+  pausado: { rotulo: 'Pausada', cor: 'bg-sky-100 text-sky-800' },
+  encerrado: { rotulo: 'Encerrada', cor: 'bg-slate-200 text-slate-700' },
+  cancelado: { rotulo: 'Cancelada', cor: 'bg-slate-800 text-white' },
 }
 
 export const PRAZO_RETENCAO: Record<string, string> = {

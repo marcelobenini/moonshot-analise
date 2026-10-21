@@ -107,6 +107,16 @@ export function CardGaveta({ id, fechar, mudou }: { id: number; fechar: () => vo
               <span>Consultor: {nomeDe(aluna.consultor_id)}</span>
               <span>Término: {data(aluna.termino)}</span>
             </div>
+            {(aluna.resumo || aluna.dores || aluna.objetivos) && (
+              <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 text-xs">
+                {([['Resumo', aluna.resumo], ['Dores', aluna.dores], ['Objetivos', aluna.objetivos]] as const).filter(([, t]) => t).map(([r, t]) => (
+                  <div key={r}><span className="font-medium text-slate-500">{r}: </span><span className="whitespace-pre-wrap text-slate-700">{t}</span></div>
+                ))}
+              </div>
+            )}
+            <Link to={`/alunas/${aluna.id}`} className="mt-2 inline-block text-xs text-indigo-700 hover:underline">
+              Ficha completa: relatos, contatos e linha do tempo →
+            </Link>
           </div>
         )}
 

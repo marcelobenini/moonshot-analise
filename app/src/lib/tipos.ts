@@ -48,6 +48,12 @@ export interface Aluna {
   link_notion: string | null
   jaqueta: string | null
   cs_planilha: string | null
+  dores: string | null
+  objetivos: string | null
+  resumo: string | null
+  instagram: string | null
+  ultimo_contato: string | null
+  proximo_contato: string | null
 }
 
 export type StatusFinanceiro = 'adimplente' | 'inadimplente' | 'parcelado' | 'quitado' | 'pendente'
@@ -84,6 +90,21 @@ export interface NotaAluna {
   texto: string
   origem: string | null
   criado_em: string
+  canal: string | null
+  retorno_em: string | null
+  retorno_feito: boolean
+}
+
+// Uma linha de vw_linha_tempo: tudo que aconteceu com a aluna, de todas as areas.
+export interface Acontecimento {
+  aluna_id: number
+  quando: string
+  tipo: 'status' | 'consultoria' | 'contato' | 'nota' | 'funil' | 'contrato' | 'demanda' | 'evento'
+  titulo: string | null
+  texto: string | null
+  extra: Record<string, unknown>
+  autor_id: string | null
+  link: string | null
 }
 
 export interface Evento {

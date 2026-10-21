@@ -106,8 +106,9 @@ No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
    3. `supabase/sistema_funis.sql`
    4. `supabase/sistema_importar.sql`
    5. `supabase/sistema_planilhas.sql`
+   6. `supabase/sistema_crm.sql`
 
-   Os cinco podem ser reaplicados sem perder dado.
+   Os seis podem ser reaplicados sem perder dado.
 3. Se a base histórica estiver carregada, rode:
    ```sql
    select importar_base_historica();  -- alunas, ciclos e pedidos em aberto
@@ -190,6 +191,21 @@ carteiras**. A tabela "Nomes que vieram das planilhas" mostra o que ainda não
 está ligado a ninguém.
 
 Fica para depois: **Orçamentos** (viagens e reembolsos).
+
+### 6. A ficha da aluna
+
+A ficha é o centro: abas **Resumo** (perfil do negócio com resumo, dores e
+objetivos), **Linha do tempo** (tudo de todas as áreas numa lista: contatos,
+consultorias, mudanças de status com motivo, funis, contratos, demandas,
+eventos), **Consultorias** e **Contratos e dados**. No topo:
+
+- **Registrar contato**: canal, o que foi falado e quando retornar. O retorno
+  aparece no Início de quem atende a aluna.
+- **Status**: ativa, inadimplente, pausada, cancelada… Pede motivo, muda o
+  contrato, guarda no histórico e avisa consultor e CS.
+- **Enviar ao comercial**: o consultor diz por que é oportunidade. A aluna
+  entra no funil Comercial com a justificativa e a observação, e a comercial
+  passa a ver os relatos e anotações dela enquanto o card estiver aberto.
 
 ---
 

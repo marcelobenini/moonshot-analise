@@ -1,0 +1,101 @@
+-- Teste da ficha, do acompanhamento e da passagem ao comercial (sistema_crm.sql).
+-- Roda depois de teste_sistema.sql e teste_planilhas.sql (usa ok, como, barrado...).
+
+\set ON_ERROR_STOP 1
+\set QUIET 1
+
+begin;
+
+insert into auth.users (id, email, raw_user_meta_data) values
+ ('20000000-0000-0000-0000-00000000000c', 'coord3@nb.com', '{"nome":"Coord"}'),
+ ('20000000-0000-0000-0000-0000000000a1', 'cs3@nb.com',    '{"nome":"CS"}'),
+ ('20000000-0000-0000-0000-0000000000b1', 'cons3@nb.com',  '{"nome":"Consultor"}'),
+ ('20000000-0000-0000-0000-0000000000b2', 'cons4@nb.com',  '{"nome":"Outro consultor"}'),
+ ('20000000-0000-0000-0000-0000000000d1', 'com3@nb.com',   '{"nome":"Comercial"}');
+update perfil set ativo = true, papel = 'coordenador' where email = 'coord3@nb.com';
+update perfil set ativo = true, papel = 'cs'          where email = 'cs3@nb.com';
+update perfil set ativo = true, papel = 'consultor'   where email in ('cons3@nb.com', 'cons4@nb.com');
+update perfil set ativo = true, papel = 'comercial'   where email = 'com3@nb.com';
+\set coord '''20000000-0000-0000-0000-00000000000c'''
+\set cs    '''20000000-0000-0000-0000-0000000000a1'''
+\set cons  '''20000000-0000-0000-0000-0000000000b1'''
+\set outro '''20000000-0000-0000-0000-0000000000b2'''
+\set com   '''20000000-0000-0000-0000-0000000000d1'''
+
+insert into aluna (nome, consultor_id, cs_id, produto, faturamento_mensal)
+values ('Helena Teste Prado', :cons, :cs, 'Moonshot Club', 90000);
+insert into contrato (aluna_id, produto, status, termino, chave)
+select id, 'Moonshot Club', 'ativo', '2027-03-01', 'teste-crm' from aluna where nome = 'Helena Teste Prado';
+\set helena '(select id from aluna where nome = ''Helena Teste Prado'')'
+
+-- Status -----------------------------------------------------------------------
+select ok(barrado(:outro, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), null, 'inadimplente', 'x')$$),
+          'consultor de outra carteira nao muda status');
+select ok(barrado(:cs, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), null, 'inadimplente', '')$$),
+          'inadimplencia sem motivo e barrada');
+select como(:cs, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), null, 'inadimplente', 'Boleto de marco em aberto')$$);
+select ok((select status_financeiro = 'inadimplente' from aluna where id = :helena)
+          and (select status_financeiro = 'inadimplente' from contrato where chave = 'teste-crm'),
+          'inadimplencia vai para o contrato e a ficha');
+select ok((select count(*) = 1 from aluna_historico where aluna_id = :helena and campo = 'status_financeiro'
+           and para = 'inadimplente' and motivo = 'Boleto de marco em aberto' and autor_id = :cs),
+          'historico guarda de, para, quem e por que');
+select ok((select count(*) = 1 from notificacao where usuario_id = :cons and titulo like '%inadimplente%'),
+          'consultor e avisado da inadimplencia');
+select ok(conta_como(:cons, 'select * from vw_inadimplentes') = 1, 'e ela aparece na lista de inadimplentes');
+
+-- Acompanhamento ------------------------------------------------------------------
+select como(:cs, $$insert into nota_aluna (aluna_id, tipo, texto, canal, retorno_em, autor_id)
+  values ((select id from aluna where nome = 'Helena Teste Prado'), 'contato', 'Falei sobre o boleto', 'WhatsApp', current_date + 3,
+          '20000000-0000-0000-0000-0000000000a1')$$);
+select ok((select ultimo_contato = current_date and proximo_contato = current_date + 3 from aluna where id = :helena),
+          'contato da CS marca ultimo contato e retorno');
+select como(:cs, $$insert into nota_aluna (aluna_id, tipo, texto, canal, autor_id)
+  values ((select id from aluna where nome = 'Helena Teste Prado'), 'contato', 'Pagou', 'Ligação',
+          '20000000-0000-0000-0000-0000000000a1')$$);
+select ok((select proximo_contato is null from aluna where id = :helena)
+          and (select bool_and(retorno_feito) from nota_aluna where aluna_id = :helena and retorno_em is not null),
+          'novo contato da baixa no retorno anterior');
+
+-- Passagem ao comercial -------------------------------------------------------------
+select como(:cons, $$insert into registro_consultoria (aluna_id, consultor_id, numero, saude, situacao)
+  values ((select id from aluna where nome = 'Helena Teste Prado'), '20000000-0000-0000-0000-0000000000b1', 1, 'engajada',
+          'Dobrou a equipe, quer abrir segunda unidade')$$);
+select ok(conta_como(:com, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 0,
+          'comercial nao ve o relato antes da passagem');
+select ok(barrado(:outro, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', null, 'x', null, null)$$),
+          'consultor de outra carteira nao envia');
+select ok(barrado(:cons, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', null, ' ', null, null)$$),
+          'passagem sem justificativa e barrada');
+select como(:cons, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', 120000,
+  'Engajada, faturamento subiu, quer escalar', 'WhatsApp a tarde', 'Prefere falar com o socio junto')$$);
+select ok((select count(*) = 1 from card c join etapa e on e.id = c.etapa_id
+           where c.funil_id = 'oportunidades' and c.aluna_id = :helena and e.ordem = 3 and c.responsavel_id = :cons),
+          'oportunidade fica com o consultor, em "Enviada ao comercial"');
+select ok((select dados->>'justificativa' = 'Engajada, faturamento subiu, quer escalar'
+                  and dados->>'observacao_consultor' = 'Prefere falar com o socio junto'
+                  and dados->>'enviado_por' = 'Consultor' and origem_card_id is not null
+           from card where funil_id = 'comercial' and aluna_id = :helena),
+          'card do comercial nasce com justificativa, observacao e quem enviou');
+select ok((select faturamento_mensal = 120000 from aluna where id = :helena), 'faturamento informado atualiza a ficha');
+select ok((select count(*) = 1 from card_evento ev join card c on c.id = ev.card_id
+           where c.funil_id = 'comercial' and c.aluna_id = :helena and ev.texto like 'Passagem de Consultor%socio junto'),
+          'passagem fica no historico do card da comercial');
+select ok(conta_como(:com, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 1,
+          'com o card aberto, comercial ve o relato do consultor');
+select ok(conta_como(:com, $$select * from nota_aluna where texto = 'Pagou'$$) = 1, 'e as anotacoes');
+select ok(barrado(:cons, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', null, 'de novo', null, null)$$),
+          'nao abre segundo card no comercial');
+select ok(conta_como(:outro, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 0,
+          'outro consultor continua sem ver o relato');
+
+-- Linha do tempo -------------------------------------------------------------------
+select ok(conta_como(:cons, $$select distinct tipo from vw_linha_tempo
+            where aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$) >= 5,
+          'linha do tempo junta status, contato, consultoria, funil e contrato');
+select ok(conta_como(:outro, $$select * from vw_linha_tempo where tipo = 'consultoria'
+            and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$) = 0,
+          'e respeita o sigilo do relato');
+
+rollback;
+\echo 'TODOS OS TESTES DE CRM PASSARAM'
