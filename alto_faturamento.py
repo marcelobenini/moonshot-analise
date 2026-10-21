@@ -286,58 +286,62 @@ S = pd.DataFrame({
     'Contato localizado por': alto._como,
 }).sort_values('Faturamento (mês)', ascending=False).reset_index(drop=True)
 
-LARG = {'Aluna': 36, 'Faturamento (mês)': 17, 'Telefone': 19, 'E-mail': 32,
-        'Produto': 16, 'Consultor': 14, 'Cidade': 24, 'Ramo': 28,
-        'Situação do contrato': 22, 'Entrada': 13, 'Término previsto': 15,
-        'CS': 16, 'Turma': 24, 'Consultorias feitas': 12,
-        'Relato do consultor': 70, 'Contato localizado por': 20}
+# A escrita so acontece quando este arquivo e executado direto. Quando
+# auditoria_50k.py importa daqui, ele e que escreve a planilha final -
+# senao o import sobrescrevia o arquivo auditado pela versao sem auditoria.
+if __name__ == '__main__':
+    LARG = {'Aluna': 36, 'Faturamento (mês)': 17, 'Telefone': 19, 'E-mail': 32,
+            'Produto': 16, 'Consultor': 14, 'Cidade': 24, 'Ramo': 28,
+            'Situação do contrato': 22, 'Entrada': 13, 'Término previsto': 15,
+            'CS': 16, 'Turma': 24, 'Consultorias feitas': 12,
+            'Relato do consultor': 70, 'Contato localizado por': 20}
 
-with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
-    wb = xw.book
-    cab = wb.add_format({'bold': True, 'bg_color': '#1F2937', 'font_color': 'white',
-                         'border': 1, 'align': 'center', 'valign': 'vcenter',
-                         'text_wrap': True})
-    cabv = wb.add_format({'bold': True, 'bg_color': '#047857', 'font_color': 'white',
-                          'border': 1, 'align': 'center', 'valign': 'vcenter',
-                          'text_wrap': True})
-    txt = wb.add_format({'valign': 'top', 'border': 1})
-    wrap = wb.add_format({'valign': 'top', 'border': 1, 'text_wrap': True})
-    vaz = wb.add_format({'valign': 'top', 'border': 1, 'font_color': '#9CA3AF',
-                         'align': 'center'})
-    din = wb.add_format({'valign': 'top', 'border': 1, 'num_format': 'R$ #,##0',
-                         'bold': True})
-    w = wb.add_worksheet('50k+ por mês')
-    for j, cl in enumerate(S.columns):
-        w.write(0, j, cl, cabv if cl == 'Faturamento (mês)' else cab)
-        w.set_column(j, j, LARG[cl])
-    for i, row in S.iterrows():
+    with pd.ExcelWriter(SAIDA, engine='xlsxwriter') as xw:
+        wb = xw.book
+        cab = wb.add_format({'bold': True, 'bg_color': '#1F2937', 'font_color': 'white',
+                             'border': 1, 'align': 'center', 'valign': 'vcenter',
+                             'text_wrap': True})
+        cabv = wb.add_format({'bold': True, 'bg_color': '#047857', 'font_color': 'white',
+                              'border': 1, 'align': 'center', 'valign': 'vcenter',
+                              'text_wrap': True})
+        txt = wb.add_format({'valign': 'top', 'border': 1})
+        wrap = wb.add_format({'valign': 'top', 'border': 1, 'text_wrap': True})
+        vaz = wb.add_format({'valign': 'top', 'border': 1, 'font_color': '#9CA3AF',
+                             'align': 'center'})
+        din = wb.add_format({'valign': 'top', 'border': 1, 'num_format': 'R$ #,##0',
+                             'bold': True})
+        w = wb.add_worksheet('50k+ por mês')
         for j, cl in enumerate(S.columns):
-            v = row[cl]
-            if cl == 'Faturamento (mês)':
-                w.write_number(i + 1, j, float(v), din)
-            elif cl == 'Consultorias feitas':
-                w.write_number(i + 1, j, int(v), txt)
-            elif v == '' or pd.isna(v):
-                w.write(i + 1, j, '—', vaz)
-            else:
-                w.write(i + 1, j, str(v), wrap if cl == 'Relato do consultor' else txt)
-    w.set_row(0, 32)
-    w.freeze_panes(1, 2)
-    w.autofilter(0, 0, len(S), len(S.columns) - 1)
+            w.write(0, j, cl, cabv if cl == 'Faturamento (mês)' else cab)
+            w.set_column(j, j, LARG[cl])
+        for i, row in S.iterrows():
+            for j, cl in enumerate(S.columns):
+                v = row[cl]
+                if cl == 'Faturamento (mês)':
+                    w.write_number(i + 1, j, float(v), din)
+                elif cl == 'Consultorias feitas':
+                    w.write_number(i + 1, j, int(v), txt)
+                elif v == '' or pd.isna(v):
+                    w.write(i + 1, j, '—', vaz)
+                else:
+                    w.write(i + 1, j, str(v), wrap if cl == 'Relato do consultor' else txt)
+        w.set_row(0, 32)
+        w.freeze_panes(1, 2)
+        w.autofilter(0, 0, len(S), len(S.columns) - 1)
 
-f = S['Faturamento (mês)']
-print('alunas com faturamento na aba do consultor:', len(c))
-print('com 50k+ por mes:', len(S))
-print('soma: R$ %s/mes' % f'{f.sum():,.0f}'.replace(',', '.'))
-print('mediana: R$ %s' % f'{f.median():,.0f}'.replace(',', '.'))
-print('\ncontato:')
-print('  com telefone:', int((S.Telefone != '').sum()), '| com e-mail:', int((S['E-mail'] != '').sum()))
-print(S['Contato localizado por'].value_counts().to_string())
-print('\npor produto:'); print(S.Produto.value_counts().to_string())
-print('\npor consultor:'); print(S.Consultor.value_counts().to_string())
-print('\nsituacao do contrato:')
-print(S['Situação do contrato'].replace('', '(não encontrada na matrícula)').value_counts().to_string())
-print('\nfaixas:')
-for rot, m in (('>= 200k', f >= 200000), ('100k a 200k', (f >= 100000) & (f < 200000)),
-               ('50k a 100k', (f >= 50000) & (f < 100000))):
-    print(f'  {rot:14s} {int(m.sum()):3d}')
+    f = S['Faturamento (mês)']
+    print('alunas com faturamento na aba do consultor:', len(c))
+    print('com 50k+ por mes:', len(S))
+    print('soma: R$ %s/mes' % f'{f.sum():,.0f}'.replace(',', '.'))
+    print('mediana: R$ %s' % f'{f.median():,.0f}'.replace(',', '.'))
+    print('\ncontato:')
+    print('  com telefone:', int((S.Telefone != '').sum()), '| com e-mail:', int((S['E-mail'] != '').sum()))
+    print(S['Contato localizado por'].value_counts().to_string())
+    print('\npor produto:'); print(S.Produto.value_counts().to_string())
+    print('\npor consultor:'); print(S.Consultor.value_counts().to_string())
+    print('\nsituacao do contrato:')
+    print(S['Situação do contrato'].replace('', '(não encontrada na matrícula)').value_counts().to_string())
+    print('\nfaixas:')
+    for rot, m in (('>= 200k', f >= 200000), ('100k a 200k', (f >= 100000) & (f < 200000)),
+                   ('50k a 100k', (f >= 50000) & (f < 100000))):
+        print(f'  {rot:14s} {int(m.sum()):3d}')
