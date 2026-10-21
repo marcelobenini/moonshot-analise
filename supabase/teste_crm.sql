@@ -97,5 +97,25 @@ select ok(conta_como(:outro, $$select * from vw_linha_tempo where tipo = 'consul
             and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$) = 0,
           'e respeita o sigilo do relato');
 
+-- Acessos -------------------------------------------------------------------------
+select ok(barrado(:cs, $$select criar_acesso('nova@nb.com', 'Nova', 'cs')$$), 'so a coordenacao cria acesso');
+select como(:coord, $$select criar_acesso('Nova.CS@nb.com ', 'Nova CS', 'cs')$$);
+select ok((select papel = 'cs' and ativo and trocar_senha and nome = 'Nova CS' from perfil where email = 'nova.cs@nb.com'),
+          'acesso criado ja nasce liberado, com o perfil, e obriga a trocar a senha');
+select ok(barrado(:coord, $$select criar_acesso('nova.cs@nb.com', 'De novo', 'cs')$$), 'e-mail repetido e barrado');
+select ok(barrado(:coord, $$select criar_acesso('x@nb.com', 'X', 'chefe')$$), 'perfil inexistente e barrado');
+select ok(conta_como((select id from perfil where email = 'nova.cs@nb.com'), 'select * from aluna') = 0,
+          'antes de trocar a senha nao ve aluna nenhuma');
+update auth.users set encrypted_password = 'trocada' where email = 'nova.cs@nb.com';
+select ok(conta_como((select id from perfil where email = 'nova.cs@nb.com'), 'select * from aluna') > 0,
+          'depois de trocar, ve as alunas');
+select como(:coord, $$select redefinir_senha((select id from perfil where email = 'nova.cs@nb.com'))$$);
+select ok((select trocar_senha from perfil where email = 'nova.cs@nb.com'), 'senha redefinida volta a ser provisoria');
+
+select ok(not barrado(:cons, $$insert into aluna (nome, consultor_id) values ('Aluna Do Consultor', '20000000-0000-0000-0000-0000000000b1')$$),
+          'consultor cadastra aluna na propria carteira');
+select ok(barrado(:cons, $$insert into aluna (nome, consultor_id) values ('Aluna De Outro', '20000000-0000-0000-0000-0000000000b2')$$),
+          'mas nao na carteira de outro');
+
 rollback;
 \echo 'TODOS OS TESTES DE CRM PASSARAM'

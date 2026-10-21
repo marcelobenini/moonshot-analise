@@ -22,7 +22,7 @@ export function Alunas() {
   const [minhas, setMinhas] = useState(eu?.papel === 'consultor' || eu?.papel === 'cs')
   const [pagina, setPagina] = useState(0)
   const [nova, setNova] = useState(false)
-  const podeCriar = ['coordenador', 'cs', 'comercial', 'retencao'].includes(eu?.papel ?? '')
+  const podeCriar = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao'].includes(eu?.papel ?? '')
 
   useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro])
 
@@ -141,7 +141,7 @@ type Duplicata = { id: number; nome: string; email: string | null; telefone: str
 
 export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () => void; salvo: (id: number) => void }) {
   const { eu } = useSessao()
-  const [f, setF] = useState<Partial<Aluna>>(aluna ?? { status_contrato: 'ativo', cs_id: eu?.papel === 'cs' ? eu.id : null })
+  const [f, setF] = useState<Partial<Aluna>>(aluna ?? { status_contrato: 'ativo', cs_id: eu?.papel === 'cs' ? eu.id : null, consultor_id: eu?.papel === 'consultor' ? eu.id : null })
   const [erro, setErro] = useState<string | null>(null)
   const [duplicatas, setDuplicatas] = useState<Duplicata[] | null>(null)
   const redistribui = eu?.papel === 'coordenador' || eu?.papel === 'cs'
@@ -231,7 +231,7 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <Campo rotulo="Nº de funcionários"><input className="entrada" type="number" min="0" value={f.funcionarios ?? ''} onChange={(e) => muda('funcionarios', e.target.value === '' ? null : Number(e.target.value))} /></Campo>
           <Campo rotulo="Consultor estratégico">
             {redistribui ? <EscolherPessoa valor={f.consultor_id ?? null} mudar={(v) => muda('consultor_id', v)} papeis={['consultor', 'coordenador']} />
-              : <input className="entrada" disabled value="Definido pela coordenação/CS" />}
+              : <input className="entrada" disabled value={!aluna && eu?.papel === 'consultor' ? 'Você' : 'Definido pela coordenação/CS'} />}
           </Campo>
           <Campo rotulo="CS responsável">
             {redistribui ? <EscolherPessoa valor={f.cs_id ?? null} mudar={(v) => muda('cs_id', v)} papeis={['cs', 'coordenador']} />

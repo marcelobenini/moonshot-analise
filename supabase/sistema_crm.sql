@@ -304,3 +304,85 @@ revoke execute on function enviar_ao_comercial(bigint, text, numeric, text, text
 grant execute on function enviar_ao_comercial(bigint, text, numeric, text, text, text) to authenticated;
 revoke execute on function acompanha_aluna(bigint) from public, anon;
 grant execute on function acompanha_aluna(bigint) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Acessos criados pela coordenacao, sem passar pelo painel do Supabase.
+-- A pessoa recebe uma senha provisoria de 6 digitos e, no primeiro login, e
+-- obrigada a trocar por uma de 8 (perfil.trocar_senha).
+-- ---------------------------------------------------------------------------
+create or replace function criar_acesso(p_email text, p_nome text, p_papel text, p_nome_planilha text default null)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  v_id uuid := gen_random_uuid();
+  v_email text := lower(trim(p_email));
+  v_senha text := lpad((floor(random() * 1000000))::int::text, 6, '0');
+begin
+  if not eh_coordenador() then raise exception 'so a coordenacao cria acessos'; end if;
+  if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'e-mail invalido'; end if;
+  if coalesce(trim(p_nome), '') = '' then raise exception 'diga o nome da pessoa'; end if;
+  if p_papel not in ('coordenador', 'cs', 'consultor', 'comercial', 'retencao') then raise exception 'perfil invalido'; end if;
+  if exists (select 1 from auth.users where lower(email) = v_email) then
+    raise exception 'ja existe acesso com este e-mail';
+  end if;
+  if to_regclass('auth.identities') is not null then
+    -- Supabase: usuario completo, com e-mail ja confirmado (ninguem depende de e-mail chegar).
+    execute $q$
+      insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+                              raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+                              confirmation_token, recovery_token, email_change_token_new, email_change,
+                              email_change_token_current, phone_change, phone_change_token, reauthentication_token)
+      values ('00000000-0000-0000-0000-000000000000', $1, 'authenticated', 'authenticated', $2,
+              extensions.crypt($3, extensions.gen_salt('bf')), now(),
+              '{"provider":"email","providers":["email"]}', $4, now(), now(), '', '', '', '', '', '', '', '')$q$
+      using v_id, v_email, v_senha, jsonb_build_object('nome', trim(p_nome));
+    execute $q$
+      insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+      values (gen_random_uuid(), $1::text, $1,
+              jsonb_build_object('sub', $1::text, 'email', $2, 'email_verified', true, 'phone_verified', false),
+              'email', now(), now(), now())$q$
+      using v_id, v_email;
+  else
+    -- Teste local: o auth minimo de sistema.sql.
+    insert into auth.users (id, email, raw_user_meta_data, encrypted_password)
+    values (v_id, v_email, jsonb_build_object('nome', trim(p_nome)), md5(v_senha));
+  end if;
+  update perfil set nome = trim(p_nome), papel = p_papel, ativo = true, trocar_senha = true,
+                    consultor_norm = nullif(trim(coalesce(p_nome_planilha, '')), '')
+  where id = v_id;
+  return v_senha;
+end $$;
+
+-- Esqueceu a senha: nova provisoria, troca obrigatoria de novo.
+create or replace function redefinir_senha(p_usuario uuid) returns text
+language plpgsql security definer set search_path = public as $$
+declare v_senha text := lpad((floor(random() * 1000000))::int::text, 6, '0'); n int;
+begin
+  if not eh_coordenador() then raise exception 'so a coordenacao redefine senha'; end if;
+  if p_usuario = auth.uid() then raise exception 'para a sua senha, use "trocar senha" no menu'; end if;
+  -- EXECUTE nao atualiza FOUND: conta pelas linhas afetadas.
+  if to_regclass('auth.identities') is not null then
+    execute 'update auth.users set encrypted_password = extensions.crypt($2, extensions.gen_salt(''bf'')), updated_at = now() where id = $1'
+      using p_usuario, v_senha;
+  else
+    update auth.users set encrypted_password = md5(v_senha) where id = p_usuario;
+  end if;
+  get diagnostics n = row_count;
+  if n = 0 then raise exception 'usuario nao encontrado'; end if;
+  -- O gatilho do Auth acabou de tirar a marca; a senha nova e provisoria.
+  update perfil set trocar_senha = true where id = p_usuario;
+  return v_senha;
+end $$;
+
+-- Consultor cadastra aluna na propria carteira (a CS e a coordenacao ja podiam).
+do $$
+begin
+  if not exists (select 1 from pg_policies where tablename = 'aluna' and policyname = 'aluna_criar_consultor') then
+    execute 'create policy aluna_criar_consultor on aluna for insert to authenticated
+             with check (meu_papel() = ''consultor'' and consultor_id = auth.uid())';
+  end if;
+end $$;
+
+revoke execute on function criar_acesso(text, text, text, text) from public, anon;
+grant execute on function criar_acesso(text, text, text, text) to authenticated;
+revoke execute on function redefinir_senha(uuid) from public, anon;
+grant execute on function redefinir_senha(uuid) to authenticated;

@@ -147,18 +147,20 @@ deve trazer `"ok": true`.
 
 ### 4. Equipe
 
-1. **Authentication → Users → Invite user**: convide cada pessoa pelo e-mail.
-   Ela recebe o link, cria a senha e cai em "aguardando liberação".
-2. A primeira coordenação é liberada pelo SQL Editor, uma vez só:
+1. A primeira coordenação é liberada pelo SQL Editor, uma vez só:
    ```sql
    update perfil set papel = 'coordenador', ativo = true where email = 'seu@email.com';
    ```
-3. Daí em diante, tudo pela tela **Equipe**: papel, liberar e bloquear. Para os
-   consultores, preencha também o **nome na planilha** (como aparecia no
-   Controle Consultorias, ex.: "carol") e clique em **Vincular carteiras da
-   planilha**. As alunas importadas vão para a carteira certa.
-4. Distribua a CS das alunas importadas (a planilha de matrículas não tem esse
-   campo): pela ficha da aluna, ou em lote no SQL Editor.
+2. Daí em diante, tudo pela tela **Equipe**:
+   - **Novo acesso**: nome, e-mail e perfil. O sistema cria o login já
+     liberado e mostra uma senha provisória de 6 números, com a mensagem pronta
+     para mandar no WhatsApp. No primeiro login a pessoa troca por uma senha
+     dela, de 8 números. Ninguém depende de e-mail chegar.
+   - **Senha**: gera uma provisória nova para quem esqueceu.
+   - **Bloquear**: corta o acesso na hora, sem apagar o histórico da pessoa.
+   - **O que cada perfil pode fazer**: o quadro das permissões.
+3. Para consultor e CS, preencha o **nome na planilha** (aceita apelidos:
+   "Thiago, Tiago") e clique em **Vincular carteiras da planilha**.
 
 ### 5. Trazer as planilhas
 
