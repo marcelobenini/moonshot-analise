@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, configurado } from '../lib/supabase'
-import { useSessao } from '../lib/sessao'
+import { CHAVE_SAIU, useSessao } from '../lib/sessao'
 import { Campo, Erro } from '../componentes/ui'
 import { mensagemErro } from '../lib/util'
 
@@ -10,7 +10,12 @@ export function Login() {
   const [senha, setSenha] = useState('')
   const [modo, setModo] = useState<'entrar' | 'link'>('entrar')
   const [erro, setErro] = useState<string | null>(null)
-  const [aviso, setAviso] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<string | null>(() => {
+    try {
+      if (sessionStorage.getItem(CHAVE_SAIU)) { sessionStorage.removeItem(CHAVE_SAIU); return 'Você saiu automaticamente depois de 1 hora sem uso. Entre de novo.' }
+    } catch { /* sem storage */ }
+    return null
+  })
   const [enviando, setEnviando] = useState(false)
 
   async function enviar(e: FormEvent) {
@@ -18,11 +23,13 @@ export function Login() {
     setErro(null); setAviso(null); setEnviando(true)
     if (modo === 'entrar') {
       const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
-      if (error) setErro(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : mensagemErro(error))
+      // Mesma mensagem para e-mail inexistente e senha errada: nao revela quem tem acesso.
+      if (error) setErro(error.status === 429 ? 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
+        : error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : mensagemErro(error))
     } else {
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/senha` })
       if (error) setErro(mensagemErro(error))
-      else setAviso('Se o e-mail estiver cadastrado, chega um link em instantes para você criar a senha.')
+      else setAviso('Se o e-mail estiver cadastrado, chega um link em instantes para você criar a senha. Se não chegar, peça uma senha provisória à coordenação.')
     }
     setEnviando(false)
   }
@@ -34,11 +41,11 @@ export function Login() {
       )}
       <form onSubmit={enviar} className="space-y-4">
         <Campo rotulo="E-mail">
-          <input className="entrada" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input className="entrada" type="email" autoComplete="username" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
         </Campo>
         {modo === 'entrar' && (
           <Campo rotulo="Senha">
-            <input className="entrada" type="password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
+            <input className="entrada" type="password" autoComplete="current-password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
           </Campo>
         )}
         <Erro msg={erro} />
@@ -48,7 +55,7 @@ export function Login() {
         </button>
         <button type="button" className="w-full text-center text-sm text-indigo-600 hover:underline"
           onClick={() => { setModo(modo === 'entrar' ? 'link' : 'entrar'); setErro(null); setAviso(null) }}>
-          {modo === 'entrar' ? 'Primeiro acesso ou esqueceu a senha?' : 'Voltar para o login'}
+          {modo === 'entrar' ? 'Esqueceu a senha?' : 'Voltar para o login'}
         </button>
       </form>
     </Tela>

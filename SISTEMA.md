@@ -107,8 +107,9 @@ No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
    4. `supabase/sistema_importar.sql`
    5. `supabase/sistema_planilhas.sql`
    6. `supabase/sistema_crm.sql`
+   7. `supabase/sistema_seguranca.sql`
 
-   Os seis podem ser reaplicados sem perder dado.
+   Os sete podem ser reaplicados sem perder dado.
 3. Se a base histórica estiver carregada, rode:
    ```sql
    select importar_base_historica();  -- alunas, ciclos e pedidos em aberto
@@ -208,6 +209,34 @@ eventos), **Consultorias** e **Contratos e dados**. No topo:
 - **Enviar ao comercial**: o consultor diz por que é oportunidade. A aluna
   entra no funil Comercial com a justificativa e a observação, e a comercial
   passa a ver os relatos e anotações dela enquanto o card estiver aberto.
+
+### 7. Segurança
+
+O que já vem ligado:
+
+- **Cada perfil só vê o que precisa**, garantido no banco (RLS), não na tela:
+  mesmo chamando a API direto, um consultor não lê o relato de aluna de outra
+  carteira. Conta bloqueada perde o acesso na hora.
+- **Senha**: provisória de 6 números, válida por **72 horas**; no primeiro
+  login a pessoa cria a dela, de 8 números. Até trocar, não vê dado nenhum.
+  Vencida, a senha vira aleatória e a coordenação gera outra.
+- **Saída automática** depois de 1 hora sem uso.
+- **Registro de segurança** (tela Equipe, só a coordenação vê): quem criou,
+  liberou, bloqueou ou mudou o perfil de alguém, quem gerou senha, quem apagou
+  ficha ou card, quem importou planilha. Ninguém edita esse registro.
+- **Planilha importada**: CPF, RG, endereço, cartão e conta bancária são
+  descartados no navegador antes do envio; o resto é apagado do banco assim
+  que vira ficha.
+- **Cabeçalhos do site** (`app/vercel.json`): CSP restrita (só o próprio site
+  e o Supabase), proibido abrir dentro de outro site, HTTPS obrigatório.
+- **Login**: a mesma mensagem para e-mail inexistente e senha errada; o
+  Supabase limita tentativas seguidas.
+
+Para conferir no painel do Supabase (**Authentication**):
+
+- **Sign In / Providers → Email**: *Allow new users to sign up* **desligado**.
+  Acesso só pela tela Equipe.
+- **URL Configuration**: *Site URL* com o endereço do app.
 
 ---
 

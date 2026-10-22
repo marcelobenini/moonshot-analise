@@ -976,6 +976,10 @@ begin
   end;
   r := r || jsonb_build_object('pendencias', (select count(*) from importacao_pendencia where importacao_id = p_imp));
   update importacao set status = 'processada', resumo = r where id = p_imp;
+  -- O dado ja foi para as fichas; a planilha crua nao fica guardada.
+  update importacao_linha set dados = '{}'::jsonb where importacao_id = p_imp;
+  perform auditar('planilha importada', (select arquivo from importacao where id = p_imp),
+                  jsonb_build_object('tipo', t, 'resumo', r));
   -- Carteiras: consultor e CS da planilha viram perfil, se ja existir quem bata.
   perform vincular_equipe();
   return r;

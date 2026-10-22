@@ -36,6 +36,11 @@ function texto(v: Celula): string {
   return String(v).replace(/\r/g, '').trim()
 }
 
+// Coluna que o sistema nao usa e que nao deve sair do computador de quem
+// importa: documento, endereco, cartao, senha. Fica fora antes do envio.
+const COLUNA_SENSIVEL = /\bcpf\b|cnpj|\brg\b|documento|endere|\bcep\b|logradouro|bairro|cartao|senha|nascimento|\brenda\b|\bconta\b|agencia|\bpix\b/
+const VALOR_SENSIVEL = /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/
+
 const PALAVRAS_DE_CABECALHO = /nome|alun|telefone|status|consultor|data|e-?mail|contato|produto|cidade|pijama|confirma|motivo|prazo|plano|faturamento|potencial|solicitante/
 
 // Nota de cabecalho: quantos rotulos conhecidos a linha tem. Linha com
@@ -70,14 +75,14 @@ export function abasParaLinhas(abas: { sheet: string; data: Celula[][] }[]): Aba
       const dados: Record<string, string> = {}
       r.forEach((c, j) => {
         const v = texto(c)
-        if (v === '') return
+        if (v === '' || (cab[j] && COLUNA_SENSIVEL.test(cab[j])) || VALOR_SENSIVEL.test(v)) return
         dados[`_${j + 1}`] = v
         const k = cab[j]
         if (k && !(k in dados)) dados[k] = v
       })
       return { linha: i, dados }
     })
-    return { nome: sheet, temCabecalho: idxCab >= 0, colunas: cab.filter(Boolean), linhas }
+    return { nome: sheet, temCabecalho: idxCab >= 0, colunas: cab.filter((k) => k && !COLUNA_SENSIVEL.test(k)), linhas }
   })
 }
 

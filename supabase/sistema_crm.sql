@@ -347,8 +347,9 @@ begin
     values (v_id, v_email, jsonb_build_object('nome', trim(p_nome)), md5(v_senha));
   end if;
   update perfil set nome = trim(p_nome), papel = p_papel, ativo = true, trocar_senha = true,
-                    consultor_norm = nullif(trim(coalesce(p_nome_planilha, '')), '')
+                    consultor_norm = nullif(trim(coalesce(p_nome_planilha, '')), ''), senha_provisoria_em = now()
   where id = v_id;
+  perform auditar('acesso criado', v_email, jsonb_build_object('perfil', p_papel, 'nome', trim(p_nome)));
   return v_senha;
 end $$;
 
@@ -359,6 +360,7 @@ declare v_senha text := lpad((floor(random() * 1000000))::int::text, 6, '0'); n 
 begin
   if not eh_coordenador() then raise exception 'so a coordenacao redefine senha'; end if;
   if p_usuario = auth.uid() then raise exception 'para a sua senha, use "trocar senha" no menu'; end if;
+  perform set_config('moonshot.senha_sistema', 'on', true);
   -- EXECUTE nao atualiza FOUND: conta pelas linhas afetadas.
   if to_regclass('auth.identities') is not null then
     execute 'update auth.users set encrypted_password = extensions.crypt($2, extensions.gen_salt(''bf'')), updated_at = now() where id = $1'
@@ -369,7 +371,9 @@ begin
   get diagnostics n = row_count;
   if n = 0 then raise exception 'usuario nao encontrado'; end if;
   -- O gatilho do Auth acabou de tirar a marca; a senha nova e provisoria.
-  update perfil set trocar_senha = true where id = p_usuario;
+  update perfil set trocar_senha = true, senha_provisoria_em = now() where id = p_usuario;
+  perform set_config('moonshot.senha_sistema', '', true);
+  perform auditar('senha provisoria gerada', (select email from perfil where id = p_usuario));
   return v_senha;
 end $$;
 

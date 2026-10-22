@@ -18,6 +18,20 @@ interface Sessao {
 
 const Ctx = createContext<Sessao | null>(null)
 
+// Sem uso por 60 minutos, a sessao cai: a ficha tem dado pessoal e relato
+// sigiloso, e o computador pode ser compartilhado. A ultima atividade fica no
+// localStorage para valer entre abas.
+const INATIVIDADE_MS = 60 * 60 * 1000
+const CHAVE_ATIVIDADE = 'moonshot.ultima_atividade'
+export const CHAVE_SAIU = 'moonshot.saiu_por_inatividade'
+
+function lerAtividade() {
+  try { return Number(localStorage.getItem(CHAVE_ATIVIDADE)) || Date.now() } catch { return Date.now() }
+}
+function marcarAtividade() {
+  try { localStorage.setItem(CHAVE_ATIVIDADE, String(Date.now())) } catch { /* sem storage: vale so a aba */ }
+}
+
 // Equipe, funis e etapas mudam pouco e aparecem em toda tela: carregam uma vez
 // na entrada e ficam aqui, em vez de cada pagina buscar de novo.
 export function ProvedorSessao({ children }: { children: ReactNode }) {
@@ -55,6 +69,33 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
     })
     return () => data.subscription.unsubscribe()
   }, [carregar])
+
+  useEffect(() => {
+    if (!sessao) return
+    let ultima = 0
+    const ativo = () => {
+      const agora = Date.now()
+      if (agora - ultima > 30000) { ultima = agora; marcarAtividade() }
+    }
+    const eventos = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove']
+    // Voltar depois de horas com a aba aberta: confere antes de contar como uso.
+    const conferir = () => {
+      if (Date.now() - lerAtividade() > INATIVIDADE_MS) {
+        try { sessionStorage.setItem(CHAVE_SAIU, '1') } catch { /* ok */ }
+        supabase.auth.signOut()
+      }
+    }
+    conferir()
+    marcarAtividade()
+    eventos.forEach((e) => window.addEventListener(e, ativo, { passive: true }))
+    document.addEventListener('visibilitychange', conferir)
+    const t = setInterval(conferir, 60000)
+    return () => {
+      eventos.forEach((e) => window.removeEventListener(e, ativo))
+      document.removeEventListener('visibilitychange', conferir)
+      clearInterval(t)
+    }
+  }, [sessao])
 
   const valor = useMemo<Sessao>(() => ({
     carregando, sessao, eu, equipe, funis, etapas,

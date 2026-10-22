@@ -90,7 +90,9 @@ export function Equipe() {
                 <td className="px-4 py-2.5">
                   {p.id === eu?.id ? <Selo cor="bg-emerald-100 text-emerald-800">Você</Selo> : p.ativo ? (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {p.trocar_senha && <Selo cor="bg-amber-100 text-amber-800">ainda não entrou</Selo>}
+                      {p.trocar_senha && (p.senha_provisoria_em
+                        ? <Selo cor="bg-amber-100 text-amber-800">ainda não entrou</Selo>
+                        : <Selo cor="bg-red-100 text-red-800">senha provisória venceu</Selo>)}
                       <button className="btn-secundario py-1" onClick={() => novaSenha(p)} title="Gerar senha provisória nova"><KeyRound size={14} /> Senha</button>
                       <button className="btn-secundario py-1" onClick={() => mudar(p, { ativo: false })}>Bloquear</button>
                     </div>
@@ -105,6 +107,7 @@ export function Equipe() {
       </div>
 
       <PerfisDeAcesso />
+      <RegistroSeguranca versao={aviso} />
 
       {nomes.length > 0 && (
         <div className="painel mt-6 overflow-x-auto">
@@ -174,11 +177,11 @@ function NovoAcesso({ fechar, criado }: { fechar: () => void; criado: (r: { nome
 // A senha so aparece aqui, uma vez. O banco guarda so o hash.
 function SenhaGerada({ nome, email, senha, fechar }: { nome: string; email: string; senha: string; fechar: () => void }) {
   const [copiado, setCopiado] = useState(false)
-  const recado = `Oi, ${nome.split(' ')[0]}! Seu acesso ao Moonshot System está pronto.\n\nEndereço: ${location.origin}\nLogin: ${email}\nSenha provisória: ${senha}\n\nNo primeiro acesso o sistema pede para você criar sua senha, de 8 números.`
+  const recado = `Oi, ${nome.split(' ')[0]}! Seu acesso ao Moonshot System está pronto.\n\nEndereço: ${location.origin}\nLogin: ${email}\nSenha provisória: ${senha}\n\nNo primeiro acesso o sistema pede para você criar sua senha, de 8 números. A senha provisória vale por 72 horas.`
   return (
     <Modal titulo="Acesso pronto" aberto fechar={fechar}>
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">Mande para {nome}. Esta senha não aparece de novo; se perder, gere outra em <b>Senha</b>.</p>
+        <p className="text-sm text-slate-600">Mande para {nome}. Esta senha não aparece de novo e <b>vale por 72 horas</b>; depois disso, gere outra em <b>Senha</b>.</p>
         <div className="rounded-lg bg-slate-50 p-4 text-center">
           <div className="text-xs text-slate-500">{email}</div>
           <div className="mt-1 font-mono text-3xl font-semibold tracking-widest">{senha}</div>
@@ -190,6 +193,35 @@ function SenhaGerada({ nome, email, senha, fechar }: { nome: string; email: stri
         </div>
       </div>
     </Modal>
+  )
+}
+
+type Registro = { id: number; quando: string; autor_id: string | null; acao: string; alvo: string | null; detalhe: Record<string, unknown> }
+
+// Quem deu, mudou ou tirou acesso, gerou senha, apagou ficha, importou planilha.
+function RegistroSeguranca({ versao }: { versao: unknown }) {
+  const { nomeDe } = useSessao()
+  const [lista, setLista] = useState<Registro[]>([])
+  useEffect(() => {
+    supabase.from('auditoria').select('*').order('quando', { ascending: false }).limit(100)
+      .then(({ data }) => setLista((data ?? []) as Registro[]))
+  }, [versao])
+  return (
+    <details className="painel mt-6">
+      <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Registro de segurança{lista.length ? ` · ${lista.length} mais recentes` : ''}</summary>
+      {lista.length === 0 ? <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">Nada registrado ainda.</p> : (
+        <ul className="divide-y divide-slate-100 border-t border-slate-100 text-sm">
+          {lista.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-x-4 px-4 py-2">
+              <span><b className="font-medium">{r.acao}</b>{r.alvo && <span className="text-slate-600"> · {r.alvo}</span>}
+                {typeof r.detalhe.de !== 'undefined' && <span className="text-xs text-slate-500"> ({String(r.detalhe.de ?? '—')} → {String(r.detalhe.para ?? '—')})</span>}
+                {typeof r.detalhe.perfil === 'string' && <span className="text-xs text-slate-500"> ({r.detalhe.perfil})</span>}</span>
+              <span className="text-xs text-slate-500">{r.autor_id ? nomeDe(r.autor_id) : 'Sistema'} · {new Date(r.quando).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
   )
 }
 

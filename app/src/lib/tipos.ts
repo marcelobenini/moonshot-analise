@@ -12,6 +12,7 @@ export interface Perfil {
   ativo: boolean
   consultor_norm: string | null
   trocar_senha: boolean
+  senha_provisoria_em: string | null
 }
 
 export interface Aluna {
