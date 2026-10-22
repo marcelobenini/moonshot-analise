@@ -89,9 +89,15 @@ export function Inicio() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">{saudacao}, {eu?.nome.split(' ')[0]}</h1>
-        <p className="text-sm text-slate-500">O que precisa da sua atenção hoje.</p>
+      <div className="relative overflow-hidden rounded-2xl bg-noite px-6 py-7 text-white">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_35%_35%,#e8d4b4_0%,#b6884c_35%,transparent_70%)] opacity-30 blur-xl" />
+        <div className="relative">
+          <div className="text-[11px] font-medium uppercase tracking-[0.35em] text-ouro">
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </div>
+          <h1 className="mt-2 text-4xl font-semibold text-white">{saudacao}, <span className="italic text-indigo-200">{eu?.nome.split(' ')[0]}</span></h1>
+          <p className="mt-1 text-sm text-slate-300">O que precisa da sua atenção hoje.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -244,8 +250,9 @@ export function Inicio() {
 function Numero({ rotulo, valor, icone, alerta }: { rotulo: string; valor: number; icone: React.ReactNode; alerta?: boolean }) {
   return (
     <div className="painel p-4">
-      <div className={`flex items-center gap-2 text-xs font-medium ${alerta ? 'text-red-600' : 'text-slate-500'}`}>{icone}{rotulo}</div>
-      <div className="mt-1 text-2xl font-semibold">{valor}</div>
+      <div className={`flex items-center gap-2 text-xs font-medium uppercase tracking-wide ${alerta ? 'text-red-600' : 'text-slate-500'}`}>
+        <span className={alerta ? '' : 'text-ouro'}>{icone}</span>{rotulo}</div>
+      <div className={`mt-1 font-display text-4xl font-semibold ${alerta ? 'text-red-700' : 'text-noite'}`}>{valor}</div>
     </div>
   )
 }
@@ -254,7 +261,7 @@ function Bloco({ titulo, link, icone, children }: { titulo: string; link?: strin
   return (
     <section className="painel overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">{icone}{titulo}</h2>
+        <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-noite"><span className="text-ouro">{icone}</span>{titulo}</h2>
         {link && <Link to={link} className="flex items-center gap-1 text-xs text-indigo-600 hover:underline">ver <ArrowRight size={12} /></Link>}
       </div>
       <div className="divide-y divide-slate-50">{children}</div>

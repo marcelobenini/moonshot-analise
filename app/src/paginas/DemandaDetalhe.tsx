@@ -68,7 +68,7 @@ export function DemandaDetalhe() {
           <Selo cor={PRIORIDADE[d.prioridade].cor}>{PRIORIDADE[d.prioridade].rotulo}</Selo>
           <span className="text-xs text-slate-500">{TIPO_DEMANDA[d.tipo]}</span>
         </div>
-        <h1 className="mt-2 text-xl font-semibold">{d.titulo}</h1>
+        <h1 className="mt-2 text-3xl font-semibold text-noite">{d.titulo}</h1>
         {d.descricao && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{d.descricao}</p>}
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div><dt className="text-xs text-slate-500">Pedido por</dt><dd className="font-medium">{nomeDe(d.solicitante_id)}</dd></div>

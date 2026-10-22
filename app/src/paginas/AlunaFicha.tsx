@@ -64,7 +64,7 @@ export function AlunaFicha() {
       <div className="painel p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold">{aluna.nome}</h1>
+            <h1 className="text-3xl font-semibold text-noite">{aluna.nome}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
               <Selo cor={st?.cor ?? 'bg-slate-100'}>{st?.rotulo ?? aluna.status_contrato}</Selo>
               {fin && aluna.status_financeiro !== 'adimplente' && <Selo cor={fin.cor}>{fin.rotulo}</Selo>}

@@ -1,20 +1,61 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource/cormorant-garamond/latin-500.css";
+@import "@fontsource/cormorant-garamond/latin-600.css";
+@import "@fontsource/cormorant-garamond/latin-600-italic.css";
 
+/* Identidade Moonshot · Natalia Beauty: preto, nude e dourado champanhe.
+   Em vez de trocar classe por classe, a paleta "indigo" do Tailwind vira o
+   dourado da marca e a "slate" vira um neutro quente: todo destaque e todo
+   cinza do app mudam juntos. */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Cormorant Garamond", "Georgia", serif;
+
+  --color-indigo-50: #fbf7f1;
+  --color-indigo-100: #f4eadb;
+  --color-indigo-200: #e8d4b4;
+  --color-indigo-300: #d9ba8a;
+  --color-indigo-400: #c9a066;
+  --color-indigo-500: #b6884c;
+  --color-indigo-600: #9c7140;
+  --color-indigo-700: #7f5a34;
+  --color-indigo-800: #66482c;
+  --color-indigo-900: #533b26;
+  --color-indigo-950: #2e2014;
+
+  --color-slate-50: #faf7f4;
+  --color-slate-100: #f2ede8;
+  --color-slate-200: #e6ded6;
+  --color-slate-300: #d3c8bd;
+  --color-slate-400: #a99b8f;
+  --color-slate-500: #7f7268;
+  --color-slate-600: #645950;
+  --color-slate-700: #4c433d;
+  --color-slate-800: #312b27;
+  --color-slate-900: #1d1916;
+  --color-slate-950: #110e0c;
+
+  --color-noite: #141110;
+  --color-nude: #f6f1ec;
+  --color-ouro: #c9a066;
 }
 
 @layer base {
-  body { @apply bg-slate-50 text-slate-900 antialiased; }
+  body { @apply bg-nude text-slate-900 antialiased; }
+  h1 { @apply font-display tracking-tight; }
+  /* A Cormorant usa algarismos de estilo antigo; numero de painel precisa ser alinhado. */
+  h1, .font-display { font-variant-numeric: lining-nums; }
+  ::selection { background: #e8d4b4; }
 }
 
 /* Tailwind 4: classe que outra classe reaproveita com @apply precisa ser @utility. */
-@utility btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50; }
-@utility btn-primario { @apply btn bg-indigo-600 text-white hover:bg-indigo-700; }
-@utility btn-secundario { @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50; }
-@utility btn-perigo { @apply btn bg-red-600 text-white hover:bg-red-700; }
+@utility btn { @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50; }
+@utility btn-primario { @apply btn bg-noite text-white shadow-sm hover:bg-black hover:text-indigo-200; }
+@utility btn-secundario { @apply btn border border-slate-300 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50; }
+@utility btn-perigo { @apply btn bg-red-700 text-white hover:bg-red-800; }
 @utility btn-fantasma { @apply btn text-slate-600 hover:bg-slate-100; }
-@utility entrada { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-500; }
-@utility rotulo { @apply mb-1 block text-xs font-medium text-slate-600; }
-@utility painel { @apply rounded-xl border border-slate-200 bg-white; }
+@utility entrada { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-500; }
+@utility rotulo { @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500; }
+@utility painel { @apply rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(20,17,16,0.04)]; }
 @utility selo { @apply inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium; }

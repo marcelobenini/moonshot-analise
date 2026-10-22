@@ -136,16 +136,20 @@ export function Aguardando() {
 
 function Tela({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="painel w-full max-w-sm p-6 shadow-sm">
-        <div className="mb-6 flex items-center gap-2">
-          <img src="/icone.svg" alt="" className="h-8 w-8" />
-          <div>
-            <div className="font-semibold">Moonshot System</div>
-            <div className="text-xs text-slate-500">Sistema de acompanhamento</div>
-          </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-noite p-4">
+      {/* Lua: o brilho dourado atras do cartao. */}
+      <div className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle_at_35%_35%,#e8d4b4_0%,#b6884c_35%,transparent_70%)] opacity-25 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-48 -left-48 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle,#7f5a34_0%,transparent_70%)] opacity-30 blur-3xl" />
+      <div className="relative w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <img src="/icone.svg" alt="" className="mx-auto h-12 w-12" />
+          <div className="mt-4 font-display text-3xl font-semibold tracking-[0.3em] text-white">MOONSHOT</div>
+          <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.4em] text-ouro">Natalia Beauty</div>
         </div>
-        {children}
+        <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-2xl shadow-black/40">
+          {children}
+        </div>
+        <p className="mt-6 text-center text-xs text-slate-400">Acesso restrito à equipe Moonshot.</p>
       </div>
     </div>
   )

@@ -74,7 +74,7 @@ export function Erro({ msg }: { msg: string | null }) {
 export function Titulo({ children, acoes }: { children: ReactNode; acoes?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h1 className="text-xl font-semibold">{children}</h1>
+      <h1 className="text-3xl font-semibold text-noite">{children}</h1>
       {acoes && <div className="flex flex-wrap gap-2">{acoes}</div>}
     </div>
   )
