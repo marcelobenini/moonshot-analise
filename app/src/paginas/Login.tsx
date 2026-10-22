@@ -144,7 +144,7 @@ function Tela({ children }: { children: React.ReactNode }) {
         <div className="mb-8 text-center">
           <img src="/icone.svg" alt="" className="mx-auto h-12 w-12" />
           <div className="mt-4 font-display text-3xl font-semibold tracking-[0.3em] text-white">MOONSHOT</div>
-          <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.4em] text-ouro">Natalia Beauty</div>
+          <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.4em] text-ouro">System</div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-2xl shadow-black/40">
           {children}

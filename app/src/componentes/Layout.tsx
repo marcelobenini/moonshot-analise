@@ -81,7 +81,7 @@ export function Marca({ clara = true }: { clara?: boolean }) {
       <img src="/icone.svg" alt="" className="h-9 w-9" />
       <div className="leading-none">
         <div className={`font-display text-xl font-semibold tracking-[0.22em] ${clara ? 'text-white' : 'text-noite'}`}>MOONSHOT</div>
-        <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.3em] text-ouro">Natalia Beauty</div>
+        <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.3em] text-ouro">System</div>
       </div>
     </div>
   )
