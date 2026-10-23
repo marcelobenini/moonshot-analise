@@ -4,13 +4,14 @@ import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail, PhoneCall, Flag,
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda, Etapa, Funil, RegistroConsultoria, Saude } from '../lib/tipos'
-import { FINANCEIRO, SAUDE, STATUS_CONTRATO, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
-import { Campo, Carregando, Erro, Modal, Potencial, Selo, Vazio } from '../componentes/ui'
+import { FINANCEIRO, SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
+import { Campo, Carregando, Erro, Modal, Selo, Vazio } from '../componentes/ui'
 import { AlunaForm } from './Alunas'
 import { NovoCard } from './CardGaveta'
 import { NovaDemanda } from './Demandas'
 import { Agenda, Contratos, EventosDaAluna, Notas } from './FichaExtras'
-import { EnviarComercial, LinhaDoTempo, MudarStatus, PainelPotencial, Panorama, PerfilNegocio, RegistrarContato } from './FichaAcoes'
+import { EnviarComercial, LinhaDoTempo, MudarStatus, PainelPotencial, PerfilNegocio, RegistrarContato } from './FichaAcoes'
+import { CabecalhoAluna, ComoEsta, Evolucao, Jornada, Mimos } from './FichaVisual'
 
 export function AlunaFicha() {
   const { id } = useParams()
@@ -56,55 +57,35 @@ export function AlunaFicha() {
   const funisParaAbrir = funis.filter((f) => podeEditar(f.id) && !abertosPorFunil.has(f.id))
   const fechar = () => setModal(null)
   const salvo = () => { setModal(null); carregar() }
-  const st = STATUS_CONTRATO[aluna.status_contrato]
   const fin = aluna.status_financeiro ? FINANCEIRO[aluna.status_financeiro] : null
 
   return (
     <div className="space-y-5">
-      <div className="painel p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold text-noite">{aluna.nome}</h1>
-              <Potencial pontos={aluna.potencial_detalhe?.pontos} />
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-              <Selo cor={st?.cor ?? 'bg-slate-100'}>{st?.rotulo ?? aluna.status_contrato}</Selo>
-              {fin && aluna.status_financeiro !== 'adimplente' && <Selo cor={fin.cor}>{fin.rotulo}</Selo>}
-              {aluna.saude && <Selo cor={SAUDE[aluna.saude].cor}>{SAUDE[aluna.saude].rotulo}</Selo>}
-              <span>{[aluna.produto, aluna.turma, aluna.empresa].filter(Boolean).join(' · ')}</span>
-            </div>
-            <div className="mt-1 text-xs text-slate-500">
-              Consultor: {aluna.consultor_id ? nomeDe(aluna.consultor_id) : aluna.consultor_planilha ? `${aluna.consultor_planilha} (planilha)` : ''}
-              {' · '}CS: {aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ? `${aluna.cs_planilha} (planilha)` : ''}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {podeContato && <button className="btn-primario" onClick={() => setModal('contato')}><PhoneCall size={16} /> Registrar contato</button>}
-            {podeRegistrar && <button className="btn-primario" onClick={() => setModal('consultoria')}><ClipboardPlus size={16} /> Registrar consultoria</button>}
-            {podeStatus && <button className="btn-secundario" onClick={() => setModal('status')}><Flag size={16} /> Status</button>}
-            {podeEnviar && !noComercial && <button className="btn-secundario" onClick={() => setModal('comercial')}><Rocket size={16} /> Enviar ao comercial</button>}
-            <button className="btn-secundario" onClick={() => setModal('demanda')}><MessageSquarePlus size={16} /> Demanda</button>
-            {podeEditarFicha && <button className="btn-secundario" onClick={() => setModal('editar')}><Pencil size={16} /> Editar</button>}
-          </div>
-        </div>
-      </div>
+      <CabecalhoAluna aluna={aluna} acoes={<>
+        {podeContato && <button className="btn-primario" onClick={() => setModal('contato')}><PhoneCall size={16} /> Registrar contato</button>}
+        {podeRegistrar && <button className="btn-primario" onClick={() => setModal('consultoria')}><ClipboardPlus size={16} /> Registrar consultoria</button>}
+        {podeStatus && <button className="btn-secundario" onClick={() => setModal('status')}><Flag size={16} /> Status</button>}
+        {podeEnviar && !noComercial && <button className="btn-secundario" onClick={() => setModal('comercial')}><Rocket size={16} /> Enviar ao comercial</button>}
+        <button className="btn-secundario" onClick={() => setModal('demanda')}><MessageSquarePlus size={16} /> Demanda</button>
+        {podeEditarFicha && <button className="btn-secundario" onClick={() => setModal('editar')}><Pencil size={16} /> Editar</button>}
+      </>} />
 
-      <Panorama aluna={aluna} registros={registros} cards={cards} />
-
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 overflow-x-auto rounded-full bg-white/70 p-1 ring-1 ring-rose-100 sm:inline-flex">
         {([['resumo', 'Resumo'], ['tempo', 'Linha do tempo'], ['consultorias', `Consultorias${registros.length ? ` · ${registros.length}` : ''}`], ['contratos', 'Contratos e dados']] as const).map(([k, r]) => (
           <button key={k} onClick={() => setAba(k)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${aba === k ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>{r}</button>
+            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition ${aba === k ? 'bg-noite text-indigo-100 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{r}</button>
         ))}
       </div>
 
       {aba === 'resumo' && (
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            <Jornada aluna={aluna} registros={registros} />
+            <div className="lg:hidden"><ComoEsta aluna={aluna} /></div>
             <PerfilNegocio aluna={aluna} pode={podeEditarFicha} mudou={carregar} />
+            <Evolucao aluna={aluna} registros={registros} />
             <section className="painel p-4">
-              <h2 className="mb-3 font-semibold">Contato e negócio</h2>
+              <h2 className="mb-3 font-display text-xl font-semibold text-noite">Contato e negócio</h2>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : ''}</Dado>
                 <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : ''}</Dado>
@@ -118,15 +99,17 @@ export function AlunaFicha() {
               </dl>
             </section>
             <section>
-              <h2 className="mb-3 font-semibold">Últimos acontecimentos</h2>
+              <h2 className="mb-3 font-display text-xl font-semibold text-noite">Últimos acontecimentos</h2>
               <LinhaDoTempo aluna={aluna} versao={versao} limite={6} />
               <button className="mt-2 text-sm text-indigo-700 hover:underline" onClick={() => setAba('tempo')}>Ver a linha do tempo inteira</button>
             </section>
           </div>
           <aside className="space-y-5">
+            <div className="hidden lg:block"><ComoEsta aluna={aluna} /></div>
             {aluna.potencial_detalhe && <PainelPotencial detalhe={aluna.potencial_detalhe} />}
+            <Mimos aluna={aluna} />
             <section>
-              <h2 className="mb-3 font-semibold">Nos funis</h2>
+              <h2 className="mb-3 font-display text-xl font-semibold text-noite">Nos funis</h2>
               <div className="painel divide-y divide-slate-100">
                 {cards.length === 0 && <div className="p-4 text-sm text-slate-500">Em nenhum funil.</div>}
                 {cards.map((c) => (
@@ -148,7 +131,7 @@ export function AlunaFicha() {
               )}
             </section>
             <section>
-              <h2 className="mb-3 font-semibold">Demandas</h2>
+              <h2 className="mb-3 font-display text-xl font-semibold text-noite">Demandas</h2>
               <div className="painel divide-y divide-slate-100">
                 {demandas.length === 0 && <div className="p-4 text-sm text-slate-500">Nenhuma demanda.</div>}
                 {demandas.map((d) => (
@@ -170,7 +153,7 @@ export function AlunaFicha() {
         <div className="space-y-6">
           <Agenda aluna={aluna} podeEditar={podeRegistrar || papel === 'cs'} />
           <section className="space-y-3">
-            <h2 className="font-semibold">Relatos de consultoria</h2>
+            <h2 className="font-display text-xl font-semibold text-noite">Relatos de consultoria</h2>
             {registros.length === 0 ? (
               <Vazio>{podeRegistrar ? 'Nenhuma consultoria registrada ainda.' : 'Nenhuma consultoria visível para você. O relato fica com quem atende a aluna, a coordenação e quem a recebe num funil.'}</Vazio>
             ) : registros.map((r) => (
@@ -202,7 +185,7 @@ export function AlunaFicha() {
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <section className="painel p-4">
-              <h2 className="mb-3 font-semibold">Dados da matrícula</h2>
+              <h2 className="mb-3 font-display text-xl font-semibold text-noite">Dados da matrícula</h2>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <Dado rotulo="Produto">{aluna.produto ?? ''}</Dado>
                 <Dado rotulo="Turma">{aluna.turma ?? ''}</Dado>

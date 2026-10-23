@@ -119,17 +119,23 @@ function mostrarRotulo(i: number, n: number, larg: number) {
 }
 
 /** Linhas com area leve: evolucao no tempo, uma ou mais series, mesmo eixo. */
-export function Linhas({ pontos, series, altura = 220 }: {
+export function Linhas({ pontos, series, altura = 220, formatar = String, doZero = true }: {
   pontos: { rotulo: string; valores: number[] }[]; series: { nome: string; cor: string }[]; altura?: number
+  formatar?: (v: number) => string
+  // Contagem comeca do zero; valor de nivel (faturamento) pode partir perto do minimo.
+  doZero?: boolean
 }) {
   const [ref, w] = useLargura<HTMLDivElement>()
   const [ativo, setAtivo] = useState<number | null>(null)
   const esq = 32, dir = 12, topo = 12, baixo = 26
   const larg = Math.max(0, w - esq - dir), alt = altura - topo - baixo
-  const max = arredondar(Math.max(1, ...pontos.flatMap((p) => p.valores)))
+  const valores = pontos.flatMap((p) => p.valores)
+  const bruto = Math.max(1, ...valores)
+  const min = doZero ? 0 : (() => { const m = Math.min(...valores); const p = Math.pow(10, Math.floor(Math.log10(Math.max(1, bruto - m)))); return Math.max(0, Math.floor((m - (bruto - m) * 0.3) / p) * p) })()
+  const max = doZero ? arredondar(bruto) : min + arredondar(bruto - min)
   const x = (i: number) => esq + (pontos.length <= 1 ? larg / 2 : (i / (pontos.length - 1)) * larg)
-  const y = (v: number) => topo + alt - (v / max) * alt
-  const ticks = [0, max / 2, max]
+  const y = (v: number) => topo + alt - ((v - min) / (max - min || 1)) * alt
+  const ticks = [min, (min + max) / 2, max]
   return (
     <div ref={ref} className="relative" onMouseLeave={() => setAtivo(null)}>
       {w > 0 && (
@@ -141,7 +147,7 @@ export function Linhas({ pontos, series, altura = 220 }: {
           }}>
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={esq} x2={w - dir} y1={y(t)} y2={y(t)} stroke={t === 0 ? TINTA.base : TINTA.grade} />
+              <line x1={esq} x2={w - dir} y1={y(t)} y2={y(t)} stroke={t === min ? TINTA.base : TINTA.grade} />
               <text x={esq - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize="10" fill={TINTA.fraca}>{compacto(t)}</text>
             </g>
           ))}
@@ -152,7 +158,7 @@ export function Linhas({ pontos, series, altura = 220 }: {
             const linha = pontos.map((p, i) => `${i ? 'L' : 'M'}${x(i)},${y(p.valores[si])}`).join(' ')
             return (
               <g key={s.nome}>
-                <path d={`${linha} L${x(pontos.length - 1)},${y(0)} L${x(0)},${y(0)} Z`} fill={s.cor} opacity="0.1" />
+                <path d={`${linha} L${x(pontos.length - 1)},${y(min)} L${x(0)},${y(min)} Z`} fill={s.cor} opacity="0.1" />
                 <path d={linha} fill="none" stroke={s.cor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
               </g>
             )
@@ -173,7 +179,7 @@ export function Linhas({ pontos, series, altura = 220 }: {
           {series.map((s, si) => (
             <div key={s.nome} className="flex items-center justify-between gap-4 text-slate-600">
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: s.cor }} />{s.nome}</span>
-              <span className="font-mono text-slate-900">{pontos[ativo].valores[si]}</span>
+              <span className="font-mono text-slate-900">{formatar(pontos[ativo].valores[si])}</span>
             </div>
           ))}
         </Dica>

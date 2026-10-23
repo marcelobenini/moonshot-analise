@@ -1,38 +1,11 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil } from 'lucide-react'
+import { Flower2, Heart, Pencil, Sparkles } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
-import type { Acontecimento, Aluna, Card, PotencialDetalhe, RegistroConsultoria } from '../lib/tipos'
-import { CANAIS, FINANCEIRO, NOTA, SAUDE, STATUS_CONTRATO, data, diasDesde, hoje, mensagemErro, reais } from '../lib/util'
+import type { Acontecimento, Aluna, PotencialDetalhe } from '../lib/tipos'
+import { CANAIS, FINANCEIRO, NOTA, SAUDE, STATUS_CONTRATO, data, mensagemErro, reais } from '../lib/util'
 import { Campo, Erro, Modal, Potencial, Selo } from '../componentes/ui'
-
-// Panorama: o que a planilha obrigava a ler em cinco abas, numa faixa so.
-export function Panorama({ aluna, registros, cards }: { aluna: Aluna; registros: RegistroConsultoria[]; cards: Card[] }) {
-  const feitas = new Set(registros.filter((r) => r.realizada && r.numero != null && r.numero > 0).map((r) => r.numero)).size
-  const semConsultoria = aluna.ultima_consultoria ? diasDesde(aluna.ultima_consultoria) : null
-  const semContato = aluna.ultimo_contato ? diasDesde(aluna.ultimo_contato) : null
-  const paraVencer = aluna.termino ? -diasDesde(aluna.termino) : null
-  const abertos = cards.filter((c) => !c.fechado_em).length
-  const itens: [string, string, boolean][] = [
-    ['Consultorias', `${feitas} de 5`, false],
-    ['Sem consultoria', semConsultoria == null ? 'nenhuma ainda' : `${semConsultoria} dias`, (semConsultoria ?? 0) > 90],
-    ['Último contato', semContato == null ? 'nunca' : semContato === 0 ? 'hoje' : `há ${semContato} dias`, semContato == null || semContato > 30],
-    ['Próximo retorno', aluna.proximo_contato ? data(aluna.proximo_contato) : 'nenhum', !!aluna.proximo_contato && aluna.proximo_contato < hoje()],
-    ['Vence em', paraVencer == null ? 'sem data' : paraVencer < 0 ? 'vencido' : `${paraVencer} dias`, paraVencer != null && paraVencer <= 120],
-    ['Em funis', String(abertos), false],
-  ]
-  return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 sm:grid-cols-3 lg:grid-cols-6">
-      {itens.map(([r, v, alerta]) => (
-        <div key={r} className="bg-white px-4 py-3">
-          <div className="text-xs text-slate-500">{r}</div>
-          <div className={`text-base font-semibold ${alerta ? 'text-red-600' : ''}`}>{v}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 // Perfil do negocio: resumo, dores e objetivos. E o que a comercial le
 // antes de ligar e o que a CS nova le antes do primeiro contato.
@@ -53,20 +26,20 @@ export function PerfilNegocio({ aluna, pode, mudou }: { aluna: Aluna; pode: bool
   }
   const vazio = !aluna.resumo && !aluna.dores && !aluna.objetivos
   return (
-    <section className="painel p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">Perfil do negócio</h2>
+    <section className="painel p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-display text-2xl font-semibold text-noite">Sobre ela e o negócio</h2>
         {pode && <button className="btn-fantasma px-2 py-1 text-xs" onClick={abrir}><Pencil size={13} /> Editar</button>}
       </div>
       {vazio ? (
-        <p className="text-sm text-slate-500">
-          Ainda sem resumo, dores ou objetivos.{pode && ' Preencha: é o que a comercial e a retenção leem antes de falar com ela.'}
+        <p className="rounded-2xl bg-rose-50/60 p-4 text-sm text-slate-600">
+          Ainda não sabemos a história dela.{pode && ' Conte aqui quem ela é, o que a preocupa e onde sonha chegar: é o que todo o time lê antes de falar com ela.'}
         </p>
       ) : (
-        <div className="grid gap-4 text-sm sm:grid-cols-3">
-          <Bloco titulo="Resumo" texto={aluna.resumo} />
-          <Bloco titulo="Dores" texto={aluna.dores} />
-          <Bloco titulo="Objetivos" texto={aluna.objetivos} />
+        <div className="grid gap-3 text-sm sm:grid-cols-3">
+          <Bloco titulo="Quem é" texto={aluna.resumo} icone={<Flower2 size={16} />} tom="bg-[#fbf5ee] text-indigo-600" />
+          <Bloco titulo="O que a preocupa" texto={aluna.dores} icone={<Heart size={16} />} tom="bg-rose-50/70 text-rose-500" />
+          <Bloco titulo="Onde quer chegar" texto={aluna.objetivos} icone={<Sparkles size={16} />} tom="bg-amber-50/60 text-amber-600" />
         </div>
       )}
       {aluna.instagram && <div className="mt-3 text-xs text-slate-500">Instagram: <a className="text-indigo-700" target="_blank" rel="noreferrer" href={`https://instagram.com/${aluna.instagram.replace(/^@/, '')}`}>{aluna.instagram}</a></div>}
@@ -95,11 +68,11 @@ export function PerfilNegocio({ aluna, pode, mudou }: { aluna: Aluna; pode: bool
   )
 }
 
-function Bloco({ titulo, texto }: { titulo: string; texto: string | null }) {
+function Bloco({ titulo, texto, icone, tom }: { titulo: string; texto: string | null; icone: ReactNode; tom: string }) {
   return (
-    <div>
-      <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">{titulo}</div>
-      <p className="whitespace-pre-wrap text-slate-700">{texto || <span className="text-slate-400">Não preenchido</span>}</p>
+    <div className={`rounded-2xl p-4 ${tom.split(' ')[0]}`}>
+      <div className={`mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide ${tom.split(' ').slice(1).join(' ')}`}>{icone}{titulo}</div>
+      <p className="whitespace-pre-wrap font-display text-[17px] leading-snug text-slate-800">{texto || <span className="font-sans text-sm text-slate-400">Não preenchido</span>}</p>
     </div>
   )
 }
