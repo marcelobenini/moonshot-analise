@@ -102,13 +102,13 @@ export function Alunas() {
                     <div className="font-medium">{a.nome}</div>
                     <div className="text-xs text-slate-500">{a.empresa ?? a.email ?? ''}</div>
                   </td>
-                  <td className="px-4 py-2.5">{a.produto ?? '—'}
+                  <td className="px-4 py-2.5">{a.produto ?? ''}
                     <div className="mt-0.5 flex gap-1">
                       {a.status_contrato !== 'ativo' && <Selo cor={STATUS_CONTRATO[a.status_contrato]?.cor ?? ''}>{STATUS_CONTRATO[a.status_contrato]?.rotulo}</Selo>}
                       {a.status_financeiro === 'inadimplente' && <Selo cor={FINANCEIRO.inadimplente.cor}>Inadimplente</Selo>}
                     </div></td>
-                  <td className="hidden px-4 py-2.5 md:table-cell">{a.consultor_id ? nomeDe(a.consultor_id) : <span className="text-slate-400">{a.consultor_planilha ?? '—'}</span>}</td>
-                  <td className="px-4 py-2.5">{a.saude ? <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo> : <span className="text-slate-400">—</span>}</td>
+                  <td className="hidden px-4 py-2.5 md:table-cell">{a.consultor_id ? nomeDe(a.consultor_id) : <span className="text-slate-400">{a.consultor_planilha ?? ''}</span>}</td>
+                  <td className="px-4 py-2.5">{a.saude ? <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo> : null}</td>
                   <td className="hidden px-4 py-2.5 sm:table-cell">{reais(a.faturamento_mensal)}</td>
                   <td className="hidden px-4 py-2.5 lg:table-cell">{data(a.ultima_consultoria)}</td>
                   <td className="hidden px-4 py-2.5 lg:table-cell">{data(a.ultimo_contato)}</td>
@@ -207,7 +207,7 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <Campo rotulo="UF"><input className="entrada" maxLength={2} value={f.uf ?? ''} onChange={(e) => muda('uf', e.target.value.toUpperCase())} /></Campo>
           <Campo rotulo="Produto">
             <select className="entrada" value={f.produto ?? ''} onChange={(e) => muda('produto', e.target.value)}>
-              <option value="">—</option>
+              <option value="">Selecione</option>
               {PRODUTOS.map((p) => <option key={p}>{p}</option>)}
               {f.produto && !PRODUTOS.includes(f.produto) && <option>{f.produto}</option>}
             </select>
@@ -222,7 +222,7 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           </Campo>
           <Campo rotulo="Status financeiro">
             <select className="entrada" value={f.status_financeiro ?? ''} onChange={(e) => muda('status_financeiro', e.target.value)}>
-              <option value="">—</option>
+              <option value="">Selecione</option>
               {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
               {f.status_financeiro && !FINANCEIRO[f.status_financeiro] && <option>{f.status_financeiro}</option>}
             </select>
@@ -241,7 +241,7 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <Campo rotulo="Link do Notion"><input className="entrada" value={f.link_notion ?? ''} onChange={(e) => muda('link_notion', e.target.value)} /></Campo>
           <Campo rotulo="Tamanho do pijama">
             <select className="entrada" value={f.tamanho_kit ?? ''} onChange={(e) => muda('tamanho_kit', e.target.value)}>
-              <option value="">—</option>
+              <option value="">Selecione</option>
               {['PP', 'P', 'M', 'G', 'GG', 'GGG', 'XG', 'XXG'].map((t) => <option key={t}>{t}</option>)}
             </select>
           </Campo>

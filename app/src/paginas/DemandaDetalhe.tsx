@@ -72,16 +72,16 @@ export function DemandaDetalhe() {
         {d.descricao && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{d.descricao}</p>}
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div><dt className="text-xs text-slate-500">Pedido por</dt><dd className="font-medium">{nomeDe(d.solicitante_id)}</dd></div>
-          <div><dt className="text-xs text-slate-500">Equipe</dt><dd className="font-medium">{d.equipe ? PAPEL[d.equipe] : '—'}</dd></div>
+          <div><dt className="text-xs text-slate-500">Equipe</dt><dd className="font-medium">{d.equipe ? PAPEL[d.equipe] : 'Nenhuma'}</dd></div>
           <div><dt className="text-xs text-slate-500">Prazo</dt><dd className="font-medium">{data(d.prazo)}</dd></div>
-          <div><dt className="text-xs text-slate-500">Aluna</dt><dd className="font-medium">{aluna ? <Link className="text-indigo-700 hover:underline" to={`/alunas/${aluna.id}`}>{aluna.nome}</Link> : '—'}</dd></div>
+          <div><dt className="text-xs text-slate-500">Aluna</dt><dd className="font-medium">{aluna ? <Link className="text-indigo-700 hover:underline" to={`/alunas/${aluna.id}`}>{aluna.nome}</Link> : 'Nenhuma'}</dd></div>
         </dl>
 
         <div className="mt-5 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
           <div>
             <span className="rotulo">Responsável</span>
             <div className="flex gap-2">
-              <EscolherPessoa valor={d.responsavel_id} mudar={(v) => mudar({ responsavel_id: v })} vazio="— ninguém ainda —" />
+              <EscolherPessoa valor={d.responsavel_id} mudar={(v) => mudar({ responsavel_id: v })} vazio="Ninguém ainda" />
               {d.responsavel_id !== eu?.id && !fechada && (
                 <button className="btn-secundario shrink-0" onClick={() => mudar({ responsavel_id: eu!.id, status: d.status === 'aberta' ? 'em_andamento' : d.status })}>
                   <Hand size={16} /> Pegar

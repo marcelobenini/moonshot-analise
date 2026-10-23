@@ -99,7 +99,7 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
 
   const valor = useMemo<Sessao>(() => ({
     carregando, sessao, eu, equipe, funis, etapas,
-    nomeDe: (id) => (id ? equipe.find((p) => p.id === id)?.nome ?? '—' : '—'),
+    nomeDe: (id) => (id ? equipe.find((p) => p.id === id)?.nome ?? 'ninguém' : 'ninguém'),
     podeEditar: (funilId) => {
       if (!eu?.papel) return false
       if (eu.papel === 'coordenador') return true

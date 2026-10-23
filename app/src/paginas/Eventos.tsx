@@ -131,12 +131,12 @@ export function EventoDetalhe() {
                     {p.aluna_id ? <Link to={`/alunas/${p.aluna_id}`} className="font-medium text-indigo-700 hover:underline">{p.nome}</Link> : <span className="font-medium">{p.nome}</span>}
                     <div className="text-xs text-slate-500">{p.tipo !== 'aluna' ? (p.tipo === 'socio' ? 'sócio(a) / acompanhante' : 'convidado(a)') : p.contato}</div>
                   </td>
-                  <td className="px-3 py-2 text-xs">{p.programa_informado ?? '—'}{p.faturamento_informado && <div className="text-slate-500">{p.faturamento_informado}</div>}</td>
+                  <td className="px-3 py-2 text-xs">{p.programa_informado ?? ''}{p.faturamento_informado && <div className="text-slate-500">{p.faturamento_informado}</div>}</td>
                   <td className="px-3 py-2"><input type="checkbox" checked={!!p.confirmado} onChange={(e) => mudar(p, { confirmado: e.target.checked })} /></td>
                   <td className="px-3 py-2"><input type="checkbox" checked={!!p.presente} onChange={(e) => mudar(p, { presente: e.target.checked })} /></td>
                   <td className="px-3 py-2">
                     <select className="entrada w-auto px-2 py-1 text-xs" value={p.potencial ?? ''} onChange={(e) => mudar(p, { potencial: (e.target.value || null) as Participante['potencial'] })}>
-                      <option value="">—</option>
+                      <option value="">Avaliar</option>
                       {Object.entries(POTENCIAL).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
                     </select>
                     {p.potencial && <span className="ml-1"><Selo cor={POTENCIAL[p.potencial].cor}>{POTENCIAL[p.potencial].rotulo}</Selo></span>}

@@ -72,8 +72,8 @@ export function AlunaFicha() {
               <span>{[aluna.produto, aluna.turma, aluna.empresa].filter(Boolean).join(' · ')}</span>
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              Consultor: {aluna.consultor_id ? nomeDe(aluna.consultor_id) : aluna.consultor_planilha ? `${aluna.consultor_planilha} (planilha)` : '—'}
-              {' · '}CS: {aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ? `${aluna.cs_planilha} (planilha)` : '—'}
+              Consultor: {aluna.consultor_id ? nomeDe(aluna.consultor_id) : aluna.consultor_planilha ? `${aluna.consultor_planilha} (planilha)` : ''}
+              {' · '}CS: {aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ? `${aluna.cs_planilha} (planilha)` : ''}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -103,13 +103,13 @@ export function AlunaFicha() {
             <section className="painel p-4">
               <h2 className="mb-3 font-semibold">Contato e negócio</h2>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-                <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : '—'}</Dado>
-                <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : '—'}</Dado>
-                <Dado rotulo="Cidade">{[aluna.cidade, aluna.uf].filter(Boolean).join(' / ') || '—'}</Dado>
-                <Dado rotulo="Empresa">{aluna.empresa ?? '—'}</Dado>
-                <Dado rotulo="Ramo">{aluna.ramo ?? '—'}</Dado>
-                <Dado rotulo="Faturamento">{reais(aluna.faturamento_mensal)}/mês</Dado>
-                <Dado rotulo="Funcionários">{aluna.funcionarios ?? '—'}</Dado>
+                <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : ''}</Dado>
+                <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : ''}</Dado>
+                <Dado rotulo="Cidade">{[aluna.cidade, aluna.uf].filter(Boolean).join(' / ') || ''}</Dado>
+                <Dado rotulo="Empresa">{aluna.empresa ?? ''}</Dado>
+                <Dado rotulo="Ramo">{aluna.ramo ?? ''}</Dado>
+                <Dado rotulo="Faturamento">{aluna.faturamento_mensal != null ? `${reais(aluna.faturamento_mensal)}/mês` : ''}</Dado>
+                <Dado rotulo="Funcionários">{aluna.funcionarios ?? ''}</Dado>
                 <Dado rotulo="Última consultoria">{data(aluna.ultima_consultoria)}</Dado>
                 <Dado rotulo="Último contato">{data(aluna.ultimo_contato)}</Dado>
               </dl>
@@ -168,7 +168,7 @@ export function AlunaFicha() {
           <section className="space-y-3">
             <h2 className="font-semibold">Relatos de consultoria</h2>
             {registros.length === 0 ? (
-              <Vazio>{podeRegistrar ? 'Nenhuma consultoria registrada ainda.' : 'Nenhuma consultoria visível para você — o relato fica com quem atende a aluna, a coordenação e quem a recebe num funil.'}</Vazio>
+              <Vazio>{podeRegistrar ? 'Nenhuma consultoria registrada ainda.' : 'Nenhuma consultoria visível para você. O relato fica com quem atende a aluna, a coordenação e quem a recebe num funil.'}</Vazio>
             ) : registros.map((r) => (
               <div key={r.id} className="painel p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -200,15 +200,15 @@ export function AlunaFicha() {
             <section className="painel p-4">
               <h2 className="mb-3 font-semibold">Dados da matrícula</h2>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-                <Dado rotulo="Produto">{aluna.produto ?? '—'}</Dado>
-                <Dado rotulo="Turma">{aluna.turma ?? '—'}</Dado>
+                <Dado rotulo="Produto">{aluna.produto ?? ''}</Dado>
+                <Dado rotulo="Turma">{aluna.turma ?? ''}</Dado>
                 <Dado rotulo="Início">{data(aluna.inicio)}</Dado>
                 <Dado rotulo="Término">{data(aluna.termino)}</Dado>
-                <Dado rotulo="Pagamento">{aluna.forma_pagamento ?? '—'}</Dado>
-                <Dado rotulo="Financeiro">{fin ? <Selo cor={fin.cor}>{fin.rotulo}</Selo> : aluna.status_financeiro ?? '—'}</Dado>
-                <Dado rotulo="Onboarding">{[aluna.onboarding_status, aluna.acesso_plataforma && `acesso ${aluna.acesso_plataforma.toLowerCase()}`].filter(Boolean).join(' · ') || '—'}</Dado>
-                <Dado rotulo="Cadastro">{aluna.cadastro_preenchido ? (aluna.link_notion ? <a className="text-indigo-700" href={aluna.link_notion} target="_blank" rel="noreferrer">preenchido · Notion</a> : 'preenchido') : '—'}</Dado>
-                <Dado rotulo="Kit">{[aluna.tamanho_kit && `pijama ${aluna.tamanho_kit}`, aluna.jaqueta && `jaqueta ${aluna.jaqueta}`].filter(Boolean).join(' · ') || '—'}</Dado>
+                <Dado rotulo="Pagamento">{aluna.forma_pagamento ?? ''}</Dado>
+                <Dado rotulo="Financeiro">{fin ? <Selo cor={fin.cor}>{fin.rotulo}</Selo> : aluna.status_financeiro ?? ''}</Dado>
+                <Dado rotulo="Onboarding">{[aluna.onboarding_status, aluna.acesso_plataforma && `acesso ${aluna.acesso_plataforma.toLowerCase()}`].filter(Boolean).join(' · ') || ''}</Dado>
+                <Dado rotulo="Cadastro">{aluna.cadastro_preenchido ? (aluna.link_notion ? <a className="text-indigo-700" href={aluna.link_notion} target="_blank" rel="noreferrer">preenchido · Notion</a> : 'preenchido') : ''}</Dado>
+                <Dado rotulo="Kit">{[aluna.tamanho_kit && `pijama ${aluna.tamanho_kit}`, aluna.jaqueta && `jaqueta ${aluna.jaqueta}`].filter(Boolean).join(' · ') || ''}</Dado>
               </dl>
             </section>
             <Notas aluna={aluna} />
@@ -233,7 +233,8 @@ function Dado({ rotulo, children }: { rotulo: string; children: React.ReactNode 
   return (
     <div className="min-w-0">
       <dt className="text-xs text-slate-500">{rotulo}</dt>
-      <dd className="truncate font-medium">{children}</dd>
+      <dd className="truncate font-medium">{children === '' || children == null || children === false
+        ? <span className="font-normal text-slate-400">Não informado</span> : children}</dd>
     </div>
   )
 }
@@ -251,7 +252,7 @@ function RegistrarConsultoria({ aluna, ultimo, fechar, salvo }: {
 
   async function salvar(e: FormEvent) {
     e.preventDefault()
-    if (!f.saude) { setErro('Escolha a saúde da aluna — é o campo que dispara retenção e oportunidade.'); return }
+    if (!f.saude) { setErro('Escolha a saúde da aluna: é o campo que dispara retenção e oportunidade.'); return }
     const { error } = await supabase.from('registro_consultoria').insert({
       aluna_id: aluna.id, consultor_id: eu?.id, data: f.data, numero: f.numero === '' ? null : Number(f.numero),
       realizada: f.realizada, saude: f.saude, situacao: f.situacao.trim(),
@@ -276,7 +277,7 @@ function RegistrarConsultoria({ aluna, ultimo, fechar, salvo }: {
           <Campo rotulo="Aconteceu?">
             <select className="entrada" value={f.realizada ? 's' : 'n'} onChange={(e) => setF({ ...f, realizada: e.target.value === 's' })}>
               <option value="s">Sim, realizada</option>
-              <option value="n">Não — agendada e não aconteceu</option>
+              <option value="n">Não, estava agendada e não aconteceu</option>
             </select>
           </Campo>
         </div>

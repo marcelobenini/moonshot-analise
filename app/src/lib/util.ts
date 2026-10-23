@@ -78,19 +78,19 @@ export const PRAZO_RETENCAO: Record<string, string> = {
 const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
 export function reais(v: number | null | undefined) {
-  return v == null ? '—' : moeda.format(Number(v))
+  return v == null ? 'não informado' : moeda.format(Number(v))
 }
 
 // Data do banco vem como 'AAAA-MM-DD'; new Date() leria como UTC e mostraria o
 // dia anterior no Brasil.
 export function data(v: string | null | undefined) {
-  if (!v) return '—'
+  if (!v) return 'sem data'
   const [a, m, d] = v.slice(0, 10).split('-')
   return `${d}/${m}/${a}`
 }
 
 export function dataHora(v: string | null | undefined) {
-  if (!v) return '—'
+  if (!v) return 'sem data'
   return new Date(v).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 

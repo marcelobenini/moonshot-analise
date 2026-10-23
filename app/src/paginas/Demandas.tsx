@@ -59,7 +59,7 @@ export function Demandas() {
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{d.titulo}</div>
                   <div className="text-xs text-slate-500">
-                    {TIPO_DEMANDA[d.tipo]} · de {nomeDe(d.solicitante_id)} · para {d.responsavel_id ? nomeDe(d.responsavel_id) : d.equipe ? `equipe ${PAPEL[d.equipe]}` : '—'} · {ha(d.atualizado_em)}
+                    {TIPO_DEMANDA[d.tipo]} · de {nomeDe(d.solicitante_id)} · para {d.responsavel_id ? nomeDe(d.responsavel_id) : d.equipe ? `equipe ${PAPEL[d.equipe]}` : 'ninguém'} · {ha(d.atualizado_em)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

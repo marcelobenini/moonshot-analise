@@ -53,7 +53,7 @@ export function Equipe() {
           6 números para você mandar à pessoa; no primeiro login ela troca por uma senha dela, de 8 números.
         </p>
         <p>
-          <b>Nome na planilha</b> é como a pessoa aparece nas planilhas — consultor ou CS. Aceita vários, separados por vírgula
+          <b>Nome na planilha</b> é como a pessoa aparece nas planilhas, consultor ou CS. Aceita vários, separados por vírgula
           (ex.: “Thiago, Tiago”). Preencha e clique em “Vincular carteiras” para as alunas importadas irem para a carteira certa.
         </p>
       </div>
@@ -77,7 +77,7 @@ export function Equipe() {
                 <td className="px-4 py-2.5">
                   <select className="entrada" value={p.papel ?? ''} disabled={p.id === eu?.id}
                     onChange={(e) => mudar(p, { papel: (e.target.value || null) as Papel | null })}>
-                    <option value="">— definir —</option>
+                    <option value="">Definir perfil</option>
                     {Object.entries(PAPEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </td>
@@ -85,7 +85,7 @@ export function Equipe() {
                   {p.papel === 'consultor' || p.papel === 'cs' || p.papel === 'coordenador' ? (
                     <input className="entrada" placeholder="ex.: Thiago, Tiago" defaultValue={p.consultor_norm ?? ''}
                       onBlur={(e) => e.target.value !== (p.consultor_norm ?? '') && mudar(p, { consultor_norm: e.target.value.trim() || null })} />
-                  ) : <span className="text-slate-400">—</span>}
+                  ) : null}
                 </td>
                 <td className="px-4 py-2.5">
                   {p.id === eu?.id ? <Selo cor="bg-emerald-100 text-emerald-800">Você</Selo> : p.ativo ? (
@@ -214,7 +214,7 @@ function RegistroSeguranca({ versao }: { versao: unknown }) {
           {lista.map((r) => (
             <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-x-4 px-4 py-2">
               <span><b className="font-medium">{r.acao}</b>{r.alvo && <span className="text-slate-600"> · {r.alvo}</span>}
-                {typeof r.detalhe.de !== 'undefined' && <span className="text-xs text-slate-500"> ({String(r.detalhe.de ?? '—')} → {String(r.detalhe.para ?? '—')})</span>}
+                {typeof r.detalhe.de !== 'undefined' && <span className="text-xs text-slate-500"> ({String(r.detalhe.de ?? 'vazio')} → {String(r.detalhe.para ?? 'vazio')})</span>}
                 {typeof r.detalhe.perfil === 'string' && <span className="text-xs text-slate-500"> ({r.detalhe.perfil})</span>}</span>
               <span className="text-xs text-slate-500">{r.autor_id ? nomeDe(r.autor_id) : 'Sistema'} · {new Date(r.quando).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
             </li>
@@ -230,16 +230,16 @@ const PERMISSOES: [string, string, string, string, string, string][] = [
   ['', 'Coordenação', 'CS', 'Consultor', 'Comercial', 'Retenção'],
   ['Ver e buscar alunas', 'todas', 'todas', 'todas', 'todas', 'todas'],
   ['Cadastrar aluna', 'sim', 'sim', 'na própria carteira', 'sim', 'sim'],
-  ['Editar ficha e perfil do negócio', 'todas', 'todas', 'da carteira', '—', '—'],
+  ['Editar ficha e perfil do negócio', 'todas', 'todas', 'da carteira', 'não', 'não'],
   ['Registrar contato', 'sim', 'sim', 'da carteira', 'com card aberto', 'sim'],
-  ['Mudar status (inadimplente, cancelada…)', 'sim', 'sim', 'da carteira', '—', 'sim'],
+  ['Mudar status (inadimplente, cancelada…)', 'sim', 'sim', 'da carteira', 'não', 'sim'],
   ['Registrar consultoria e ler relatos', 'tudo', 'das suas alunas', 'da carteira', 'com card aberto (só ler)', 'com card aberto (só ler)'],
-  ['Enviar ao comercial', 'sim', 'sim', 'da carteira', '—', '—'],
-  ['Redistribuir carteira (consultor/CS)', 'sim', 'sim', '—', '—', '—'],
+  ['Enviar ao comercial', 'sim', 'sim', 'da carteira', 'não', 'não'],
+  ['Redistribuir carteira (consultor/CS)', 'sim', 'sim', 'não', 'não', 'não'],
   ['Contratos', 'editar', 'editar', 'ver', 'ver', 'ver'],
   ['Funis que move', 'todos', 'Onboarding, Renovação', 'Ciclo, Oportunidades, Renovação', 'Comercial', 'Retenção'],
   ['Eventos', 'editar', 'editar', 'marcar presença', 'editar', 'marcar presença'],
-  ['Equipe, acessos e importar planilhas', 'sim', '—', '—', '—', '—'],
+  ['Equipe, acessos e importar planilhas', 'sim', 'não', 'não', 'não', 'não'],
 ]
 
 function PerfisDeAcesso() {
@@ -254,7 +254,7 @@ function PerfisDeAcesso() {
           <tbody>
             {PERMISSOES.slice(1).map((l) => (
               <tr key={l[0]} className="border-t border-slate-100">
-                {l.map((c, i) => <td key={i} className={`px-3 py-2 ${i === 0 ? 'font-medium text-slate-700' : c === '—' ? 'text-slate-300' : 'text-slate-600'}`}>{c}</td>)}
+                {l.map((c, i) => <td key={i} className={`px-3 py-2 ${i === 0 ? 'font-medium text-slate-700' : c === 'não' ? 'text-slate-300' : 'text-slate-600'}`}>{c}</td>)}
               </tr>
             ))}
           </tbody>

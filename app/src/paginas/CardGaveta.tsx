@@ -102,7 +102,7 @@ export function CardGaveta({ id, fechar, mudou }: { id: number; fechar: () => vo
             <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-slate-600">
               <span>{aluna.telefone ?? 'sem telefone'}</span>
               <span className="truncate">{aluna.email ?? 'sem e-mail'}</span>
-              <span>{[aluna.produto, aluna.turma].filter(Boolean).join(' · ') || '—'}</span>
+              <span>{[aluna.produto, aluna.turma].filter(Boolean).join(' · ')}</span>
               <span>Fatura {reais(aluna.faturamento_mensal)}/mês</span>
               <span>Consultor: {nomeDe(aluna.consultor_id)}</span>
               <span>Término: {data(aluna.termino)}</span>
@@ -203,7 +203,7 @@ function CampoDinamico({ campo, valor, mudar }: { campo: CampoFunil; valor: stri
       <Campo rotulo={campo.rotulo}>
         {campo.tipo === 'selecao' ? (
           <select className="entrada" value={String(v)} onChange={(e) => mudar(e.target.value || null)}>
-            <option value="">—</option>
+            <option value="">Selecione</option>
             {campo.opcoes?.map((o) => <option key={o} value={o}>{o.replace(/_/g, ' ')}</option>)}
           </select>
         ) : campo.tipo === 'textao' ? (

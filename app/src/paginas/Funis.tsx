@@ -306,10 +306,10 @@ function Lista({ cards, colunas, abrir }: { cards: CardComAluna[]; colunas: Etap
               <tr key={c.id} onClick={() => abrir(c.id)} className="cursor-pointer border-b border-slate-100 hover:bg-slate-50">
                 <td className="px-4 py-2.5"><div className="font-medium">{c.titulo}</div><div className="text-xs text-slate-500">{c.aluna?.produto}</div></td>
                 <td className="px-4 py-2.5">{e?.nome}</td>
-                <td className="px-4 py-2.5">{c.responsavel_id ? nomeDe(c.responsavel_id) : <span className="text-slate-400">—</span>}</td>
+                <td className="px-4 py-2.5">{c.responsavel_id ? nomeDe(c.responsavel_id) : null}</td>
                 <td className={`px-4 py-2.5 ${c.prazo && c.prazo < hoje() ? 'font-medium text-red-600' : ''}`}>{data(c.prazo)}</td>
                 <td className={`px-4 py-2.5 ${atrasado ? 'font-medium text-red-600' : 'text-slate-600'}`}>{parado}d</td>
-                <td className="px-4 py-2.5 text-right">{c.valor != null ? reais(c.valor) : '—'}</td>
+                <td className="px-4 py-2.5 text-right">{c.valor != null ? reais(c.valor) : ''}</td>
               </tr>
             )
           })}
@@ -360,7 +360,7 @@ export function PedirMotivo({ etapa, opcoes, fechar, confirmar }: {
   return (
     <Modal titulo={`Mover para "${etapa.nome}"`} aberto fechar={fechar}>
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">Esta etapa exige motivo — é o que permite medir depois por que se perde.</p>
+        <p className="text-sm text-slate-600">Esta etapa exige motivo: é o que permite medir depois por que se perde.</p>
         {opcoes.length > 0 && (
           <Campo rotulo="Motivo">
             <select className="entrada" value={motivo} onChange={(e) => setMotivo(e.target.value)} autoFocus>

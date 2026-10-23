@@ -866,9 +866,9 @@ begin
     if v_nome is null or norm_nome(v_nome) in ('aluna', 'nome') then continue; end if;
     m := regexp_match(l.aba, '(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?');
     dt := case when m is not null then make_date(coalesce(nullif(m[3], '')::int, extract(year from now())::int), m[2]::int, m[1]::int) end;
-    insert into evento (nome, data) values (coalesce(nullif(regexp_replace(arquivo, '\.xlsx$', ''), ''), 'Evento') || ' — ' || l.aba, dt)
+    insert into evento (nome, data) values (coalesce(nullif(regexp_replace(arquivo, '\.xlsx$', ''), ''), 'Evento') || ' · ' || l.aba, dt)
     on conflict (nome, data) do nothing;
-    select id into ev from evento where evento.nome = coalesce(nullif(regexp_replace(arquivo, '\.xlsx$', ''), ''), 'Evento') || ' — ' || l.aba
+    select id into ev from evento where evento.nome = coalesce(nullif(regexp_replace(arquivo, '\.xlsx$', ''), ''), 'Evento') || ' · ' || l.aba
       and data is not distinct from dt;
     if not exists (select 1 from evento_participante where evento_id = ev) then n_ev := n_ev + 1; end if;
 

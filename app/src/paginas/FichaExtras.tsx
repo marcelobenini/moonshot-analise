@@ -79,7 +79,7 @@ function ContratoForm({ c, fechar, salvo }: { c: Partial<Contrato>; fechar: () =
         </Campo>
         <Campo rotulo="Financeiro">
           <select className="entrada" value={f.status_financeiro ?? ''} onChange={(e) => muda('status_financeiro', e.target.value)}>
-            <option value="">—</option>
+            <option value="">Selecione</option>
             {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
           </select>
         </Campo>

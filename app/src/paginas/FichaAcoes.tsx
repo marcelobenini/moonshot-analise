@@ -16,10 +16,10 @@ export function Panorama({ aluna, registros, cards }: { aluna: Aluna; registros:
   const abertos = cards.filter((c) => !c.fechado_em).length
   const itens: [string, string, boolean][] = [
     ['Consultorias', `${feitas} de 5`, false],
-    ['Sem consultoria', semConsultoria == null ? '—' : `${semConsultoria} dias`, (semConsultoria ?? 0) > 90],
+    ['Sem consultoria', semConsultoria == null ? 'nenhuma ainda' : `${semConsultoria} dias`, (semConsultoria ?? 0) > 90],
     ['Último contato', semContato == null ? 'nunca' : semContato === 0 ? 'hoje' : `há ${semContato} dias`, semContato == null || semContato > 30],
-    ['Próximo retorno', aluna.proximo_contato ? data(aluna.proximo_contato) : '—', !!aluna.proximo_contato && aluna.proximo_contato < hoje()],
-    ['Vence em', paraVencer == null ? '—' : paraVencer < 0 ? 'vencido' : `${paraVencer} dias`, paraVencer != null && paraVencer <= 120],
+    ['Próximo retorno', aluna.proximo_contato ? data(aluna.proximo_contato) : 'nenhum', !!aluna.proximo_contato && aluna.proximo_contato < hoje()],
+    ['Vence em', paraVencer == null ? 'sem data' : paraVencer < 0 ? 'vencido' : `${paraVencer} dias`, paraVencer != null && paraVencer <= 120],
     ['Em funis', String(abertos), false],
   ]
   return (
@@ -99,7 +99,7 @@ function Bloco({ titulo, texto }: { titulo: string; texto: string | null }) {
   return (
     <div>
       <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">{titulo}</div>
-      <p className="whitespace-pre-wrap text-slate-700">{texto || <span className="text-slate-400">—</span>}</p>
+      <p className="whitespace-pre-wrap text-slate-700">{texto || <span className="text-slate-400">Não preenchido</span>}</p>
     </div>
   )
 }
@@ -274,7 +274,7 @@ const CAMPO_STATUS: Record<string, string> = {
 }
 
 function rotuloValor(campo: string | null, v: unknown) {
-  if (v == null || v === '') return '—'
+  if (v == null || v === '') return 'vazio'
   const s = String(v)
   if (campo === 'saude') return SAUDE[s as keyof typeof SAUDE]?.rotulo ?? s
   if (campo === 'status_contrato') return STATUS_CONTRATO[s]?.rotulo ?? s

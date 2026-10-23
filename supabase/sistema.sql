@@ -506,9 +506,9 @@ begin
                     and aluna_id = a.id and fechado_em is null)
   returning id into novo;
   if novo is not null then
-    perform notificar_papel('retencao', 'risco', 'Aluna em risco', a.nome || ' — ' || p_porque,
+    perform notificar_papel('retencao', 'risco', 'Aluna em risco', a.nome || ': ' || p_porque,
                             '/funis/retencao?card=' || novo);
-    perform notificar(a.cs_id, 'risco', 'Aluna em risco', a.nome || ' — ' || p_porque,
+    perform notificar(a.cs_id, 'risco', 'Aluna em risco', a.nome || ': ' || p_porque,
                       '/funis/retencao?card=' || novo);
   end if;
   return novo;
@@ -532,7 +532,7 @@ begin
     insert into card_evento (card_id, tipo, de_etapa, para_etapa, texto)
     values (new.id, 'moveu', old.etapa_id, new.etapa_id,
             e.nome || case when new.motivo is not null and new.motivo is distinct from old.motivo
-                           then ' — motivo: ' || new.motivo else '' end);
+                           then '. Motivo: ' || new.motivo else '' end);
     perform notificar(new.responsavel_id, 'card', new.titulo || ' → ' || e.nome, null,
                       '/funis/' || new.funil_id || '?card=' || new.id);
     perform card_automacoes(new, e);

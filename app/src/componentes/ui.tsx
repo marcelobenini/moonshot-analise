@@ -81,7 +81,7 @@ export function Titulo({ children, acoes }: { children: ReactNode; acoes?: React
 }
 
 /** Escolha de alguem da equipe, opcionalmente so de alguns papeis. */
-export function EscolherPessoa({ valor, mudar, papeis, vazio = '— ninguém —' }: {
+export function EscolherPessoa({ valor, mudar, papeis, vazio = 'Ninguém' }: {
   valor: string | null; mudar: (id: string | null) => void; papeis?: Papel[]; vazio?: string
 }) {
   const { equipe } = useSessao()
