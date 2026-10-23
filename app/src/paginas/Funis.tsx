@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { Plus, Clock, Search, CalendarDays, ChevronDown, Columns3, List, Flag, Layers, MoreHorizontal, Wallet } from 'lucide-react'
+import { Plus, Clock, Search, CalendarDays, ChevronDown, Columns3, List } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Etapa } from '../lib/tipos'
@@ -151,16 +151,18 @@ export function Funis() {
         <div className="p-4 sm:p-6"><Lista cards={visiveis} colunas={colunas} abrir={(id) => nav(`?card=${id}`)} /></div>
       ) : (
         <DndContext sensors={sensores} onDragEnd={soltar}>
-          <div className="flex h-[calc(100vh-9.5rem)] gap-3 overflow-x-auto px-4 pb-3 pt-3 sm:px-6">
-            {colunas.map((etapa) => {
+          <div className="flex h-[calc(100vh-9.5rem)] gap-4 overflow-x-auto px-4 pb-4 pt-4 sm:px-6">
+            {colunas.map((etapa, i) => {
               const doEtapa = visiveis.filter((c) => c.etapa_id === etapa.id)
+              const maior = Math.max(1, ...colunas.map((e) => visiveis.filter((c) => c.etapa_id === e.id).length))
+              const cor = corDaEtapa(etapa, i)
               return (
-                <Coluna key={etapa.id} etapa={etapa} total={doEtapa.length}
+                <Coluna key={etapa.id} etapa={etapa} total={doEtapa.length} cor={cor} proporcao={doEtapa.length / maior}
                   soma={doEtapa.reduce((s, c) => s + Number(c.valor ?? 0), 0)}
                   parados={doEtapa.filter((c) => etapa.alerta_dias != null && !c.fechado_em && diasDesde(c.etapa_desde) > etapa.alerta_dias).length}
                   podeCriar={editavel && etapa.tipo === 'aberta'} criar={() => setNovo(etapa)}>
                   {doEtapa.map((c) => (
-                    <CartaoArrastavel key={c.id} card={c} etapa={etapa} arrastavel={editavel}
+                    <CartaoArrastavel key={c.id} card={c} etapa={etapa} arrastavel={editavel} cor={cor}
                       responsavel={c.responsavel_id ? nomeDe(c.responsavel_id) : null} abrir={() => nav(`?card=${c.id}`)} />
                   ))}
                 </Coluna>
@@ -182,36 +184,51 @@ export function Funis() {
   )
 }
 
-function Coluna({ etapa, total, soma, parados, podeCriar, criar, children }: {
-  etapa: Etapa; total: number; soma: number; parados: number; podeCriar: boolean; criar: () => void; children: React.ReactNode
+// Cada etapa tem a sua cor: bolinha, faixa do topo, borda dos cards. Etapa de
+// fim usa verde (ganha) ou cinza (perdida), em qualquer funil.
+type Cor = { ponto: string; topo: string; barra: string; borda: string; card: string; borda2: string }
+const PALETA: Cor[] = [
+  { ponto: 'bg-violet-700', topo: 'bg-violet-50/80', barra: 'bg-violet-700', borda: 'border-l-violet-700', card: 'bg-violet-50', borda2: 'border-violet-100' },
+  { ponto: 'bg-sky-500', topo: 'bg-sky-50', barra: 'bg-sky-500', borda: 'border-l-sky-500', card: 'bg-sky-50', borda2: 'border-sky-100' },
+  { ponto: 'bg-purple-400', topo: 'bg-purple-50/80', barra: 'bg-purple-400', borda: 'border-l-purple-400', card: 'bg-purple-50', borda2: 'border-purple-100' },
+  { ponto: 'bg-amber-400', topo: 'bg-amber-50/80', barra: 'bg-amber-400', borda: 'border-l-amber-400', card: 'bg-amber-50', borda2: 'border-amber-100' },
+  { ponto: 'bg-rose-400', topo: 'bg-rose-50/80', barra: 'bg-rose-400', borda: 'border-l-rose-400', card: 'bg-rose-50', borda2: 'border-rose-100' },
+  { ponto: 'bg-teal-500', topo: 'bg-teal-50/80', barra: 'bg-teal-500', borda: 'border-l-teal-500', card: 'bg-teal-50', borda2: 'border-teal-100' },
+]
+const COR_GANHA: Cor = { ponto: 'bg-emerald-500', topo: 'bg-emerald-50/80', barra: 'bg-emerald-500', borda: 'border-l-emerald-500', card: 'bg-emerald-50', borda2: 'border-emerald-100' }
+const COR_PERDIDA: Cor = { ponto: 'bg-slate-400', topo: 'bg-slate-100', barra: 'bg-slate-400', borda: 'border-l-slate-400', card: 'bg-slate-50', borda2: 'border-slate-200' }
+
+function corDaEtapa(e: Etapa, i: number): Cor {
+  return e.tipo === 'ganha' ? COR_GANHA : e.tipo === 'perdida' ? COR_PERDIDA : PALETA[i % PALETA.length]
+}
+
+function Coluna({ etapa, total, soma, parados, podeCriar, criar, cor, proporcao, children }: {
+  etapa: Etapa; total: number; soma: number; parados: number; podeCriar: boolean; criar: () => void
+  cor: Cor; proporcao: number; children: React.ReactNode
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: etapa.id })
-  // Etapa final (ganha/perdida) fica num tom mais fechado, como coluna "arquivada".
-  const fundo = isOver ? 'bg-indigo-100/70 ring-2 ring-indigo-300' : etapa.tipo === 'aberta' ? 'bg-slate-200/50' : 'bg-slate-300/55'
   return (
-    <div ref={setNodeRef} className={`flex h-full w-[17.5rem] shrink-0 flex-col rounded-xl ${fundo}`}>
-      <div className="px-3 pb-2 pt-3">
+    <div ref={setNodeRef}
+      className={`flex h-full w-[18.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border bg-gradient-to-b from-slate-100/70 to-slate-200/60 ${isOver ? 'border-slate-400 ring-2 ring-slate-300' : 'border-slate-200'}`}>
+      <div className={`border-b border-slate-200/80 px-5 pb-4 pt-4 ${cor.topo}`}>
         <div className="flex items-center justify-between gap-2">
-          <div className="truncate text-sm font-semibold text-slate-700">{etapa.nome}</div>
-          <span className="flex items-center gap-1">
-            {etapa.tipo === 'ganha' && <span className="selo bg-emerald-100 text-emerald-800">ganha</span>}
-            {etapa.tipo === 'perdida' && <span className="selo bg-slate-200 text-slate-600">perdida</span>}
-            <MoreHorizontal size={16} className="text-slate-400" />
-          </span>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${cor.ponto}`} />
+            <span className="truncate font-semibold text-slate-800">{etapa.nome}</span>
+          </div>
+          <span className="font-mono text-lg font-medium text-slate-700">{total}</span>
         </div>
-        <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
-          <span className="flex items-center gap-1" title="Cards"><Layers size={12} /> {total}</span>
-          {soma > 0 && <span className="flex items-center gap-1" title="Valor somado"><Wallet size={12} /> {reais(soma)}</span>}
-          {etapa.alerta_dias != null && (
-            <span className={`flex items-center gap-1 ${parados ? 'font-medium text-red-600' : ''}`} title={`Alerta depois de ${etapa.alerta_dias} dias na etapa`}>
-              <Clock size={12} /> {parados ? `${parados} parado${parados > 1 ? 's' : ''}` : `${etapa.alerta_dias}d`}
-            </span>
-          )}
+        <div className="mt-3 flex items-center justify-between font-mono text-sm text-slate-700">
+          <span>{soma > 0 ? reais(soma) : 'R$ 0'}</span>
+          {parados > 0 && <span className="flex items-center gap-1 font-sans text-xs font-semibold text-red-600"><Clock size={12} /> {parados} parado{parados > 1 ? 's' : ''}</span>}
+        </div>
+        <div className="mt-4 h-1 overflow-hidden rounded-full bg-slate-200">
+          <div className={`h-full rounded-full ${cor.barra}`} style={{ width: `${total ? Math.max(proporcao, 0.06) * 100 : 0}%` }} />
         </div>
       </div>
-      <div className="flex min-h-16 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">{children}</div>
+      <div className="flex min-h-16 flex-1 flex-col gap-3 overflow-y-auto p-4">{children}</div>
       {podeCriar && (
-        <button onClick={criar} className="flex items-center gap-1.5 px-4 py-2.5 text-left text-xs font-medium text-indigo-700 hover:text-indigo-900">
+        <button onClick={criar} className="flex items-center gap-1.5 border-t border-slate-200/70 px-5 py-3 text-left text-xs font-medium text-slate-500 hover:bg-white/50 hover:text-slate-800">
           <Plus size={14} /> Adicionar card
         </button>
       )}
@@ -219,68 +236,65 @@ function Coluna({ etapa, total, soma, parados, podeCriar, criar, children }: {
   )
 }
 
-// Cor da etiqueta do card: o produto da aluna, para bater o olho no quadro.
-const COR_PRODUTO: Record<string, string> = {
-  'Moonshot Club': 'bg-sky-400', 'Moonshot Pró': 'bg-indigo-400', 'Moonshot Elite': 'bg-amber-500',
-  'Moonshot Private': 'bg-noite', 'Moonshot In Company': 'bg-violet-400', 'Máquina de Vendas': 'bg-emerald-500',
-}
-
 function Avatar({ nome }: { nome: string }) {
   const iniciais = nome.split(/\s+/).filter((p) => !/^(da|de|do|dos|das|e|\(.*)$/i.test(p)).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
   return (
-    <span title={nome} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-noite text-[10px] font-semibold text-indigo-200 ring-2 ring-white">
+    <span title={nome} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-noite text-[10px] font-semibold text-indigo-200">
       {iniciais || '?'}
     </span>
   )
 }
 
-function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir }: {
-  card: CardComAluna; etapa: Etapa; arrastavel: boolean; responsavel: string | null; abrir: () => void
+// "Hoje", "Ontem", "4d": ha quanto tempo o card esta nesta etapa.
+function haQuanto(dias: number) {
+  return dias <= 0 ? 'Hoje' : dias === 1 ? 'Ontem' : `${dias}d`
+}
+
+function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir, cor }: {
+  card: CardComAluna; etapa: Etapa; arrastavel: boolean; responsavel: string | null; abrir: () => void; cor: Cor
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id, disabled: !arrastavel })
   const estilo = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
   const parado = diasDesde(card.etapa_desde)
   const atrasado = etapa.alerta_dias != null && !card.fechado_em && parado > etapa.alerta_dias
-  const h = hoje()
-  const prazoVencido = !!card.prazo && card.prazo < h && !card.fechado_em
-  // Barra de tempo na etapa: quanto do prazo de alerta ja foi usado.
-  const uso = etapa.alerta_dias ? Math.min(1, parado / etapa.alerta_dias) : null
+  const prazoVencido = !!card.prazo && card.prazo < hoje() && !card.fechado_em
   const saude = card.aluna?.saude ? SAUDE[card.aluna.saude] : null
+  const dados = card.dados ?? {}
+  // Linha de apoio: o que o consultor escreveu, ou o produto e o faturamento.
+  const escrito = (typeof dados.justificativa === 'string' && dados.justificativa)
+    || (typeof dados.sinal === 'string' && dados.sinal) || ''
+  const apoio = escrito || [card.aluna?.produto, card.aluna?.faturamento_mensal ? `${reais(card.aluna.faturamento_mensal)}/mês` : null].filter(Boolean).join(' · ')
+  const origem = (typeof dados.enviado_por === 'string' && `de ${dados.enviado_por}`) || (typeof dados.origem === 'string' && dados.origem) || responsavel
   return (
     <div ref={setNodeRef} style={estilo} {...attributes} {...listeners} onClick={abrir}
-      className={`group relative cursor-pointer overflow-hidden rounded-lg border text-sm shadow-[0_1px_2px_rgba(20,17,16,0.08)] transition hover:shadow-md
-        ${atrasado || prazoVencido ? 'border-red-200 bg-red-50' : 'border-slate-200/70 bg-white'}
-        ${isDragging ? 'z-50 rotate-2 shadow-xl' : ''} ${card.fechado_em ? 'opacity-60' : ''}`}>
-      <div className="p-3 pb-2.5">
-        <div className="flex items-center justify-between">
-          <span className={`h-1 w-6 rounded-full ${COR_PRODUTO[card.aluna?.produto ?? ''] ?? 'bg-slate-300'}`} title={card.aluna?.produto ?? ''} />
-          <MoreHorizontal size={15} className="text-slate-400 opacity-0 transition group-hover:opacity-100" />
+      className={`cursor-pointer rounded-xl border border-l-[3px] px-5 py-4 shadow-[0_1px_2px_rgba(20,17,16,0.05)] transition hover:-translate-y-px hover:shadow-md
+        ${cor.borda} ${cor.borda2} ${cor.card} ${isDragging ? 'z-50 rotate-2 shadow-xl' : ''} ${card.fechado_em ? 'opacity-60' : ''}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-[15px] font-semibold text-slate-900">{card.titulo}</div>
+          {apoio && <div className="mt-0.5 line-clamp-2 text-sm text-slate-500">{apoio}</div>}
         </div>
-        <div className="mt-2 font-semibold leading-snug text-slate-800">{card.titulo}</div>
-        {(card.aluna?.produto || card.valor != null) && (
-          <div className="mt-0.5 text-xs text-slate-500">{[card.aluna?.produto, card.valor != null && reais(card.valor)].filter(Boolean).join(' · ')}</div>
-        )}
-        <div className="mt-2.5 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            {responsavel ? <Avatar nome={responsavel} /> : <span className="h-6 w-6 rounded-full border border-dashed border-slate-300" title="Sem responsável" />}
-            {saude && <span className={`selo ${saude.cor}`}>{saude.rotulo}</span>}
-          </div>
-          {card.prazo && (
-            <span className={`flex shrink-0 items-center gap-1 text-xs font-semibold ${prazoVencido ? 'text-red-600' : 'text-indigo-700'}`}>
-              {new Date(card.prazo + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')}
-              <Flag size={13} className={prazoVencido ? 'fill-red-500 text-red-500' : 'text-slate-400'} />
-            </span>
-          )}
-        </div>
-        <div className={`mt-2 flex items-center gap-1 text-[11px] ${atrasado ? 'font-semibold text-red-600' : 'text-slate-400'}`}>
-          <Clock size={11} /> {parado === 0 ? 'entrou hoje' : `${parado} ${parado === 1 ? 'dia' : 'dias'} na etapa`}
-        </div>
+        {responsavel ? <Avatar nome={responsavel} /> : <span className="h-6 w-6 shrink-0 rounded-full border border-dashed border-slate-300" title="Sem responsável" />}
       </div>
-      {uso != null && !card.fechado_em && (
-        <div className="h-[3px] bg-slate-100">
-          <div className={`h-full ${atrasado ? 'bg-red-500' : uso > 0.7 ? 'bg-amber-400' : 'bg-emerald-500'}`} style={{ width: `${Math.max(uso, 0.04) * 100}%` }} />
+      {card.valor != null && <div className="mt-3 font-mono text-lg font-medium text-slate-900">{reais(card.valor)}</div>}
+      {(atrasado || saude || (escrito && card.aluna?.produto)) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {atrasado && <span className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">parado</span>}
+          {saude && <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${saude.cor}`}>{saude.rotulo.toLowerCase()}</span>}
+          {escrito && card.aluna?.produto && <span className="rounded-md bg-slate-200/70 px-2 py-0.5 text-xs font-medium text-slate-600">{card.aluna.produto.replace('Moonshot ', '')}</span>}
         </div>
       )}
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs font-medium text-slate-500">
+        <span className="flex min-w-0 items-center gap-2">
+          {origem && <span className="truncate">{origem}</span>}
+          {card.prazo && (
+            <span className={`flex shrink-0 items-center gap-1 font-semibold ${prazoVencido ? 'text-red-600' : 'text-amber-700'}`}>
+              <Clock size={12} /> {data(card.prazo).slice(0, 5)}
+            </span>
+          )}
+        </span>
+        <span className={`shrink-0 ${atrasado ? 'font-semibold text-red-600' : ''}`}>{haQuanto(parado)}</span>
+      </div>
     </div>
   )
 }
