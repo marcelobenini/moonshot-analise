@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna } from '../lib/tipos'
 import { FINANCEIRO, PRODUTOS, SAUDE, STATUS_CONTRATO, data, mensagemErro, reais } from '../lib/util'
-import { Campo, Carregando, Erro, EscolherPessoa, Modal, Selo, Titulo, Vazio } from '../componentes/ui'
+import { Campo, Carregando, Erro, EscolherPessoa, Modal, Potencial, Selo, Titulo, Vazio } from '../componentes/ui'
 
 const POR_PAGINA = 50
 
@@ -19,16 +19,17 @@ export function Alunas() {
   const [saude, setSaude] = useState('')
   const [produto, setProduto] = useState('')
   const [financeiro, setFinanceiro] = useState('')
+  const [ordem, setOrdem] = useState<'nome' | 'potencial'>('nome')
   const [minhas, setMinhas] = useState(eu?.papel === 'consultor' || eu?.papel === 'cs')
   const [pagina, setPagina] = useState(0)
   const [nova, setNova] = useState(false)
   const podeCriar = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao'].includes(eu?.papel ?? '')
 
-  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro])
+  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro, ordem])
 
   useEffect(() => {
     const t = setTimeout(async () => {
-      let q = supabase.from('aluna').select('*', { count: 'exact' })
+      let q = supabase.from('aluna').select('*, potencial', { count: 'exact' })
       const s = termo.trim().replace(/[%,()]/g, ' ')
       if (s) q = q.or(`nome.ilike.%${s}%,email.ilike.%${s}%,telefone.ilike.%${s}%,empresa.ilike.%${s}%`)
       if (status === 'vivos') q = q.not('status_contrato', 'in', '(cancelado,encerrado)')
@@ -37,11 +38,11 @@ export function Alunas() {
       if (produto) q = q.eq('produto', produto)
       if (financeiro) q = q.eq('status_financeiro', financeiro)
       if (minhas && eu) q = q.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
-      const { data: d, count } = await q.order('nome').range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1)
+      const { data: d, count } = await (ordem === 'potencial' ? q.order('potencial', { ascending: false }).order('nome') : q.order('nome')).range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1)
       setLista((d ?? []) as Aluna[]); setTotal(count ?? 0)
     }, 200)
     return () => clearTimeout(t)
-  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro])
+  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro, ordem])
 
   return (
     <div>
@@ -75,6 +76,10 @@ export function Alunas() {
           <option value="">Qualquer financeiro</option>
           {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
         </select>
+        <select className="entrada w-auto" value={ordem} onChange={(e) => setOrdem(e.target.value as 'nome' | 'potencial')}>
+          <option value="nome">Ordem alfabética</option>
+          <option value="potencial">Maior potencial</option>
+        </select>
         <label className="flex items-center gap-2 text-sm text-slate-600">
           <input type="checkbox" checked={minhas} onChange={(e) => setMinhas(e.target.checked)} /> Minha carteira
         </label>
@@ -88,6 +93,7 @@ export function Alunas() {
                 <th className="px-4 py-2.5">Aluna</th>
                 <th className="px-4 py-2.5">Produto</th>
                 <th className="hidden px-4 py-2.5 md:table-cell">Consultor</th>
+                <th className="px-4 py-2.5">Potencial</th>
                 <th className="px-4 py-2.5">Saúde</th>
                 <th className="hidden px-4 py-2.5 sm:table-cell">Faturamento</th>
                 <th className="hidden px-4 py-2.5 lg:table-cell">Última consultoria</th>
@@ -108,6 +114,7 @@ export function Alunas() {
                       {a.status_financeiro === 'inadimplente' && <Selo cor={FINANCEIRO.inadimplente.cor}>Inadimplente</Selo>}
                     </div></td>
                   <td className="hidden px-4 py-2.5 md:table-cell">{a.consultor_id ? nomeDe(a.consultor_id) : <span className="text-slate-400">{a.consultor_planilha ?? ''}</span>}</td>
+                  <td className="px-4 py-2.5"><Potencial pontos={a.potencial} /></td>
                   <td className="px-4 py-2.5">{a.saude ? <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo> : null}</td>
                   <td className="hidden px-4 py-2.5 sm:table-cell">{reais(a.faturamento_mensal)}</td>
                   <td className="hidden px-4 py-2.5 lg:table-cell">{data(a.ultima_consultoria)}</td>

@@ -5,12 +5,12 @@ import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda, Etapa, Funil, RegistroConsultoria, Saude } from '../lib/tipos'
 import { FINANCEIRO, SAUDE, STATUS_CONTRATO, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
-import { Campo, Carregando, Erro, Modal, Selo, Vazio } from '../componentes/ui'
+import { Campo, Carregando, Erro, Modal, Potencial, Selo, Vazio } from '../componentes/ui'
 import { AlunaForm } from './Alunas'
 import { NovoCard } from './CardGaveta'
 import { NovaDemanda } from './Demandas'
 import { Agenda, Contratos, EventosDaAluna, Notas } from './FichaExtras'
-import { EnviarComercial, LinhaDoTempo, MudarStatus, Panorama, PerfilNegocio, RegistrarContato } from './FichaAcoes'
+import { EnviarComercial, LinhaDoTempo, MudarStatus, PainelPotencial, Panorama, PerfilNegocio, RegistrarContato } from './FichaAcoes'
 
 export function AlunaFicha() {
   const { id } = useParams()
@@ -27,7 +27,7 @@ export function AlunaFicha() {
 
   const carregar = useCallback(async () => {
     const [a, c, r, d] = await Promise.all([
-      supabase.from('aluna').select('*').eq('id', id).maybeSingle(),
+      supabase.from('aluna').select('*, potencial_detalhe').eq('id', id).maybeSingle(),
       supabase.from('card').select('*').eq('aluna_id', id).order('criado_em', { ascending: false }),
       supabase.from('registro_consultoria').select('*').eq('aluna_id', id).order('data', { ascending: false }).order('id', { ascending: false }),
       supabase.from('demanda').select('*').eq('aluna_id', id).order('criado_em', { ascending: false }),
@@ -64,7 +64,10 @@ export function AlunaFicha() {
       <div className="painel p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-3xl font-semibold text-noite">{aluna.nome}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-semibold text-noite">{aluna.nome}</h1>
+              <Potencial pontos={aluna.potencial_detalhe?.pontos} />
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
               <Selo cor={st?.cor ?? 'bg-slate-100'}>{st?.rotulo ?? aluna.status_contrato}</Selo>
               {fin && aluna.status_financeiro !== 'adimplente' && <Selo cor={fin.cor}>{fin.rotulo}</Selo>}
@@ -121,6 +124,7 @@ export function AlunaFicha() {
             </section>
           </div>
           <aside className="space-y-5">
+            {aluna.potencial_detalhe && <PainelPotencial detalhe={aluna.potencial_detalhe} />}
             <section>
               <h2 className="mb-3 font-semibold">Nos funis</h2>
               <div className="painel divide-y divide-slate-100">

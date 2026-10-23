@@ -108,8 +108,9 @@ No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
    5. `supabase/sistema_planilhas.sql`
    6. `supabase/sistema_crm.sql`
    7. `supabase/sistema_seguranca.sql`
+   8. `supabase/sistema_potencial.sql`
 
-   Os sete podem ser reaplicados sem perder dado.
+   Os oito podem ser reaplicados sem perder dado.
 3. Se a base histórica estiver carregada, rode:
    ```sql
    select importar_base_historica();  -- alunas, ciclos e pedidos em aberto
@@ -209,6 +210,26 @@ eventos), **Consultorias** e **Contratos e dados**. No topo:
 - **Enviar ao comercial**: o consultor diz por que é oportunidade. A aluna
   entra no funil Comercial com a justificativa e a observação, e a comercial
   passa a ver os relatos e anotações dela enquanto o card estiver aberto.
+
+### Potencial (0 a 100)
+
+Calculado na hora, nunca gravado, e aberto na ficha (cada ponto com o porquê):
+
+| Parte | Pontos | Como |
+|---|---|---|
+| Porte | até 35 | faturamento mensal contra o corte de oportunidade (R$ 80 mil) |
+| Engajamento | até 25 | saúde registrada: engajada 25, oscilante 12, sem contato 3, risco 0 |
+| Relação viva | até 15 | último contato ou consultoria: até 30 dias 15, 60 dias 10, 90 dias 5 |
+| Jornada | até 15 | consultorias feitas: 3 ou mais 15, 2 10, 1 5 |
+| Espaço para subir | até 10 | Club 10, Pró e Máquina 8, Elite 4, Private e In Company 2 |
+| Evento | +5 | marcada como potencial alto num evento |
+| Descontos | | inadimplente -25, pausada ou bloqueada -20, cancelada ou encerrada -40 |
+
+70 ou mais é **quente** (fogo), de 40 a 69 **morno** (termômetro), abaixo de 40
+**frio** (floco). Aparece no card do funil, na ficha, na lista de alunas (dá para
+ordenar) e no Início ("Maiores potenciais"). Para mudar os pesos, edite
+`sistema_potencial.sql` e reaplique; o corte de porte é o parâmetro
+`corte_oportunidade`.
 
 ### 7. Segurança
 

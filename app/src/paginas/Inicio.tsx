@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight, PhoneCall } from 'lucide-react'
+import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight, PhoneCall, Flame } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda } from '../lib/tipos'
 import { PRIORIDADE, SAUDE, data, diasDesde, hoje, reais } from '../lib/util'
-import { Carregando, Selo } from '../componentes/ui'
+import { Carregando, Potencial, Selo } from '../componentes/ui'
 
 type CardEtapa = Card & { etapa: { nome: string; alerta_dias: number | null } }
 type Resumo = { funil_id: string; etapa: string; ordem: number; cards: number; parados: number; valor: number | null }
@@ -27,6 +27,7 @@ export function Inicio() {
   const [agenda, setAgenda] = useState<AgendaItem[]>([])
   const [inadimplentes, setInadimplentes] = useState<Inadimplente[]>([])
   const [retornos, setRetornos] = useState<Aluna[]>([])
+  const [potenciais, setPotenciais] = useState<Aluna[]>([])
   const [semContato, setSemContato] = useState<{ lista: Aluna[]; total: number }>({ lista: [], total: 0 })
   const coord = eu?.papel === 'coordenador'
 
@@ -43,6 +44,9 @@ export function Inicio() {
     let qSem = supabase.from('aluna').select('*', { count: 'exact' }).eq('status_contrato', 'ativo')
       .or(`ultimo_contato.is.null,ultimo_contato.lt.${ha30.toLocaleDateString('sv-SE')}`)
       .order('ultimo_contato', { ascending: true, nullsFirst: true }).limit(8)
+    let qPot = supabase.from('aluna').select('*, potencial').eq('status_contrato', 'ativo').order('potencial', { ascending: false }).limit(8)
+    if (!coord) qPot = qPot.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+    qPot.then(({ data: d }) => setPotenciais((d ?? []) as Aluna[]))
     if (!coord) {
       qRetorno = qRetorno.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
       qSem = qSem.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
@@ -120,6 +124,14 @@ export function Inicio() {
           {demandas.length === 0 ? <Nada>Nenhuma demanda em aberto com você.</Nada> : demandas.map((d) => (
             <Linha key={d.id} para={`/demandas/${d.id}`} titulo={d.titulo} sub={d.prazo ? `prazo ${data(d.prazo)}` : 'sem prazo'}
               direita={d.prioridade !== 'normal' && <Selo cor={PRIORIDADE[d.prioridade].cor}>{PRIORIDADE[d.prioridade].rotulo}</Selo>} />
+          ))}
+        </Bloco>
+
+        <Bloco titulo={coord ? 'Maiores potenciais' : 'Maiores potenciais da carteira'} link="/alunas" icone={<Flame size={16} />}>
+          {potenciais.length === 0 ? <Nada>Nenhuma aluna ativa.</Nada> : potenciais.map((a) => (
+            <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
+              sub={[a.produto, a.faturamento_mensal != null ? `${reais(a.faturamento_mensal)}/mês` : null].filter(Boolean).join(' · ')}
+              direita={<Potencial pontos={a.potencial} />} />
           ))}
         </Bloco>
 

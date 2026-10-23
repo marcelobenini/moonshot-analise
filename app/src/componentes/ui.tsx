@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, Flame, Snowflake, Thermometer } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Papel } from '../lib/tipos'
@@ -134,5 +134,19 @@ export function EscolherAluna({ valor, mudar }: { valor: Aluna | null; mudar: (a
         </div>
       )}
     </div>
+  )
+}
+
+/** Pontuacao de potencial (0 a 100): fogo quente, termometro morno, floco frio. */
+export function Potencial({ pontos, grande }: { pontos: number | null | undefined; grande?: boolean }) {
+  if (pontos == null) return null
+  const faixa = pontos >= 70 ? 'quente' : pontos >= 40 ? 'morno' : 'frio'
+  const I = faixa === 'quente' ? Flame : faixa === 'morno' ? Thermometer : Snowflake
+  const cor = faixa === 'quente' ? 'text-red-600' : faixa === 'morno' ? 'text-amber-700' : 'text-sky-600'
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1 font-mono font-medium ${cor} ${grande ? 'text-3xl' : 'text-sm'}`}
+      title={`Potencial ${pontos} de 100 (${faixa})`}>
+      <I size={grande ? 24 : 14} strokeWidth={2.2} /> {pontos}
+    </span>
   )
 }

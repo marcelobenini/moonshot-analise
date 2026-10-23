@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { Pencil } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
-import type { Acontecimento, Aluna, Card, RegistroConsultoria } from '../lib/tipos'
+import type { Acontecimento, Aluna, Card, PotencialDetalhe, RegistroConsultoria } from '../lib/tipos'
 import { CANAIS, FINANCEIRO, NOTA, SAUDE, STATUS_CONTRATO, data, diasDesde, hoje, mensagemErro, reais } from '../lib/util'
-import { Campo, Erro, Modal, Selo } from '../componentes/ui'
+import { Campo, Erro, Modal, Potencial, Selo } from '../componentes/ui'
 
 // Panorama: o que a planilha obrigava a ler em cinco abas, numa faixa so.
 export function Panorama({ aluna, registros, cards }: { aluna: Aluna; registros: RegistroConsultoria[]; cards: Card[] }) {
@@ -356,6 +356,39 @@ export function LinhaDoTempo({ aluna, versao, limite }: { aluna: Aluna; versao: 
           ))}
         </ol>
       )}
+    </section>
+  )
+}
+
+// De onde veio cada ponto: a regra a vista, para poder ser contestada.
+export function PainelPotencial({ detalhe }: { detalhe: PotencialDetalhe }) {
+  const rotulo = { quente: 'Quente', morno: 'Morno', frio: 'Frio' }[detalhe.faixa]
+  return (
+    <section className="painel p-4">
+      <div className="flex items-end justify-between">
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Potencial</div>
+          <div className="mt-1 text-sm font-semibold text-slate-700">{rotulo}</div>
+        </div>
+        <Potencial pontos={detalhe.pontos} grande />
+      </div>
+      <ul className="mt-4 space-y-2.5">
+        {detalhe.itens.map((i) => (
+          <li key={i.item}>
+            <div className="flex items-baseline justify-between gap-2 text-xs">
+              <span className="font-medium text-slate-700">{i.item}</span>
+              <span className={`font-mono ${i.pontos < 0 ? 'text-red-600' : 'text-slate-600'}`}>{i.pontos > 0 ? '+' : ''}{i.pontos}{i.max ? ` / ${i.max}` : ''}</span>
+            </div>
+            {i.max ? (
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-indigo-400" style={{ width: `${(Math.max(0, i.pontos) / i.max) * 100}%` }} />
+              </div>
+            ) : null}
+            <div className="mt-0.5 text-[11px] text-slate-500">{i.porque}</div>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-[11px] leading-snug text-slate-400">Calculado na hora: porte, engajamento, contato recente, consultorias feitas e produto atual. Inadimplência e contrato parado descontam.</p>
     </section>
   )
 }

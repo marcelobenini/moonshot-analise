@@ -55,6 +55,15 @@ export interface Aluna {
   instagram: string | null
   ultimo_contato: string | null
   proximo_contato: string | null
+  // Colunas calculadas no banco (sistema_potencial.sql), quando pedidas no select.
+  potencial?: number
+  potencial_detalhe?: PotencialDetalhe
+}
+
+export interface PotencialDetalhe {
+  pontos: number
+  faixa: 'quente' | 'morno' | 'frio'
+  itens: { item: string; pontos: number; max?: number; porque: string }[]
 }
 
 export type StatusFinanceiro = 'adimplente' | 'inadimplente' | 'parcelado' | 'quitado' | 'pendente'

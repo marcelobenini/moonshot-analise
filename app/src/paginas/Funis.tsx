@@ -6,10 +6,10 @@ import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Etapa } from '../lib/tipos'
 import { SAUDE, data, diasDesde, hoje, mensagemErro, reais } from '../lib/util'
-import { Carregando, Erro, Modal, Campo, Vazio } from '../componentes/ui'
+import { Carregando, Erro, Modal, Campo, Potencial, Vazio } from '../componentes/ui'
 import { CardGaveta, NovoCard } from './CardGaveta'
 
-type CardComAluna = Card & { aluna: Pick<Aluna, 'id' | 'nome' | 'produto' | 'saude' | 'faturamento_mensal'> | null }
+type CardComAluna = Card & { aluna: Pick<Aluna, 'id' | 'nome' | 'produto' | 'saude' | 'faturamento_mensal' | 'potencial'> | null }
 
 export function Funis() {
   const { funis, etapas, nomeDe, podeEditar, eu } = useSessao()
@@ -36,7 +36,7 @@ export function Funis() {
 
   const carregar = useCallback(async () => {
     if (!funilId) return
-    let q = supabase.from('card').select('*, aluna(id, nome, produto, saude, faturamento_mensal)').eq('funil_id', funilId)
+    let q = supabase.from('card').select('*, aluna(id, nome, produto, saude, faturamento_mensal, potencial)').eq('funil_id', funilId)
     if (!verFechados) q = q.is('fechado_em', null)
     else q = q.or(`fechado_em.is.null,fechado_em.gte.${new Date(Date.now() - 30 * 86400000).toISOString()}`)
     const { data: d, error } = await q.order('posicao')
@@ -239,7 +239,7 @@ function Coluna({ etapa, total, soma, parados, podeCriar, criar, cor, proporcao,
 function Avatar({ nome }: { nome: string }) {
   const iniciais = nome.split(/\s+/).filter((p) => !/^(da|de|do|dos|das|e|\(.*)$/i.test(p)).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
   return (
-    <span title={nome} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-noite text-[10px] font-semibold text-indigo-200">
+    <span title={nome} className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-noite text-[9px] font-semibold text-indigo-200">
       {iniciais || '?'}
     </span>
   )
@@ -264,7 +264,7 @@ function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir, cor }: 
   const escrito = (typeof dados.justificativa === 'string' && dados.justificativa)
     || (typeof dados.sinal === 'string' && dados.sinal) || ''
   const apoio = escrito || [card.aluna?.produto, card.aluna?.faturamento_mensal ? `${reais(card.aluna.faturamento_mensal)}/mês` : null].filter(Boolean).join(' · ')
-  const origem = (typeof dados.enviado_por === 'string' && `de ${dados.enviado_por}`) || (typeof dados.origem === 'string' && dados.origem) || responsavel
+  const origem = (typeof dados.enviado_por === 'string' && `de ${dados.enviado_por}`) || (typeof dados.origem === 'string' && dados.origem) || responsavel?.split(' ')[0]
   return (
     <div ref={setNodeRef} style={estilo} {...attributes} {...listeners} onClick={abrir}
       className={`cursor-pointer rounded-xl border border-l-[3px] px-5 py-4 shadow-[0_1px_2px_rgba(20,17,16,0.05)] transition hover:-translate-y-px hover:shadow-md
@@ -274,7 +274,7 @@ function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir, cor }: 
           <div className="truncate text-[15px] font-semibold text-slate-900">{card.titulo}</div>
           {apoio && <div className="mt-0.5 line-clamp-2 text-sm text-slate-500">{apoio}</div>}
         </div>
-        {responsavel ? <Avatar nome={responsavel} /> : <span className="h-6 w-6 shrink-0 rounded-full border border-dashed border-slate-300" title="Sem responsável" />}
+        <Potencial pontos={card.aluna?.potencial} />
       </div>
       {card.valor != null && <div className="mt-3 font-mono text-lg font-medium text-slate-900">{reais(card.valor)}</div>}
       {(atrasado || saude || (escrito && card.aluna?.produto)) && (
@@ -286,6 +286,7 @@ function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir, cor }: 
       )}
       <div className="mt-3 flex items-center justify-between gap-2 text-xs font-medium text-slate-500">
         <span className="flex min-w-0 items-center gap-2">
+          {responsavel ? <Avatar nome={responsavel} /> : <span className="h-5 w-5 shrink-0 rounded-full border border-dashed border-slate-300" title="Sem responsável" />}
           {origem && <span className="truncate">{origem}</span>}
           {card.prazo && (
             <span className={`flex shrink-0 items-center gap-1 font-semibold ${prazoVencido ? 'text-red-600' : 'text-amber-700'}`}>
