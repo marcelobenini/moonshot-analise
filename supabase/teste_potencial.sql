@@ -30,5 +30,12 @@ select ok((select jsonb_array_length(potencial_detalhe(a)->'itens') >= 5 from al
 select ok(conta_como(:cons, $$select potencial(a) from aluna a where nome = 'Quente Teste Um'$$) = 1,
           'quem ve a aluna ve a pontuacao');
 
+select ok((select (painel(false)->>'ativas')::int >= 3), 'painel conta as alunas ativas');
+select como(:cons, $$create temp table p_cons as select painel(true) as p$$);
+select ok((select (p->>'ativas')::int = 3 and (p->'potencial'->>'quente')::int = 1
+                  and (p->>'inadimplentes')::int = 1 and jsonb_array_length(p->'semanas') = 12
+                  and (p->'semanas'->11->>'consultorias')::int = 3 from p_cons),
+          'painel da carteira: ativas, potencial, inadimplentes e 12 semanas de atividade');
+
 rollback;
 \echo 'TODOS OS TESTES DE POTENCIAL PASSARAM'

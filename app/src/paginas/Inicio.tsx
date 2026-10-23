@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight, PhoneCall, Flame } from 'lucide-react'
+import { AlertTriangle, Clock, MessageSquare, CalendarClock, ArrowRight, PhoneCall, Flame, Users, Wallet, HeartPulse, Receipt, Activity, KanbanSquare, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda } from '../lib/tipos'
 import { PRIORIDADE, SAUDE, data, diasDesde, hoje, reais } from '../lib/util'
 import { Carregando, Potencial, Selo } from '../componentes/ui'
+import { BarrasH, Colunas, Legenda, Linhas, Rosca, compacto } from '../componentes/graficos'
 
 type CardEtapa = Card & { etapa: { nome: string; alerta_dias: number | null } }
 type Resumo = { funil_id: string; etapa: string; ordem: number; cards: number; parados: number; valor: number | null }
@@ -13,6 +14,11 @@ type Carteira = { consultor_id: string; consultor: string; alunas: number; em_ri
 type Mes = { mes: string; contratos: number; faturamento_mensal: number | null }
 type Retencao = { prazo: string; desfecho: string; tipo: string; pedidos: number }
 type AgendaItem = { id: number; aluna_id: number; nome: string; numero: number; data_prevista: string; consultor: string | null; atrasada: boolean; consultor_id: string | null }
+type Painel = {
+  ativas: number; novas_30d: number; faturamento: number; com_faturamento: number; em_risco: number; inadimplentes: number
+  saude: Record<string, number> | null; potencial: { quente: number; morno: number; frio: number }
+  produtos: Record<string, number> | null; semanas: { semana: string; contatos: number; consultorias: number }[]
+}
 type Inadimplente = { aluna_id: number; nome: string; consultor: string | null; consultor_id: string | null; produto_contrato: string }
 
 export function Inicio() {
@@ -28,6 +34,8 @@ export function Inicio() {
   const [inadimplentes, setInadimplentes] = useState<Inadimplente[]>([])
   const [retornos, setRetornos] = useState<Aluna[]>([])
   const [potenciais, setPotenciais] = useState<Aluna[]>([])
+  const [painel, setPainel] = useState<Painel | null>(null)
+  const [funilGrafico, setFunilGrafico] = useState<string | null>(null)
   const [semContato, setSemContato] = useState<{ lista: Aluna[]; total: number }>({ lista: [], total: 0 })
   const coord = eu?.papel === 'coordenador'
 
@@ -44,6 +52,7 @@ export function Inicio() {
     let qSem = supabase.from('aluna').select('*', { count: 'exact' }).eq('status_contrato', 'ativo')
       .or(`ultimo_contato.is.null,ultimo_contato.lt.${ha30.toLocaleDateString('sv-SE')}`)
       .order('ultimo_contato', { ascending: true, nullsFirst: true }).limit(8)
+    supabase.rpc('painel', { p_minha: !coord }).then(({ data: d }) => setPainel((d ?? null) as Painel | null))
     let qPot = supabase.from('aluna').select('*, potencial').eq('status_contrato', 'ativo').order('potencial', { ascending: false }).limit(8)
     if (!coord) qPot = qPot.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
     qPot.then(({ data: d }) => setPotenciais((d ?? []) as Aluna[]))
@@ -61,7 +70,7 @@ export function Inicio() {
       qRisco,
       supabase.from('vw_funil_resumo').select('*'),
       supabase.from('vw_carteira').select('*').order('consultor'),
-      supabase.from('vw_renovacao_mes').select('*').order('mes').limit(6),
+      supabase.from('vw_renovacao_mes').select('*').order('mes').limit(12),
       coord ? supabase.from('vw_retencao_sistema').select('*') : Promise.resolve({ data: [] }),
       // A visao respeita a RLS: consultor ve a agenda da propria carteira.
       supabase.from('vw_agenda_proxima').select('*').order('data_prevista').limit(40),
@@ -104,11 +113,54 @@ export function Inicio() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Numero rotulo="Cards comigo" valor={meusCards.length} icone={<Clock size={18} />} />
-        <Numero rotulo="Parados além do prazo" valor={parados.length} icone={<AlertTriangle size={18} />} alerta={parados.length > 0} />
-        <Numero rotulo="Demandas comigo" valor={demandas.length} icone={<MessageSquare size={18} />} />
-        <Numero rotulo={coord ? 'Alunas em risco' : 'Em risco na carteira'} valor={risco.length} icone={<AlertTriangle size={18} />} alerta={risco.length > 0} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Indicador rotulo={coord ? 'Alunas ativas' : 'Alunas ativas na carteira'} valor={painel ? String(painel.ativas) : '…'}
+          sub={painel ? `${painel.novas_30d} novas nos últimos 30 dias` : ''} icone={<Users size={20} />} tom="ouro" />
+        <Indicador rotulo="Faturamento" valor={painel ? `R$ ${compacto(painel.faturamento)}` : '…'}
+          sub={painel ? `por mês, de ${painel.com_faturamento} alunas` : ''} icone={<Wallet size={20} />} tom="noite" />
+        <Indicador rotulo="Em risco" valor={painel ? String(painel.em_risco) : '…'} alerta={!!painel?.em_risco}
+          sub="risco de saída ou sem contato" icone={<HeartPulse size={20} />} tom="vermelho" />
+        <Indicador rotulo="Inadimplentes" valor={painel ? String(painel.inadimplentes) : '…'} alerta={!!painel?.inadimplentes}
+          sub="com contrato vivo" icone={<Receipt size={20} />} tom="ambar" />
+      </div>
+
+      {painel && <Graficos painel={painel} />}
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Cartao titulo="Funis" icone={<KanbanSquare size={16} />} link={`/funis/${funilGrafico ?? funis[0]?.id ?? ''}`}
+          acoes={
+            <select className="entrada w-auto py-1 text-xs" value={funilGrafico ?? funis[0]?.id ?? ''} onChange={(e) => setFunilGrafico(e.target.value)}>
+              {funis.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
+            </select>
+          }>
+          {(() => {
+            const fid = funilGrafico ?? funis[0]?.id
+            const linhas = resumo.filter((r) => r.funil_id === fid).sort((x, y) => x.ordem - y.ordem)
+            return linhas.length === 0 ? <Nada>Sem cards abertos neste funil.</Nada>
+              : <BarrasH dados={linhas.map((l) => ({ rotulo: l.etapa, valor: l.cards, alerta: l.parados }))} cor="#b6884c" />
+          })()}
+        </Cartao>
+        <Cartao titulo="Vencimentos por mês" icone={<CalendarClock size={16} />} link="/funis/renovacao">
+          {meses.length === 0 ? <Nada>Sem vencimentos cadastrados.</Nada> : (
+            <Colunas cor="#141110" dados={meses.map((m) => ({
+              rotulo: new Date(m.mes + '-15').toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+              valor: m.contratos,
+              detalhe: `${new Date(m.mes + '-15').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} · ${reais(m.faturamento_mensal)}/mês`,
+            }))} formatar={(v) => `${v} contrato${v === 1 ? '' : 's'}`} />
+          )}
+        </Cartao>
+        <Cartao titulo="Alunas por produto" icone={<Package size={16} />} link="/alunas">
+          {!painel?.produtos ? <Nada>Nenhuma aluna ativa.</Nada> : (
+            <BarrasH cor="#2a78d6" dados={Object.entries(painel.produtos).sort((x, y) => y[1] - x[1]).map(([k, v]) => ({ rotulo: k, valor: v }))} />
+          )}
+        </Cartao>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 pt-2">
+        <h2 className="font-display text-2xl font-semibold text-noite">Para agir hoje</h2>
+        <span className="selo bg-white text-slate-600 ring-1 ring-slate-200"><Clock size={12} className="mr-1" />{meusCards.length} cards comigo</span>
+        <span className={`selo ring-1 ${parados.length ? 'bg-red-50 text-red-700 ring-red-200' : 'bg-white text-slate-600 ring-slate-200'}`}><AlertTriangle size={12} className="mr-1" />{parados.length} parados</span>
+        <span className="selo bg-white text-slate-600 ring-1 ring-slate-200"><MessageSquare size={12} className="mr-1" />{demandas.length} demandas</span>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -184,24 +236,6 @@ export function Inicio() {
           )}
         </Bloco>
 
-        <Bloco titulo="Vencimentos dos próximos meses" link="/funis/renovacao" icone={<CalendarClock size={16} />}>
-          {meses.length === 0 ? <Nada>Sem vencimentos cadastrados.</Nada> : (
-            <div className="space-y-2 p-4">
-              {meses.map((m) => {
-                const max = Math.max(...meses.map((x) => x.contratos))
-                return (
-                  <div key={m.mes} className="flex items-center gap-3 text-sm">
-                    <span className="w-20 shrink-0 text-slate-600">{new Date(m.mes + '-15').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })}</span>
-                    <div className="h-5 flex-1 rounded bg-slate-100">
-                      <div className="h-5 rounded bg-indigo-500" style={{ width: `${(m.contratos / max) * 100}%` }} />
-                    </div>
-                    <span className="w-28 shrink-0 text-right text-xs text-slate-600">{m.contratos} · {reais(m.faturamento_mensal)}</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </Bloco>
       </div>
 
       {carteira.length > 0 && (
@@ -234,37 +268,97 @@ export function Inicio() {
               <b>Retenção no sistema:</b> {Math.round((retidas / decididas) * 100)}% ({retidas} de {decididas} pedidos fora dos 7 dias terminaram com a aluna ficando).
             </div>
           )}
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {funis.map((f) => {
-              const linhas = resumo.filter((r) => r.funil_id === f.id).sort((a, b) => a.ordem - b.ordem)
-              return (
-                <Bloco key={f.id} titulo={f.nome} link={`/funis/${f.id}`}>
-                  {linhas.length === 0 ? <Nada>Sem cards abertos.</Nada> : (
-                    <div className="space-y-1 p-4 text-sm">
-                      {linhas.map((l) => (
-                        <div key={l.etapa} className="flex justify-between">
-                          <span className="text-slate-600">{l.etapa}</span>
-                          <span>{l.cards}{l.parados > 0 && <span className="ml-2 text-xs font-medium text-red-600">{l.parados} parados</span>}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Bloco>
-              )
-            })}
-          </div>
         </>
       )}
     </div>
   )
 }
 
-function Numero({ rotulo, valor, icone, alerta }: { rotulo: string; valor: number; icone: React.ReactNode; alerta?: boolean }) {
+const TOM = {
+  ouro: 'bg-indigo-100 text-indigo-700', noite: 'bg-noite text-indigo-200',
+  vermelho: 'bg-red-100 text-red-700', ambar: 'bg-amber-100 text-amber-700',
+}
+
+function Indicador({ rotulo, valor, sub, icone, tom, alerta }: {
+  rotulo: string; valor: string; sub: string; icone: React.ReactNode; tom: keyof typeof TOM; alerta?: boolean
+}) {
   return (
-    <div className="painel p-4">
-      <div className={`flex items-center gap-2 text-xs font-medium uppercase tracking-wide ${alerta ? 'text-red-600' : 'text-slate-500'}`}>
-        <span className={alerta ? '' : 'text-ouro'}>{icone}</span>{rotulo}</div>
-      <div className={`mt-1 font-display text-4xl font-semibold ${alerta ? 'text-red-700' : 'text-noite'}`}>{valor}</div>
+    <div className="painel flex items-start gap-4 p-5">
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${TOM[tom]}`}>{icone}</span>
+      <div className="min-w-0">
+        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{rotulo}</div>
+        <div className={`mt-0.5 font-mono text-3xl font-medium ${alerta ? 'text-red-700' : 'text-noite'}`}>{valor}</div>
+        <div className="mt-0.5 truncate text-xs text-slate-500">{sub}</div>
+      </div>
+    </div>
+  )
+}
+
+function Cartao({ titulo, icone, link, acoes, children, className = '' }: {
+  titulo: string; icone?: React.ReactNode; link?: string; acoes?: React.ReactNode; children: React.ReactNode; className?: string
+}) {
+  return (
+    <section className={`painel p-5 ${className}`}>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-noite"><span className="text-ouro">{icone}</span>{titulo}</h2>
+        <div className="flex items-center gap-2">
+          {acoes}
+          {link && <Link to={link} className="flex items-center gap-1 text-xs text-indigo-700 hover:underline">ver <ArrowRight size={12} /></Link>}
+        </div>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+// Cores dos graficos. Serie: azul e laranja (paleta validada para daltonismo).
+// Saude e estado, nao serie: verde, ambar, laranja, vermelho, sempre com rotulo.
+const COR_SERIE = ['#2a78d6', '#eb6834']
+const COR_SAUDE: [string, string, string][] = [
+  ['engajada', 'Engajada', '#0ca30c'], ['renovou_upsell', 'Renovou / upsell', '#2a78d6'],
+  ['oscilante', 'Oscilante', '#fab219'], ['sem_contato', 'Sem contato', '#ec835a'],
+  ['risco_saida', 'Risco de saída', '#d03b3b'], ['sem_registro', 'Sem registro', '#d3c8bd'],
+]
+
+function Graficos({ painel }: { painel: Painel }) {
+  const pontos = useMemo(() => painel.semanas.map((s) => ({
+    rotulo: new Date(s.semana + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    valores: [s.contatos, s.consultorias],
+  })), [painel])
+  const totais = [painel.semanas.reduce((t, s) => t + s.contatos, 0), painel.semanas.reduce((t, s) => t + s.consultorias, 0)]
+  const pot = painel.potencial
+  const totalPot = pot.quente + pot.morno + pot.frio
+  return (
+    <div className="grid gap-5 lg:grid-cols-3">
+      <Cartao titulo="Atividade com as alunas" icone={<Activity size={16} />} className="lg:col-span-2"
+        acoes={<span className="text-xs text-slate-500">últimas 12 semanas</span>}>
+        <div className="mb-3 flex flex-wrap items-end gap-6">
+          {['Contatos da CS', 'Consultorias realizadas'].map((n, i) => (
+            <div key={n}>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500"><span className="h-2.5 w-2.5 rounded-full" style={{ background: COR_SERIE[i] }} />{n}</div>
+              <div className="font-mono text-2xl font-medium text-noite">{totais[i]}</div>
+            </div>
+          ))}
+        </div>
+        <Linhas altura={300} pontos={pontos} series={[{ nome: 'Contatos da CS', cor: COR_SERIE[0] }, { nome: 'Consultorias', cor: COR_SERIE[1] }]} />
+      </Cartao>
+      <Cartao titulo="Saúde da carteira" icone={<HeartPulse size={16} />}>
+        <Rosca rotuloCentro="ativas" centro={painel.ativas}
+          fatias={COR_SAUDE.map(([k, nome, cor]) => ({ nome, cor, valor: painel.saude?.[k] ?? 0 })).filter((f) => f.valor > 0)} />
+        {totalPot > 0 && (
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="font-medium uppercase tracking-wide text-slate-500">Potencial</span>
+              <Legenda itens={[{ nome: 'quente', cor: '#d03b3b', valor: pot.quente }, { nome: 'morno', cor: '#fab219', valor: pot.morno }, { nome: 'frio', cor: '#2a78d6', valor: pot.frio }]} />
+            </div>
+            <div className="flex h-2.5 gap-[2px] overflow-hidden rounded-full">
+              {[[pot.quente, '#d03b3b'], [pot.morno, '#fab219'], [pot.frio, '#2a78d6']].map(([v, c]) => Number(v) > 0 && (
+                <div key={String(c)} style={{ width: `${(Number(v) / totalPot) * 100}%`, background: String(c) }} />
+              ))}
+            </div>
+          </div>
+        )}
+      </Cartao>
     </div>
   )
 }

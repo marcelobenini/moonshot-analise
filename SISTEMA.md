@@ -109,8 +109,9 @@ No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
    6. `supabase/sistema_crm.sql`
    7. `supabase/sistema_seguranca.sql`
    8. `supabase/sistema_potencial.sql`
+   9. `supabase/sistema_painel.sql`
 
-   Os oito podem ser reaplicados sem perder dado.
+   Os nove podem ser reaplicados sem perder dado.
 3. Se a base histórica estiver carregada, rode:
    ```sql
    select importar_base_historica();  -- alunas, ciclos e pedidos em aberto
