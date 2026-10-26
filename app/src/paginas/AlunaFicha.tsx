@@ -25,18 +25,22 @@ export function AlunaFicha() {
   const [modal, setModal] = useState<'editar' | 'consultoria' | 'contato' | 'status' | 'comercial' | 'demanda' | null>(null)
   const [novoCard, setNovoCard] = useState<{ funil: Funil; etapa: Etapa } | null>(null)
   const [versao, setVersao] = useState(0)
+  const [cpf, setCpf] = useState<string | null>(null)
 
   const carregar = useCallback(async () => {
-    const [a, c, r, d] = await Promise.all([
+    const [a, c, r, d, doc] = await Promise.all([
       supabase.from('aluna').select('*, potencial_detalhe').eq('id', id).maybeSingle(),
       supabase.from('card').select('*').eq('aluna_id', id).order('criado_em', { ascending: false }),
       supabase.from('registro_consultoria').select('*').eq('aluna_id', id).order('data', { ascending: false }).order('id', { ascending: false }),
       supabase.from('demanda').select('*').eq('aluna_id', id).order('criado_em', { ascending: false }),
+      // O CPF fica numa tabela propria: so volta para coordenacao, CS e quem atende a aluna.
+      supabase.from('aluna_documento').select('cpf').eq('aluna_id', id).maybeSingle(),
     ])
     setAluna((a.data ?? null) as Aluna | null)
     setCards((c.data ?? []) as Card[])
     setRegistros((r.data ?? []) as RegistroConsultoria[])
     setDemandas((d.data ?? []) as Demanda[])
+    setCpf((doc.data as { cpf: string } | null)?.cpf ?? null)
     setVersao((v) => v + 1)
   }, [id])
   useEffect(() => { carregar() }, [carregar])
@@ -89,6 +93,7 @@ export function AlunaFicha() {
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : ''}</Dado>
                 <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`}><Mail size={13} />{aluna.email}</a> : ''}</Dado>
+                {cpf && <Dado rotulo="CPF">{cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</Dado>}
                 <Dado rotulo="Cidade">{[aluna.cidade, aluna.uf].filter(Boolean).join(' / ') || ''}</Dado>
                 <Dado rotulo="Empresa">{aluna.empresa ?? ''}</Dado>
                 <Dado rotulo="Ramo">{aluna.ramo ?? ''}</Dado>

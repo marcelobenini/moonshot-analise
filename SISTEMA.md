@@ -110,8 +110,12 @@ No projeto do Supabase (região São Paulo, ver `supabase/README.md`):
    7. `supabase/sistema_seguranca.sql`
    8. `supabase/sistema_potencial.sql`
    9. `supabase/sistema_painel.sql`
+   10. `supabase/sistema_documento.sql`
 
-   Os nove podem ser reaplicados sem perder dado.
+   Os dez podem ser reaplicados sem perder dado. O CPF das alunas fica na
+   tabela `aluna_documento`, que só a coordenação, a CS e quem atende a aluna
+   leem; na importação ele é a primeira chave para não duplicar cadastro, e só
+   vale com dígito verificador certo.
 3. Se a base histórica estiver carregada, rode:
    ```sql
    select importar_base_historica();  -- alunas, ciclos e pedidos em aberto

@@ -390,18 +390,28 @@ $$;
 --   -> primeiro + ultimo nome -> trigrama >= 0,8
 -- Cada passe so casa com candidato UNICO. Semelhante mas incerto (0,55 a
 -- 0,8) devolve os candidatos para virar pendencia de revisao.
+-- Dois nomes podem ser da mesma pessoa? Mesmo primeiro nome, ou parecidos.
+create or replace function nomes_compativeis(a text, b text) returns boolean
+language sql immutable set search_path = public, extensions as $$
+  select a is not null and b is not null
+     and (split_part(a, ' ', 1) = split_part(b, ' ', 1) or similarity(a, b) >= 0.45)
+$$;
+
 create or replace function achar_aluna(p_nome text, p_email text, p_fone text,
                                        out aluna_id bigint, out metodo text, out candidatos jsonb)
 language plpgsql stable set search_path = public, extensions as $$
 declare k text := chave_nome(p_nome); toks text[]; ids bigint[];
 begin
+  -- E-mail e telefone so valem com nome compativel: a planilha repete o
+  -- telefone da empresa e o e-mail da socia em fichas de pessoas diferentes.
   if p_email is not null and p_email ~ '@' then
-    select id into aluna_id from aluna where lower(email) = lower(trim(p_email)) limit 1;
+    select id into aluna_id from aluna where lower(email) = lower(trim(p_email))
+      and (k is null or nomes_compativeis(nome_chave, k)) limit 1;
     if aluna_id is not null then metodo := 'email'; return; end if;
   end if;
   if length(regexp_replace(coalesce(p_fone, ''), '\D', '', 'g')) >= 8 then
-    select id into aluna_id from aluna where norm_fone(telefone) = norm_fone(p_fone)
-      or norm_fone(telefone2) = norm_fone(p_fone) limit 1;
+    select id into aluna_id from aluna where (norm_fone(telefone) = norm_fone(p_fone)
+      or norm_fone(telefone2) = norm_fone(p_fone)) and (k is null or nomes_compativeis(nome_chave, k)) limit 1;
     if aluna_id is not null then metodo := 'telefone'; return; end if;
   end if;
   if k is null or length(k) < 4 then return; end if;
@@ -570,16 +580,36 @@ declare
   l record; d jsonb; a record; v_nome text; v_produto text; ini date; fim date; v_status text;
   n_cont int := 0; n_alunas int := 0; n_onb int := 0; n_notas int := 0; ignoradas jsonb := '{}';
   v_chave text; acesso text; onb text; grupo text; et int; tocadas bigint[] := '{}'; r record;
+  v_id bigint; n_docs int := 0; v_aba_vendas text; trocado boolean := false; v_cpf text; v_fone text; v_email text;
 begin
-  for l in select * from importacao_linha where importacao_id = p_imp order by aba, linha loop
-    if norm_nome(l.aba) ~ 'dados vendas|renovacao|boleto nb|pedidos de cancelamento|^cancelamentos$' then
+  for l in select * from importacao_linha where importacao_id = p_imp
+           order by norm_nome(aba) like 'dados vendas%', aba, linha loop
+    -- Aba de vendas (lida por ultimo): so completa CPF, e-mail e telefone de quem ja tem ficha.
+    if norm_nome(l.aba) like 'dados vendas%' then
+      d := l.dados;
+      -- A aba tem uma segunda tabela com cabecalho proprio (Endereco, Cliente Nome,
+      -- TELEFONE, CPF): dali para baixo, CPF e telefone estao trocados.
+      if v_aba_vendas is distinct from l.aba then v_aba_vendas := l.aba; trocado := false; end if;
+      if norm_nome(ler(d, 'cpf')) = 'telefone' then trocado := true; continue; end if;
+      v_cpf := case when trocado then ler(d, 'telefone') else ler(d, 'cpf') end;
+      v_fone := case when trocado then ler(d, 'cpf') else ler(d, 'telefone') end;
+      v_email := ler(d, 'cliente email', 'email', 'e-mail');
+      if v_email !~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' then v_email := null; end if;
+      v_id := vincular_documento(p_imp, l.aba, l.linha, ler(d, 'cliente nome', 'nome'), v_email, v_fone, v_cpf);
+      if v_id is not null then
+        perform completar_aluna(v_id, jsonb_build_object('email', v_email, 'telefone', v_fone));
+        n_docs := n_docs + 1;
+      end if;
+      continue;
+    end if;
+    if norm_nome(l.aba) ~ 'renovacao|boleto nb|pedidos de cancelamento|^cancelamentos$' then
       ignoradas := jsonb_set(ignoradas, array[l.aba], to_jsonb(coalesce((ignoradas->>l.aba)::int, 0) + 1));
       continue;
     end if;
     d := l.dados;
     v_nome := ler(d, 'nome', 'aluno(a)', 'aluna', 'coluna 2', '_2');
     if v_nome is null or v_nome ~ '^\d+(\.0)?$' or norm_nome(v_nome) in ('nome', 'aluna', 'aluno(a)') then continue; end if;
-    select * into a from garantir_aluna(p_imp, l.aba, l.linha, v_nome, ler(d, 'e-mail', 'email'), ler(d, 'telefone'));
+    select * into a from garantir_aluna_doc(p_imp, l.aba, l.linha, v_nome, ler(d, 'e-mail', 'email'), ler(d, 'telefone'), ler(d, 'cpf'));
     if a.aluna_id is null then continue; end if;
     if a.criada then n_alunas := n_alunas + 1; end if;
 
@@ -636,7 +666,8 @@ begin
     if found then n_onb := n_onb + 1; end if;
   end loop;
   return jsonb_build_object('contratos', n_cont, 'alunas_novas', n_alunas,
-                            'onboarding_em_aberto', n_onb, 'anotacoes', n_notas, 'abas_ignoradas', ignoradas);
+                            'onboarding_em_aberto', n_onb, 'anotacoes', n_notas, 'abas_ignoradas', ignoradas,
+                            'fichas_completadas_pela_venda', n_docs);
 end $$;
 
 -- Controle Consultorias: a aba e do consultor (mais confiavel que a coluna
