@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, configurado } from '../lib/supabase'
+import { supabase, configurado, definirManterConectado, manterConectado, provedoresLigados } from '../lib/supabase'
 import { CHAVE_SAIU, useSessao } from '../lib/sessao'
 import { Campo, Erro } from '../componentes/ui'
 import { mensagemErro } from '../lib/util'
@@ -12,16 +12,43 @@ export function Login() {
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(() => {
     try {
-      if (sessionStorage.getItem(CHAVE_SAIU)) { sessionStorage.removeItem(CHAVE_SAIU); return 'Você saiu automaticamente depois de 1 hora sem uso. Entre de novo.' }
+      if (sessionStorage.getItem(CHAVE_SAIU)) { sessionStorage.removeItem(CHAVE_SAIU); return 'Você saiu automaticamente por tempo sem uso. Entre de novo.' }
     } catch { /* sem storage */ }
     return null
   })
   const [enviando, setEnviando] = useState(false)
+  const [manter, setManter] = useState(manterConectado)
+  const [google, setGoogle] = useState(false)
+
+  useEffect(() => {
+    provedoresLigados().then((p) => setGoogle(p.google))
+    // Volta do Google com erro: conta que a coordenacao nao criou (o cadastro
+    // aberto fica desligado), ou login cancelado.
+    const q = new URLSearchParams(location.search + '&' + location.hash.slice(1))
+    const desc = q.get('error_description')
+    if (desc) {
+      setErro(/signup|not allowed|user not found/i.test(desc)
+        ? 'Este Google não tem acesso ao Moonshot. Use o mesmo e-mail que a coordenação cadastrou, ou peça seu acesso.'
+        : 'Não foi possível entrar com o Google. Tente de novo.')
+      history.replaceState(null, '', location.pathname)
+    }
+  }, [])
+
+  async function entrarComGoogle() {
+    setErro(null); setAviso(null)
+    definirManterConectado(manter)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: location.origin, queryParams: { prompt: 'select_account' } },
+    })
+    if (error) setErro(mensagemErro(error))
+  }
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
     setErro(null); setAviso(null); setEnviando(true)
     if (modo === 'entrar') {
+      definirManterConectado(manter)
       const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
       // Mesma mensagem para e-mail inexistente e senha errada: nao revela quem tem acesso.
       if (error) setErro(error.status === 429 ? 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
@@ -48,17 +75,44 @@ export function Login() {
             <input className="entrada" type="password" autoComplete="current-password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
           </Campo>
         )}
+        {modo === 'entrar' && (
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-[#b6884c]" checked={manter} onChange={(e) => setManter(e.target.checked)} />
+            Manter conectado
+            <span className="text-xs text-slate-400">(só em computador seu)</span>
+          </label>
+        )}
         <Erro msg={erro} />
         {aviso && <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{aviso}</div>}
         <button className="btn-primario w-full" disabled={enviando}>
           {modo === 'entrar' ? 'Entrar' : 'Enviar link'}
         </button>
+        {modo === 'entrar' && google && (
+          <>
+            <div className="flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200" />ou<span className="h-px flex-1 bg-slate-200" /></div>
+            <button type="button" onClick={entrarComGoogle}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+              <LogoGoogle /> Entrar com Google
+            </button>
+          </>
+        )}
         <button type="button" className="w-full text-center text-sm text-indigo-600 hover:underline"
           onClick={() => { setModo(modo === 'entrar' ? 'link' : 'entrar'); setErro(null); setAviso(null) }}>
           {modo === 'entrar' ? 'Esqueceu a senha?' : 'Voltar para o login'}
         </button>
       </form>
     </Tela>
+  )
+}
+
+function LogoGoogle() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
   )
 }
 

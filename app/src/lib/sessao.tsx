@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { manterConectado, supabase } from './supabase'
 import type { Etapa, Funil, Perfil } from './tipos'
 
 interface Sessao {
@@ -19,9 +19,10 @@ interface Sessao {
 const Ctx = createContext<Sessao | null>(null)
 
 // Sem uso por 60 minutos, a sessao cai: a ficha tem dado pessoal e relato
-// sigiloso, e o computador pode ser compartilhado. A ultima atividade fica no
-// localStorage para valer entre abas.
-const INATIVIDADE_MS = 60 * 60 * 1000
+// sigiloso, e o computador pode ser compartilhado. Quem marca "manter
+// conectado" no login (computador proprio) cai so depois de 30 dias parado.
+// A ultima atividade fica no localStorage para valer entre abas.
+const inatividadeMs = () => (manterConectado() ? 30 * 24 : 1) * 60 * 60 * 1000
 const CHAVE_ATIVIDADE = 'moonshot.ultima_atividade'
 export const CHAVE_SAIU = 'moonshot.saiu_por_inatividade'
 
@@ -80,7 +81,7 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
     const eventos = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove']
     // Voltar depois de horas com a aba aberta: confere antes de contar como uso.
     const conferir = () => {
-      if (Date.now() - lerAtividade() > INATIVIDADE_MS) {
+      if (Date.now() - lerAtividade() > inatividadeMs()) {
         try { sessionStorage.setItem(CHAVE_SAIU, '1') } catch { /* ok */ }
         supabase.auth.signOut()
       }
