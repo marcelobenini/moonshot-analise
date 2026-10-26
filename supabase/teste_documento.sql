@@ -49,6 +49,12 @@ select ok((select count(*) = 1 from aluna a join aluna_documento d on d.aluna_id
 select ok(conta_como((select id from perfil where papel = 'consultor' limit 1), 'select * from aluna_documento') = 0,
           'consultor sem a aluna na carteira nao ve CPF');
 
+insert into aluna (nome) values ('Dalia Eduarda Doc da Silva'), ('Begonia Teodoro Docsalles');
+select ok((select aluna_id is null from achar_aluna('Dalia Teresa da Silva', null, null)),
+          'primeiro e ultimo iguais com sobrenome comum (Silva) nao juntam pessoas diferentes');
+select ok((select aluna_id is not null from achar_aluna('Begonia Docsalles', null, null)),
+          'nome curto com sobrenome raro ainda acha a ficha');
+
 insert into aluna (nome, email) values ('Lirio Doc Costa', 'lirio@doc.com'), ('Lirio Doc C', 'LIRIO@doc.com');
 select ok((cruzar_duplicatas()->>'fichas_unidas')::int >= 1, 'cruzamento acha a ficha repetida');
 select ok((select count(*) = 1 from aluna where lower(email) = 'lirio@doc.com'), 'e une as duas, com mesmo e-mail e nome compativel');

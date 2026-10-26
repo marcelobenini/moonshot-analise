@@ -397,6 +397,16 @@ language sql immutable set search_path = public, extensions as $$
      and (split_part(a, ' ', 1) = split_part(b, ' ', 1) or similarity(a, b) >= 0.45)
 $$;
 
+-- Sobrenome tao comum que, sozinho com o primeiro nome, nao identifica ninguem:
+-- "Maria ... Silva" e "Nayara ... Silva" sao pessoas diferentes.
+create or replace function sobrenome_comum(t text) returns boolean
+language sql immutable set search_path = public as $$
+  select t = any(array['silva','santos','souza','sousa','oliveira','lima','pereira','costa','rodrigues','ferreira',
+                       'alves','gomes','carvalho','martins','almeida','ribeiro','barbosa','soares','araujo','fernandes',
+                       'nascimento','moura','mendes','dias','castro','cardoso','rocha','lopes','teixeira','freitas',
+                       'vieira','batista','marques','ramos','reis','cruz','nunes','moraes','morais','jesus','miranda','pinto'])
+$$;
+
 create or replace function achar_aluna(p_nome text, p_email text, p_fone text,
                                        out aluna_id bigint, out metodo text, out candidatos jsonb)
 language plpgsql stable set search_path = public, extensions as $$
@@ -431,10 +441,14 @@ begin
       and array_length(array(select w from unnest(string_to_array(a.nome_chave, ' ')) w where length(w) > 2), 1) >= 2;
     if array_length(ids, 1) = 1 then aluna_id := ids[1]; metodo := 'nome_parcial'; return; end if;
 
-    select array_agg(id) into ids from aluna a
-    where split_part(a.nome_chave, ' ', 1) = split_part(k, ' ', 1)
-      and regexp_replace(a.nome_chave, '^.* ', '') = regexp_replace(k, '^.* ', '');
-    if array_length(ids, 1) = 1 then aluna_id := ids[1]; metodo := 'primeiro_ultimo'; return; end if;
+    -- Primeiro e ultimo iguais, mas o meio diferente, so junta se o sobrenome
+    -- for raro; com Silva, Santos, Lima... vira duvida (ficha nova + pendencia).
+    if not sobrenome_comum(regexp_replace(k, '^.* ', '')) then
+      select array_agg(id) into ids from aluna a
+      where split_part(a.nome_chave, ' ', 1) = split_part(k, ' ', 1)
+        and regexp_replace(a.nome_chave, '^.* ', '') = regexp_replace(k, '^.* ', '');
+      if array_length(ids, 1) = 1 then aluna_id := ids[1]; metodo := 'primeiro_ultimo'; return; end if;
+    end if;
   end if;
 
   select jsonb_agg(jsonb_build_object('id', id, 'nome', nome, 'similaridade', round(s::numeric, 2)) order by s desc)
