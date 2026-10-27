@@ -123,3 +123,21 @@ export function mensagemErro(e: unknown) {
   }
   return 'Algo deu errado. Tente de novo.'
 }
+
+// Link do WhatsApp: numero brasileiro sem DDI ganha o 55; o de fora (351...)
+// ja vem com o codigo do pais.
+export function linkWhats(tel: string | null | undefined) {
+  const d = (tel ?? '').replace(/\D/g, '')
+  if (d.length < 8) return null
+  return `https://wa.me/${d.length <= 11 ? '55' + d : d}`
+}
+
+// Origem do card em portugues de gente: "consultor" vira "Indicação de Marcelo".
+export function rotuloOrigem(dados: Record<string, unknown>) {
+  const o = typeof dados.origem === 'string' ? dados.origem : null
+  const quem = typeof dados.enviado_por === 'string' ? dados.enviado_por : null
+  if (o === 'consultor' || (!o && quem)) return quem ? `Indicação de ${quem}` : 'Indicação do consultor'
+  if (o === 'lista') return 'Lista'
+  if (o === 'inbound') return 'Inbound'
+  return o
+}
