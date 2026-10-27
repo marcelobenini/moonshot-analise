@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ExternalLink, FileText, Loader2, Sparkles, X } from 'lucide-react'
+import { ExternalLink, FileText, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Fechamento, FechamentoRegistro } from '../lib/tipos'
@@ -133,8 +133,6 @@ function Registro({ r, autor }: { r: FechamentoRegistro; autor: string }) {
   )
 }
 
-type Leitura = { resumo: string; status: string; nivel: number; acoes: string[]; pontos_de_atencao: string[] }
-
 function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) {
   const [transcricao, setTranscricao] = useState('')
   const [resumo, setResumo] = useState('')
@@ -142,9 +140,7 @@ function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) 
   const [nivel, setNivel] = useState<string>(caso.nivel ? String(caso.nivel) : '')
   const [acoes, setAcoes] = useState('')
   const [quando, setQuando] = useState('')
-  const [lendo, setLendo] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [aviso, setAviso] = useState<string | null>(null)
 
   async function arquivo(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -155,29 +151,10 @@ function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) 
     setErro(null)
   }
 
-  async function ler() {
-    setLendo(true); setErro(null); setAviso(null)
-    const { data: r, error } = await supabase.functions.invoke('ler-transcricao', { body: { fechamento_id: caso.id, texto: transcricao } })
-    setLendo(false)
-    if (error) {
-      const corpo = await (error as { context?: Response }).context?.json?.().catch(() => null)
-      setErro(corpo?.erro === 'sem_chave'
-        ? 'A leitura automática ainda não foi ligada. A coordenação precisa cadastrar a chave da API no Supabase.'
-        : corpo?.erro ?? 'Não deu para ler a transcrição agora.')
-      return
-    }
-    const l = r as Leitura
-    setResumo([l.resumo, ...(l.pontos_de_atencao.length ? ['Pontos de atenção: ' + l.pontos_de_atencao.join('; ')] : [])].join('\n\n'))
-    setStatus(l.status)
-    if (l.nivel) setNivel(String(l.nivel))
-    setAcoes(l.acoes.map((a) => `• ${a}`).join('\n'))
-    setAviso('Preenchido a partir da transcrição. Confira e ajuste antes de salvar.')
-  }
-
   async function salvar(e: FormEvent) {
     e.preventDefault()
-    if (!resumo.trim() && !acoes.trim() && status === caso.status && nivel === String(caso.nivel ?? '')) {
-      setErro('Escreva o que aconteceu ou mude o status, o nível ou as ações.'); return
+    if (!transcricao.trim() && !resumo.trim() && !acoes.trim() && status === caso.status && nivel === String(caso.nivel ?? '')) {
+      setErro('Suba a transcrição, escreva o que aconteceu ou mude o status, o nível ou as ações.'); return
     }
     const { error } = await supabase.from('fechamento_registro').insert({
       fechamento_id: caso.id, tipo: transcricao.trim() ? 'transcricao' : 'atualizacao',
@@ -186,25 +163,21 @@ function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) 
       acoes: acoes.trim() || null, proxima_acao_em: quando || null,
     })
     if (error) { setErro(mensagemErro(error)); return }
-    setTranscricao(''); setResumo(''); setAcoes(''); setQuando(''); setAviso(null)
+    setTranscricao(''); setResumo(''); setAcoes(''); setQuando('')
     salvo()
   }
 
   return (
     <form onSubmit={salvar} className="space-y-3 rounded-xl border border-ouro/40 p-4">
       <h3 className="font-display text-lg font-semibold text-noite">Registrar acompanhamento</h3>
-      <Campo rotulo="Transcrição da reunião" dica="Cole o texto ou suba o arquivo de transcrição. Depois, peça a leitura automática para preencher os campos.">
+      <Campo rotulo="Transcrição da reunião" dica="Cole o texto ou suba o arquivo. A transcrição fica arquivada no histórico do caso.">
         <textarea className="entrada min-h-28 text-xs" value={transcricao} onChange={(e) => setTranscricao(e.target.value)} />
       </Campo>
       <div className="flex flex-wrap items-center gap-2">
         <label className="btn-secundario cursor-pointer"><FileText size={15} /> Subir arquivo
           <input type="file" accept=".txt,.vtt,.srt,.md,text/plain" className="hidden" onChange={arquivo} />
         </label>
-        <button type="button" className="btn-secundario" disabled={lendo || transcricao.trim().length < 40} onClick={ler}>
-          {lendo ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} Ler transcrição
-        </button>
       </div>
-      {aviso && <p className="rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800">{aviso}</p>}
       <Campo rotulo="O que aconteceu">
         <textarea className="entrada min-h-20" value={resumo} onChange={(e) => setResumo(e.target.value)} />
       </Campo>
