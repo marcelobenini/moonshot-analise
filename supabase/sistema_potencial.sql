@@ -61,6 +61,9 @@ begin
   if a.status_contrato in ('pausado', 'bloqueado') then
     ajuste := ajuste - 20;
     itens := itens || jsonb_build_object('item', 'Contrato ' || a.status_contrato, 'pontos', -20, 'porque', 'contrato parado');
+  elsif a.status_contrato = 'em_cancelamento' then
+    ajuste := ajuste - 30;
+    itens := itens || jsonb_build_object('item', 'Em processo de cancelamento', 'pontos', -30, 'porque', 'pediu para sair');
   elsif a.status_contrato in ('cancelado', 'encerrado') then
     ajuste := ajuste - 40;
     itens := itens || jsonb_build_object('item', 'Contrato ' || a.status_contrato, 'pontos', -40, 'porque', 'fora do programa');

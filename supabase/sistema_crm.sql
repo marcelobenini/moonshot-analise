@@ -41,11 +41,15 @@ begin
   if new.status_contrato is distinct from old.status_contrato then
     insert into aluna_historico (aluna_id, campo, de, para, motivo, autor_id)
     values (new.id, 'status_contrato', old.status_contrato, new.status_contrato, m, auth.uid());
-    if not silencio and new.status_contrato in ('cancelado', 'pausado', 'bloqueado') then
-      perform notificar(new.consultor_id, 'status', new.nome || ': ' || new.status_contrato,
+    if not silencio and new.status_contrato in ('cancelado', 'pausado', 'bloqueado', 'em_cancelamento') then
+      perform notificar(new.consultor_id, 'status', new.nome || ': ' || replace(replace(new.status_contrato, 'em_cancelamento', 'em processo de cancelamento'), '_', ' '),
                         coalesce(m, 'Mudado por ' || quem), '/alunas/' || new.id);
-      perform notificar(new.cs_id, 'status', new.nome || ': ' || new.status_contrato,
+      perform notificar(new.cs_id, 'status', new.nome || ': ' || replace(replace(new.status_contrato, 'em_cancelamento', 'em processo de cancelamento'), '_', ' '),
                         coalesce(m, 'Mudado por ' || quem), '/alunas/' || new.id);
+    end if;
+    -- Pediu para sair: vira trabalho da retencao.
+    if new.status_contrato = 'em_cancelamento' then
+      perform abrir_retencao(new.id, 'Em processo de cancelamento' || coalesce(': ' || m, ''));
     end if;
   end if;
   if new.status_financeiro is distinct from old.status_financeiro then
@@ -95,7 +99,7 @@ begin
   select * into a from aluna where id = p_aluna;
   if a.id is null then raise exception 'aluna % nao existe', p_aluna; end if;
   if coalesce(trim(p_motivo), '') = ''
-     and (p_status_contrato in ('cancelado', 'pausado', 'bloqueado', 'encerrado')
+     and (p_status_contrato in ('cancelado', 'pausado', 'bloqueado', 'encerrado', 'em_cancelamento')
           or p_status_financeiro = 'inadimplente') then
     raise exception 'diga o motivo: fica no historico da aluna';
   end if;
@@ -390,3 +394,23 @@ revoke execute on function criar_acesso(text, text, text, text) from public, ano
 grant execute on function criar_acesso(text, text, text, text) to authenticated;
 revoke execute on function redefinir_senha(uuid) from public, anon;
 grant execute on function redefinir_senha(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Status "em processo de cancelamento": aluna que pediu para sair e ainda
+-- esta com a retencao. Continua viva (conta na carteira).
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'aluna_status_contrato_check'
+                 and pg_get_constraintdef(oid) like '%em_cancelamento%') then
+    alter table aluna drop constraint if exists aluna_status_contrato_check;
+    alter table aluna add constraint aluna_status_contrato_check
+      check (status_contrato in ('ativo','pendente','bloqueado','pausado','em_cancelamento','encerrado','cancelado'));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'contrato_status_check'
+                 and pg_get_constraintdef(oid) like '%em_cancelamento%') then
+    alter table contrato drop constraint if exists contrato_status_check;
+    alter table contrato add constraint contrato_status_check
+      check (status in ('ativo','pendente','bloqueado','pausado','em_cancelamento','encerrado','cancelado'));
+  end if;
+end $$;

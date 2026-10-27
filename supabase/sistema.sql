@@ -182,7 +182,7 @@ create table if not exists aluna (
     inicio             date,
     termino            date,
     status_contrato    text not null default 'ativo'
-                       check (status_contrato in ('ativo','pendente','bloqueado','pausado','encerrado','cancelado')),
+                       check (status_contrato in ('ativo','pendente','bloqueado','pausado','em_cancelamento','encerrado','cancelado')),
     status_financeiro  text,
     faturamento_mensal numeric(14,2),
     funcionarios       integer,

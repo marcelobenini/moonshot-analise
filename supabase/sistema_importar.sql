@@ -38,7 +38,8 @@ begin
                      consultor_planilha, criado_por)
   select p.id, p.nome_canonico, m.telefone, m.email, f.empresa, c.ramo, c.cidade, m.produto, m.turma,
          m.inicio, m.termino,
-         case when norm_nome(m.status) like '%cancel%' then 'cancelado'
+         case when norm_nome(m.status) like '%processo%' then 'em_cancelamento'
+              when norm_nome(m.status) like '%cancel%' then 'cancelado'
               when norm_nome(m.status) like '%encerr%' then 'encerrado'
               when norm_nome(m.status) like '%pausad%' then 'pausado'
               when norm_nome(m.status) like '%bloquead%' then 'bloqueado'

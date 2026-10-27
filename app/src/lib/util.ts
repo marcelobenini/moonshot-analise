@@ -66,6 +66,7 @@ export const STATUS_CONTRATO: Record<string, { rotulo: string; cor: string }> = 
   pendente: { rotulo: 'Pendente', cor: 'bg-amber-100 text-amber-800' },
   bloqueado: { rotulo: 'Bloqueada', cor: 'bg-red-100 text-red-800' },
   pausado: { rotulo: 'Pausada', cor: 'bg-sky-100 text-sky-800' },
+  em_cancelamento: { rotulo: 'Em processo de cancelamento', cor: 'bg-orange-100 text-orange-800' },
   encerrado: { rotulo: 'Encerrada', cor: 'bg-slate-200 text-slate-700' },
   cancelado: { rotulo: 'Cancelada', cor: 'bg-slate-800 text-white' },
 }

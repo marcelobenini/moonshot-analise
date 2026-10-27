@@ -117,5 +117,12 @@ select ok(not barrado(:cons, $$insert into aluna (nome, consultor_id) values ('A
 select ok(barrado(:cons, $$insert into aluna (nome, consultor_id) values ('Aluna De Outro', '20000000-0000-0000-0000-0000000000b2')$$),
           'mas nao na carteira de outro');
 
+-- Em processo de cancelamento: convive com a inadimplencia e abre a retencao.
+select como(:cs, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), 'em_cancelamento', 'inadimplente', 'Pediu para sair por falta de tempo')$$);
+select ok((select status_contrato = 'em_cancelamento' and status_financeiro = 'inadimplente' from aluna where id = :helena),
+          'em processo de cancelamento e inadimplente vivem juntas');
+select ok(exists (select 1 from card where funil_id = 'retencao' and aluna_id = :helena and fechado_em is null),
+          'em processo de cancelamento abre card na retencao');
+
 rollback;
 \echo 'TODOS OS TESTES DE CRM PASSARAM'

@@ -127,31 +127,49 @@ export function RegistrarContato({ aluna, fechar, salvo }: { aluna: Aluna; fecha
   )
 }
 
-const STATUS_RAPIDO: { rotulo: string; contrato?: string; financeiro?: string; cor: string }[] = [
-  { rotulo: 'Ativa', contrato: 'ativo', cor: 'border-emerald-300 text-emerald-800' },
-  { rotulo: 'Inadimplente', financeiro: 'inadimplente', cor: 'border-red-300 text-red-700' },
-  { rotulo: 'Pagamento em dia', financeiro: 'adimplente', cor: 'border-emerald-300 text-emerald-800' },
-  { rotulo: 'Pausada', contrato: 'pausado', cor: 'border-sky-300 text-sky-800' },
-  { rotulo: 'Bloqueada', contrato: 'bloqueado', cor: 'border-red-300 text-red-700' },
-  { rotulo: 'Cancelada', contrato: 'cancelado', cor: 'border-slate-400 text-slate-800' },
-  { rotulo: 'Encerrada', contrato: 'encerrado', cor: 'border-slate-300 text-slate-600' },
+// Duas familias de etiqueta. Dentro de cada uma so vale uma (nao da para estar
+// ativa e cancelada); entre elas convivem (cancelada e inadimplente).
+const SITUACAO: { rotulo: string; valor: string; cor: string }[] = [
+  { rotulo: 'Ativa', valor: 'ativo', cor: 'border-emerald-300 text-emerald-800' },
+  { rotulo: 'Pausada', valor: 'pausado', cor: 'border-sky-300 text-sky-800' },
+  { rotulo: 'Bloqueada', valor: 'bloqueado', cor: 'border-red-300 text-red-700' },
+  { rotulo: 'Em processo de cancelamento', valor: 'em_cancelamento', cor: 'border-orange-300 text-orange-800' },
+  { rotulo: 'Cancelada', valor: 'cancelado', cor: 'border-slate-400 text-slate-800' },
+  { rotulo: 'Encerrada', valor: 'encerrado', cor: 'border-slate-300 text-slate-600' },
+]
+const PAGAMENTO: { rotulo: string; valor: string; cor: string }[] = [
+  { rotulo: 'Pagamento em dia', valor: 'adimplente', cor: 'border-emerald-300 text-emerald-800' },
+  { rotulo: 'Inadimplente', valor: 'inadimplente', cor: 'border-red-300 text-red-700' },
 ]
 
 export function MudarStatus({ aluna, fechar, salvo }: { aluna: Aluna; fechar: () => void; salvo: () => void }) {
-  const [escolha, setEscolha] = useState<(typeof STATUS_RAPIDO)[number] | null>(null)
+  const [contrato, setContrato] = useState(aluna.status_contrato as string)
+  const [financeiro, setFinanceiro] = useState(aluna.status_financeiro ?? '')
   const [motivo, setMotivo] = useState('')
   const [erro, setErro] = useState<string | null>(null)
-  const exige = escolha && (escolha.financeiro === 'inadimplente' || ['cancelado', 'pausado', 'bloqueado', 'encerrado'].includes(escolha.contrato ?? ''))
+  const mudaContrato = contrato !== aluna.status_contrato
+  const mudaFinanceiro = financeiro !== (aluna.status_financeiro ?? '')
+  const mudou = mudaContrato || mudaFinanceiro
+  const exige = (mudaContrato && ['cancelado', 'pausado', 'bloqueado', 'encerrado', 'em_cancelamento'].includes(contrato))
+    || (mudaFinanceiro && financeiro === 'inadimplente')
   async function salvar(e: FormEvent) {
     e.preventDefault()
-    if (!escolha) return
+    if (!mudou) return
     const { error } = await supabase.rpc('mudar_status_aluna', {
-      p_aluna: aluna.id, p_status_contrato: escolha.contrato ?? null,
-      p_status_financeiro: escolha.financeiro ?? null, p_motivo: motivo.trim() || null,
+      p_aluna: aluna.id, p_status_contrato: mudaContrato ? contrato : null,
+      p_status_financeiro: mudaFinanceiro ? financeiro : null, p_motivo: motivo.trim() || null,
     })
     if (error) { setErro(mensagemErro(error)); return }
     salvo()
   }
+  const botoes = (lista: typeof SITUACAO, atual: string, escolher: (v: string) => void) => (
+    <div className="flex flex-wrap gap-2">
+      {lista.map((s) => (
+        <button type="button" key={s.valor} onClick={() => escolher(s.valor)}
+          className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${s.cor} ${atual === s.valor ? 'ring-2 ring-ouro bg-nude' : 'hover:bg-slate-50'}`}>{s.rotulo}</button>
+      ))}
+    </div>
+  )
   return (
     <Modal titulo={`Status · ${aluna.nome}`} aberto fechar={fechar}>
       <form onSubmit={salvar} className="space-y-4">
@@ -160,18 +178,25 @@ export function MudarStatus({ aluna, fechar, salvo }: { aluna: Aluna; fechar: ()
           <Selo cor={STATUS_CONTRATO[aluna.status_contrato]?.cor ?? ''}>{STATUS_CONTRATO[aluna.status_contrato]?.rotulo ?? aluna.status_contrato}</Selo>
           {aluna.status_financeiro && <Selo cor={FINANCEIRO[aluna.status_financeiro]?.cor ?? 'bg-slate-100'}>{FINANCEIRO[aluna.status_financeiro]?.rotulo ?? aluna.status_financeiro}</Selo>}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {STATUS_RAPIDO.map((s) => (
-            <button type="button" key={s.rotulo} onClick={() => setEscolha(s)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${s.cor} ${escolha === s ? 'ring-2 ring-indigo-400' : 'hover:bg-slate-50'}`}>{s.rotulo}</button>
-          ))}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Situação do contrato <span className="font-normal normal-case">(só uma)</span></p>
+          {botoes(SITUACAO, contrato, setContrato)}
         </div>
-        {escolha && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pagamento <span className="font-normal normal-case">(convive com a situação)</span></p>
+          {botoes(PAGAMENTO, financeiro, setFinanceiro)}
+        </div>
+        {mudou && (
           <Campo rotulo={exige ? 'Motivo *' : 'Motivo'} dica="Fica no histórico da aluna e vai no aviso para o consultor e a CS.">
             <textarea className="entrada min-h-20" required={!!exige} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
           </Campo>
         )}
-        {escolha?.contrato === 'cancelado' && (
+        {mudaContrato && contrato === 'em_cancelamento' && (
+          <p className="rounded-lg bg-orange-50 p-3 text-xs text-orange-900">
+            A aluna continua na carteira e entra no funil de <b>Retenção</b> para a equipe tentar reverter.
+          </p>
+        )}
+        {mudaContrato && contrato === 'cancelado' && (
           <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
             Pedido de cancelamento em andamento? Coloque a aluna no funil de <b>Retenção</b> em vez de cancelar direto: assim a retenção tenta reverter e o motivo entra na taxa.
           </p>
@@ -179,7 +204,7 @@ export function MudarStatus({ aluna, fechar, salvo }: { aluna: Aluna; fechar: ()
         <Erro msg={erro} />
         <div className="flex justify-end gap-2">
           <button type="button" className="btn-secundario" onClick={fechar}>Cancelar</button>
-          <button className="btn-primario" disabled={!escolha}>Salvar status</button>
+          <button className="btn-primario" disabled={!mudou}>Salvar status</button>
         </div>
       </form>
     </Modal>

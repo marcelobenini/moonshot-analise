@@ -44,8 +44,8 @@ select ok((select count(*) = 2 from aluna where email = 'maria@x.com' or nome = 
 select ok((select limpar_nome('MARIA DA SILVA E SOUZA - obs') = 'Maria da Silva e Souza'
            and limpar_nome('Cláudia N. Benati (sócia)') = 'Cláudia N. Benati'),
           'nome em maiusculas vira nome proprio, sem a anotacao');
-select ok((select status = 'ativo' from contrato where turma = 'MOONSHOT ELITE'),
-          '"Processo Cancelamento" e aluna ativa, nao cancelada');
+select ok((select status = 'em_cancelamento' from contrato where turma = 'MOONSHOT ELITE'),
+          '"Processo Cancelamento" vira em processo de cancelamento, nao cancelada');
 select ok((select status_financeiro = 'pendente' from contrato where turma = 'MOONSHOT ELITE'), 'pendente de pagamento vira financeiro pendente');
 select ok((select produto = 'Moonshot Pró' and termino = '2027-05-12' from aluna where email = 'maria@x.com'),
           'ficha espelha o contrato mais recente');

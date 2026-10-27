@@ -28,7 +28,7 @@ export interface Aluna {
   turma: string | null
   inicio: string | null
   termino: string | null
-  status_contrato: 'ativo' | 'pendente' | 'bloqueado' | 'pausado' | 'encerrado' | 'cancelado'
+  status_contrato: 'ativo' | 'pendente' | 'bloqueado' | 'pausado' | 'em_cancelamento' | 'encerrado' | 'cancelado'
   status_financeiro: string | null
   faturamento_mensal: number | null
   funcionarios: number | null

@@ -57,7 +57,7 @@ create table if not exists contrato (
     termino            date,
     plano_meses        integer,
     status             text not null default 'ativo'
-                       check (status in ('ativo','pendente','bloqueado','pausado','encerrado','cancelado')),
+                       check (status in ('ativo','pendente','bloqueado','pausado','em_cancelamento','encerrado','cancelado')),
     status_financeiro  text check (status_financeiro in ('adimplente','inadimplente','parcelado','quitado','pendente')),
     forma_pagamento    text,
     assinatura         text,
@@ -287,8 +287,8 @@ create or replace function mapear_status(t text) returns text
 language sql immutable as $$
   select case
     when t is null then null
-    -- "Processo Cancelamento" ainda e aluna ativa: e trabalho da retencao.
-    when norm_nome(t) like '%processo%' then 'ativo'
+    -- "Processo Cancelamento" ainda e aluna viva: e trabalho da retencao.
+    when norm_nome(t) like '%processo%' then 'em_cancelamento'
     when norm_nome(t) like '%cancel%' then 'cancelado'
     when norm_nome(t) like '%encerr%' then 'encerrado'
     when norm_nome(t) like '%inadimpl%' then 'bloqueado'

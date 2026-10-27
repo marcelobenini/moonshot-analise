@@ -66,6 +66,7 @@ export function Alunas() {
           <option value="pendente">Pendente</option>
           <option value="bloqueado">Bloqueado</option>
           <option value="pausado">Pausado</option>
+          <option value="em_cancelamento">Em processo de cancelamento</option>
           <option value="encerrado">Encerrado</option>
           <option value="cancelado">Cancelado</option>
         </select>
@@ -236,7 +237,7 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <Campo rotulo="Término do contrato" dica="O card de renovação nasce sozinho 120 dias antes."><input className="entrada" type="date" value={f.termino ?? ''} onChange={(e) => muda('termino', e.target.value)} /></Campo>
           <Campo rotulo="Status do contrato">
             <select className="entrada" value={f.status_contrato ?? 'ativo'} onChange={(e) => muda('status_contrato', e.target.value)}>
-              {['ativo', 'pendente', 'bloqueado', 'pausado', 'encerrado', 'cancelado'].map((s) => <option key={s}>{s}</option>)}
+              {['ativo', 'pendente', 'bloqueado', 'pausado', 'em_cancelamento', 'encerrado', 'cancelado'].map((s) => <option key={s} value={s}>{STATUS_CONTRATO[s]?.rotulo ?? s}</option>)}
             </select>
           </Campo>
           <Campo rotulo="Status financeiro">

@@ -4,7 +4,7 @@ import { Check, Plus, Send } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { AgendaConsultoria, Aluna, Contrato, NotaAluna, Participante } from '../lib/tipos'
-import { FINANCEIRO, NOTA, PRODUTOS, data, dataHora, hoje, mensagemErro } from '../lib/util'
+import { FINANCEIRO, NOTA, PRODUTOS, STATUS_CONTRATO, data, dataHora, hoje, mensagemErro } from '../lib/util'
 import { Campo, Erro, Modal, Selo } from '../componentes/ui'
 
 // Contratos: uma linha por compra. O que a planilha resolvia repetindo a
@@ -74,7 +74,7 @@ function ContratoForm({ c, fechar, salvo }: { c: Partial<Contrato>; fechar: () =
         <Campo rotulo="Término" dica="A renovação nasce 120 dias antes."><input className="entrada" type="date" value={f.termino ?? ''} onChange={(e) => muda('termino', e.target.value)} /></Campo>
         <Campo rotulo="Status">
           <select className="entrada" value={f.status ?? 'ativo'} onChange={(e) => muda('status', e.target.value)}>
-            {['ativo', 'pendente', 'bloqueado', 'pausado', 'encerrado', 'cancelado'].map((s) => <option key={s}>{s}</option>)}
+            {['ativo', 'pendente', 'bloqueado', 'pausado', 'em_cancelamento', 'encerrado', 'cancelado'].map((s) => <option key={s} value={s}>{STATUS_CONTRATO[s]?.rotulo ?? s}</option>)}
           </select>
         </Campo>
         <Campo rotulo="Financeiro">
