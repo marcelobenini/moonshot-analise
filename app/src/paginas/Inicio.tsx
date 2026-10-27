@@ -38,12 +38,14 @@ export function Inicio() {
   const [funilGrafico, setFunilGrafico] = useState<string | null>(null)
   const [semContato, setSemContato] = useState<{ lista: Aluna[]; total: number }>({ lista: [], total: 0 })
   const coord = eu?.papel === 'coordenador'
+  // A CS acompanha a base inteira, como a coordenacao; o consultor ve a carteira.
+  const geral = coord || eu?.papel === 'cs'
 
   useEffect(() => {
     if (!eu) return
     let qRisco = supabase.from('aluna').select('*').in('saude', ['risco_saida', 'sem_contato'])
       .not('status_contrato', 'in', '(cancelado,encerrado)').order('ultima_consultoria', { ascending: true, nullsFirst: true }).limit(8)
-    if (!coord) qRisco = qRisco.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+    if (!geral) qRisco = qRisco.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
     // Retornos combinados ate daqui a 3 dias e quem esta ha 30 dias sem contato.
     const em3 = new Date(); em3.setDate(em3.getDate() + 3)
     const ha30 = new Date(); ha30.setDate(ha30.getDate() - 30)
@@ -52,11 +54,11 @@ export function Inicio() {
     let qSem = supabase.from('aluna').select('*', { count: 'exact' }).eq('status_contrato', 'ativo')
       .or(`ultimo_contato.is.null,ultimo_contato.lt.${ha30.toLocaleDateString('sv-SE')}`)
       .order('ultimo_contato', { ascending: true, nullsFirst: true }).limit(8)
-    supabase.rpc('painel', { p_minha: !coord }).then(({ data: d }) => setPainel((d ?? null) as Painel | null))
+    supabase.rpc('painel', { p_minha: !geral }).then(({ data: d }) => setPainel((d ?? null) as Painel | null))
     let qPot = supabase.from('aluna').select('*, potencial').eq('status_contrato', 'ativo').order('potencial', { ascending: false }).limit(8)
-    if (!coord) qPot = qPot.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+    if (!geral) qPot = qPot.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
     qPot.then(({ data: d }) => setPotenciais((d ?? []) as Aluna[]))
-    if (!coord) {
+    if (!geral) {
       qRetorno = qRetorno.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
       qSem = qSem.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
     }
@@ -74,7 +76,7 @@ export function Inicio() {
       coord ? supabase.from('vw_retencao_sistema').select('*') : Promise.resolve({ data: [] }),
       // A visao respeita a RLS: consultor ve a agenda da propria carteira.
       supabase.from('vw_agenda_proxima').select('*').order('data_prevista').limit(40),
-      coord || eu.papel === 'cs' ? supabase.from('vw_inadimplentes').select('*').order('consultor')
+      geral ? supabase.from('vw_inadimplentes').select('*').order('consultor')
         : supabase.from('vw_inadimplentes').select('*').eq('consultor_id', eu.id),
     ]).then(([c, d, r, fr, ca, m, rt, ag, ina]) => {
       setAgenda((ag.data ?? []) as AgendaItem[])
@@ -114,7 +116,7 @@ export function Inicio() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Indicador rotulo={coord ? 'Alunas ativas' : 'Alunas ativas na carteira'} valor={painel ? String(painel.ativas) : '…'}
+        <Indicador rotulo={geral ? 'Alunas ativas' : 'Alunas ativas na carteira'} valor={painel ? String(painel.ativas) : '…'}
           sub={painel ? `${painel.novas_30d} novas nos últimos 30 dias` : ''} icone={<Users size={20} />} tom="ouro" />
         <Indicador rotulo="Faturamento" valor={painel ? `R$ ${compacto(painel.faturamento)}` : '…'}
           sub={painel ? `por mês, de ${painel.com_faturamento} alunas` : ''} icone={<Wallet size={20} />} tom="noite" />
@@ -179,7 +181,7 @@ export function Inicio() {
           ))}
         </Bloco>
 
-        <Bloco titulo={coord ? 'Maiores potenciais' : 'Maiores potenciais da carteira'} link="/alunas" icone={<Flame size={16} />}>
+        <Bloco titulo={geral ? 'Maiores potenciais' : 'Maiores potenciais da carteira'} link="/alunas" icone={<Flame size={16} />}>
           {potenciais.length === 0 ? <Nada>Nenhuma aluna ativa.</Nada> : potenciais.map((a) => (
             <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
               sub={[a.produto, a.faturamento_mensal != null ? `${reais(a.faturamento_mensal)}/mês` : null].filter(Boolean).join(' · ')}
@@ -190,7 +192,7 @@ export function Inicio() {
         <Bloco titulo={`Retornos combinados${retornos.length ? ` (${retornos.length})` : ''}`} icone={<PhoneCall size={16} />}>
           {retornos.length === 0 ? <Nada>Nenhum retorno para os próximos dias.</Nada> : retornos.map((a) => (
             <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
-              sub={`último contato ${data(a.ultimo_contato)}${coord ? ` · CS ${nomeDe(a.cs_id)}` : ''}`}
+              sub={`último contato ${data(a.ultimo_contato)}${geral ? ` · CS ${nomeDe(a.cs_id)}` : ''}`}
               direita={<span className={`text-xs font-medium ${a.proximo_contato! < hoje() ? 'text-red-600' : a.proximo_contato === hoje() ? 'text-amber-700' : 'text-slate-600'}`}>
                 {a.proximo_contato! < hoje() ? 'atrasado · ' : a.proximo_contato === hoje() ? 'hoje · ' : ''}{data(a.proximo_contato)}</span>} />
           ))}
@@ -199,7 +201,7 @@ export function Inicio() {
         <Bloco titulo={`Há mais de 30 dias sem contato${semContato.total ? ` (${semContato.total})` : ''}`} link="/alunas">
           {semContato.lista.length === 0 ? <Nada>Todas as alunas ativas tiveram contato no último mês.</Nada> : semContato.lista.map((a) => (
             <Linha key={a.id} para={`/alunas/${a.id}`} titulo={a.nome}
-              sub={`${a.ultimo_contato ? `último contato ${data(a.ultimo_contato)}` : 'nenhum contato registrado'}${coord ? ` · CS ${nomeDe(a.cs_id)}` : ''}`} />
+              sub={`${a.ultimo_contato ? `último contato ${data(a.ultimo_contato)}` : 'nenhum contato registrado'}${geral ? ` · CS ${nomeDe(a.cs_id)}` : ''}`} />
           ))}
         </Bloco>
 
@@ -214,7 +216,7 @@ export function Inicio() {
         <Bloco titulo="Consultorias dos próximos 14 dias">
           {agenda.length === 0 ? <Nada>Nada marcado na agenda.</Nada> : agenda.slice(0, 10).map((g) => (
             <Linha key={g.id} para={`/alunas/${g.aluna_id}`} titulo={g.nome}
-              sub={`${g.numero === 0 ? 'Entrada' : `${g.numero}ª consultoria`}${coord ? ` · ${g.consultor ?? 'sem consultor'}` : ''}`}
+              sub={`${g.numero === 0 ? 'Entrada' : `${g.numero}ª consultoria`}${geral ? ` · ${g.consultor ?? 'sem consultor'}` : ''}`}
               direita={<span className={`text-xs font-medium ${g.atrasada ? 'text-red-600' : 'text-slate-600'}`}>{g.atrasada ? 'atrasada · ' : ''}{data(g.data_prevista)}</span>} />
           ))}
         </Bloco>
@@ -239,7 +241,7 @@ export function Inicio() {
       </div>
 
       {carteira.length > 0 && (
-        <Bloco titulo={coord ? 'Carteiras' : 'Minha carteira'}>
+        <Bloco titulo={geral ? 'Carteiras' : 'Minha carteira'}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-slate-500">

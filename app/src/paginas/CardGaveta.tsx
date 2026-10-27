@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { X, Send, ExternalLink, Phone, Mail, MessageCircle, ChevronDown, Info as Info2, MessagesSquare, History,
-  Filter, Thermometer, Share2, UserRound, DollarSign, CalendarClock, Trash2, Trophy } from 'lucide-react'
+  Filter, Thermometer, Share2, UserRound, DollarSign, CalendarClock, Trash2, Trophy, HeartHandshake } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, CardEvento, CampoFunil, Etapa, Funil } from '../lib/tipos'
@@ -183,6 +183,11 @@ export function CardGaveta({ id, fechar, mudou, encaixado = false }: { id: numbe
                       ? <div className="w-52"><EscolherPessoa valor={atual.responsavel_id} mudar={(v) => muda('responsavel_id', v)} /></div>
                       : nomeDe(atual.responsavel_id)}
                   </Linha>
+                  {aluna && (
+                    <Linha icone={HeartHandshake} rotulo="CS responsável">
+                      {aluna.cs_id ? nomeDe(aluna.cs_id) : aluna.cs_planilha ?? <span className="text-slate-400">Sem CS</span>}
+                    </Linha>
+                  )}
                   <Linha icone={DollarSign} rotulo="Valor potencial">
                     {editavel
                       ? <input className="entrada w-32 py-1 text-right font-mono" type="number" min="0" step="100" value={atual.valor ?? ''} placeholder="R$"

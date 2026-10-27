@@ -119,3 +119,24 @@ on conflict (funil_id, ordem) do update set
   nome = excluded.nome, tipo = excluded.tipo, exige_motivo = excluded.exige_motivo,
   alerta_dias = excluded.alerta_dias, alerta_coordenacao = excluded.alerta_coordenacao,
   gatilho = excluded.gatilho, marco_consultoria = excluded.marco_consultoria;
+
+-- Ascensao: a escada da aluna, Club -> Pro -> In Company -> Private. Cada
+-- coluna e um degrau; subir a aluna de coluna e ela ascender de programa. O
+-- consultor sobe quem esta pronta, o comercial fecha, a CS acompanha.
+-- "A definir" segura quem ainda nao tem o programa claro no cadastro.
+insert into funil (id, nome, descricao, ordem, papeis_editam, papeis_leem, restringe_carteira, campos, motivos) values
+  ('ascensao', 'Ascensão', 'Escada da aluna: Club → Pró → In Company → Private. Mova a aluna para o degrau em que ela está.', 7,
+   '{consultor,comercial,cs}', '{retencao}', true,
+   '[{"chave":"proximo_degrau_em","rotulo":"Previsão de subir","tipo":"data"},
+     {"chave":"degrau_origem","rotulo":"De onde veio o degrau","tipo":"texto"},
+     {"chave":"observacao","rotulo":"Observação","tipo":"textao"}]', '{}')
+on conflict (id) do update set nome = excluded.nome, descricao = excluded.descricao, papeis_editam = excluded.papeis_editam,
+  papeis_leem = excluded.papeis_leem, campos = excluded.campos;
+
+insert into etapa (funil_id, ordem, nome, tipo) values
+  ('ascensao', 1, 'A definir', 'aberta'),
+  ('ascensao', 2, 'Moonshot Club', 'aberta'),
+  ('ascensao', 3, 'Moonshot Pró', 'aberta'),
+  ('ascensao', 4, 'Moonshot In Company', 'aberta'),
+  ('ascensao', 5, 'Moonshot Private', 'aberta')
+on conflict (funil_id, ordem) do update set nome = excluded.nome, tipo = excluded.tipo;

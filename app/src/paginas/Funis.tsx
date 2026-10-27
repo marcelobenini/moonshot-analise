@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { Plus, Clock, Search, CalendarDays, ChevronDown, Columns3, List, Phone, Mail, UserRound, FileText } from 'lucide-react'
+import { Plus, Clock, Search, CalendarDays, ChevronDown, Columns3, List, Phone, Mail, UserRound, FileText, HeartHandshake } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Etapa } from '../lib/tipos'
@@ -9,7 +9,7 @@ import { SAUDE, data, diasDesde, hoje, mensagemErro, reais, rotuloOrigem } from 
 import { Carregando, Erro, Modal, Campo, Potencial, Vazio } from '../componentes/ui'
 import { CardGaveta, NovoCard } from './CardGaveta'
 
-type CardComAluna = Card & { aluna: Pick<Aluna, 'id' | 'nome' | 'produto' | 'saude' | 'faturamento_mensal' | 'potencial' | 'telefone' | 'email'> | null }
+type CardComAluna = Card & { aluna: Pick<Aluna, 'id' | 'nome' | 'produto' | 'saude' | 'faturamento_mensal' | 'potencial' | 'telefone' | 'email' | 'cs_id' | 'cs_planilha'> | null }
 
 export function Funis() {
   const { funis, etapas, nomeDe, podeEditar, eu } = useSessao()
@@ -45,7 +45,7 @@ export function Funis() {
 
   const carregar = useCallback(async () => {
     if (!funilId) return
-    let q = supabase.from('card').select('*, aluna(id, nome, produto, saude, faturamento_mensal, potencial, telefone, email)').eq('funil_id', funilId)
+    let q = supabase.from('card').select('*, aluna(id, nome, produto, saude, faturamento_mensal, potencial, telefone, email, cs_id, cs_planilha)').eq('funil_id', funilId)
     if (!verFechados) q = q.is('fechado_em', null)
     else q = q.or(`fechado_em.is.null,fechado_em.gte.${new Date(Date.now() - 30 * 86400000).toISOString()}`)
     const { data: d, error } = await q.order('posicao')
@@ -263,6 +263,8 @@ function haQuanto(dias: number) {
 function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir, cor, selecionado }: {
   card: CardComAluna; etapa: Etapa; arrastavel: boolean; responsavel: string | null; abrir: () => void; cor: Cor; selecionado: boolean
 }) {
+  const { nomeDe } = useSessao()
+  const cs = card.aluna?.cs_id ? nomeDe(card.aluna.cs_id).split(' ')[0] : card.aluna?.cs_planilha?.split(' ')[0] ?? null
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id, disabled: !arrastavel })
   const estilo = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
   const parado = diasDesde(card.etapa_desde)
@@ -291,6 +293,7 @@ function CartaoArrastavel({ card, etapa, arrastavel, responsavel, abrir, cor, se
         {card.aluna?.email && <div className="flex items-center gap-1.5 truncate"><Mail size={12} className="shrink-0 text-slate-400" /> {card.aluna.email}</div>}
         <div className="flex items-center gap-1.5 truncate"><UserRound size={12} className="shrink-0 text-slate-400" /> {responsavel ?? <span className="text-slate-400">sem responsável</span>}</div>
       </div>
+      {cs && <div className="mt-2 inline-flex max-w-full items-center gap-1 truncate rounded-md bg-nude px-2 py-0.5 text-xs font-medium text-noite ring-1 ring-ouro/30"><HeartHandshake size={11} /> CS {cs}</div>}
       {card.valor != null && <div className="mt-2.5 font-mono text-base font-semibold text-emerald-700">{reais(card.valor)}</div>}
       {(atrasado || saude || produto || prazoVencido) && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">

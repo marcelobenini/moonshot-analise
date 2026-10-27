@@ -10,7 +10,7 @@ import { Campo, Carregando, Erro, EscolherPessoa, Modal, Potencial, Selo, Titulo
 const POR_PAGINA = 50
 
 export function Alunas() {
-  const { eu, nomeDe } = useSessao()
+  const { eu, nomeDe, equipe } = useSessao()
   const nav = useNavigate()
   const [lista, setLista] = useState<Aluna[] | null>(null)
   const [total, setTotal] = useState(0)
@@ -20,12 +20,15 @@ export function Alunas() {
   const [produto, setProduto] = useState('')
   const [financeiro, setFinanceiro] = useState('')
   const [ordem, setOrdem] = useState<'nome' | 'potencial'>('nome')
-  const [minhas, setMinhas] = useState(eu?.papel === 'consultor' || eu?.papel === 'cs')
+  // Consultor abre na propria carteira; a CS acompanha a base toda (o filtro
+  // por CS separa quem atende cada uma).
+  const [minhas, setMinhas] = useState(eu?.papel === 'consultor')
+  const [cs, setCs] = useState('')
   const [pagina, setPagina] = useState(0)
   const [nova, setNova] = useState(false)
   const podeCriar = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao'].includes(eu?.papel ?? '')
 
-  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro, ordem])
+  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro, ordem, cs])
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -38,11 +41,13 @@ export function Alunas() {
       if (produto) q = q.eq('produto', produto)
       if (financeiro) q = q.eq('status_financeiro', financeiro)
       if (minhas && eu) q = q.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
+      if (cs === 'sem') q = q.is('cs_id', null)
+      else if (cs) q = q.eq('cs_id', cs)
       const { data: d, count } = await (ordem === 'potencial' ? q.order('potencial', { ascending: false }).order('nome') : q.order('nome')).range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1)
       setLista((d ?? []) as Aluna[]); setTotal(count ?? 0)
     }, 200)
     return () => clearTimeout(t)
-  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro, ordem])
+  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro, ordem, cs])
 
   return (
     <div>
@@ -76,6 +81,11 @@ export function Alunas() {
           <option value="">Qualquer financeiro</option>
           {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
         </select>
+        <select className="entrada w-auto" value={cs} onChange={(e) => setCs(e.target.value)}>
+          <option value="">Qualquer CS</option>
+          {equipe.filter((p) => p.ativo && p.papel === 'cs').map((p) => <option key={p.id} value={p.id}>CS {p.nome}</option>)}
+          <option value="sem">Sem CS</option>
+        </select>
         <select className="entrada w-auto" value={ordem} onChange={(e) => setOrdem(e.target.value as 'nome' | 'potencial')}>
           <option value="nome">Ordem alfabética</option>
           <option value="potencial">Maior potencial</option>
@@ -93,6 +103,7 @@ export function Alunas() {
                 <th className="px-4 py-2.5">Aluna</th>
                 <th className="px-4 py-2.5">Produto</th>
                 <th className="hidden px-4 py-2.5 md:table-cell">Consultor</th>
+                <th className="hidden px-4 py-2.5 md:table-cell">CS</th>
                 <th className="px-4 py-2.5">Potencial</th>
                 <th className="px-4 py-2.5">Saúde</th>
                 <th className="hidden px-4 py-2.5 sm:table-cell">Faturamento</th>
@@ -114,6 +125,7 @@ export function Alunas() {
                       {a.status_financeiro === 'inadimplente' && <Selo cor={FINANCEIRO.inadimplente.cor}>Inadimplente</Selo>}
                     </div></td>
                   <td className="hidden px-4 py-2.5 md:table-cell">{a.consultor_id ? nomeDe(a.consultor_id) : <span className="text-slate-400">{a.consultor_planilha ?? ''}</span>}</td>
+                  <td className="hidden px-4 py-2.5 md:table-cell">{a.cs_id ? nomeDe(a.cs_id) : <span className="text-slate-400">{a.cs_planilha ?? ''}</span>}</td>
                   <td className="px-4 py-2.5"><Potencial pontos={a.potencial} /></td>
                   <td className="px-4 py-2.5">{a.saude ? <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo> : null}</td>
                   <td className="hidden px-4 py-2.5 sm:table-cell">{reais(a.faturamento_mensal)}</td>
