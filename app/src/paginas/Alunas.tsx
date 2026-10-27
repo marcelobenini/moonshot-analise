@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Search, AlertTriangle } from 'lucide-react'
+import { Plus, Search, AlertTriangle, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna } from '../lib/tipos'
@@ -26,6 +26,8 @@ export function Alunas() {
   const [cs, setCs] = useState('')
   const [pagina, setPagina] = useState(0)
   const [nova, setNova] = useState(false)
+  const [filtros, setFiltros] = useState(false)
+  const nFiltros = [status !== 'vivos', saude, produto, financeiro, cs, minhas].filter(Boolean).length
   const podeCriar = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao'].includes(eu?.papel ?? '')
 
   useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro, ordem, cs])
@@ -55,10 +57,14 @@ export function Alunas() {
         Alunas
       </Titulo>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-56 flex-1 sm:max-w-sm">
+        <div className="relative min-w-0 flex-1 sm:max-w-sm">
           <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
           <input className="entrada pl-9" placeholder="Nome, e-mail, telefone ou empresa" value={termo} onChange={(e) => setTermo(e.target.value)} />
         </div>
+        <button className="btn-secundario sm:hidden" onClick={() => setFiltros(!filtros)}>
+          <SlidersHorizontal size={16} /> Filtros{nFiltros ? ` · ${nFiltros}` : ''}
+        </button>
+        <div className={`${filtros ? 'grid' : 'hidden'} w-full grid-cols-2 gap-2 sm:contents`}>
         <select className="entrada w-auto" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="vivos">Contratos vivos</option>
           <option value="">Todos</option>
@@ -94,11 +100,33 @@ export function Alunas() {
         <label className="flex items-center gap-2 text-sm text-slate-600">
           <input type="checkbox" checked={minhas} onChange={(e) => setMinhas(e.target.checked)} /> Minha carteira
         </label>
+        </div>
       </div>
 
       {lista === null ? <Carregando /> : lista.length === 0 ? <Vazio>Nenhuma aluna encontrada.</Vazio> : (
         <div className="painel overflow-x-auto">
-          <table className="w-full text-sm">
+          <ul className="divide-y divide-slate-100 sm:hidden">
+            {lista.map((a) => (
+              <li key={a.id}>
+                <button className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-nude" onClick={() => nav(`/alunas/${a.id}`)}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xs font-semibold text-noite">
+                    {a.nome.split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-noite">{a.nome}</span>
+                    <span className="block truncate text-xs text-slate-500">{[a.produto?.replace('Moonshot ', ''), a.cs_id ? `CS ${nomeDe(a.cs_id)}` : null].filter(Boolean).join(' · ')}</span>
+                    <span className="mt-1 flex flex-wrap gap-1">
+                      {a.status_contrato !== 'ativo' && <Selo cor={STATUS_CONTRATO[a.status_contrato]?.cor ?? ''}>{STATUS_CONTRATO[a.status_contrato]?.rotulo}</Selo>}
+                      {a.status_financeiro === 'inadimplente' && <Selo cor={FINANCEIRO.inadimplente.cor}>Inadimplente</Selo>}
+                      {a.saude && <Selo cor={SAUDE[a.saude].cor}>{SAUDE[a.saude].rotulo}</Selo>}
+                    </span>
+                  </span>
+                  <Potencial pontos={a.potencial} />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <table className="hidden w-full text-sm sm:table">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500">
               <tr>
                 <th className="px-4 py-2.5">Aluna</th>

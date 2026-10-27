@@ -93,7 +93,7 @@ export function CabecalhoAluna({ aluna, acoes }: { aluna: Aluna; acoes: ReactNod
           </div>
         </div>
       </div>
-      <div className="relative mt-6 flex flex-wrap gap-2">{acoes}</div>
+      <div className="relative mt-6 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible [&>*]:shrink-0">{acoes}</div>
     </section>
   )
 }

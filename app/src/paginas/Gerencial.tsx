@@ -7,7 +7,7 @@ import type { Fechamento } from '../lib/tipos'
 import { NIVEL, STATUS_CASO, data, diasDesde, reais } from '../lib/util'
 import { Carregando, Selo, Titulo, Vazio } from '../componentes/ui'
 import { BarrasH, Colunas, compacto } from '../componentes/graficos'
-import { Cartao, Indicador } from '../componentes/painel'
+import { Cartao, Indicador, Segmento } from '../componentes/painel'
 import { CasoGaveta } from './CasoGaveta'
 
 type PorProduto = { produto: string; qtd: number; contratado: number; pago: number; saldo: number }
@@ -56,14 +56,8 @@ export function Gerencial() {
   return (
     <div className="space-y-5">
       <Titulo>Gerencial</Titulo>
-      <div className="flex flex-wrap gap-1 rounded-xl bg-white p-1 ring-1 ring-slate-200 sm:w-fit">
-        {ABAS.map(({ id, rotulo, icone: I }) => (
-          <button key={id} onClick={() => setBusca((b) => { b.set('aba', id); return b })}
-            className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${aba === id ? 'bg-noite text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <I size={15} /> {rotulo}
-          </button>
-        ))}
-      </div>
+      <Segmento opcoes={ABAS.map(({ id, rotulo, icone: I }) => ({ id, rotulo, icone: <I size={15} /> }))}
+        valor={aba} mudar={(id) => setBusca((b) => { b.set('aba', id); return b })} />
       {erro ? <Vazio>{erro}</Vazio> : !painel ? <Carregando /> : (
         <>
           {aba === 'fechamentos' && <AbaFechamentos painel={painel} recarregar={carregar} />}
@@ -85,7 +79,7 @@ function AbaFechamentos({ painel, recarregar }: { painel: Painel; recarregar: ()
   }))
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Indicador rotulo="Total contratado" valor={`R$ ${compacto(f.contratado)}`} sub={`${f.qtd} fechamentos${f.sem_valor ? `, ${f.sem_valor} sem valor` : ''}`} icone={<FileSignature size={20} />} tom="noite" />
         <Indicador rotulo="Já recebido" valor={`R$ ${compacto(f.pago)}`} sub={f.contratado ? `${Math.round((f.pago / f.contratado) * 100)}% do contratado` : ''} icone={<Wallet size={20} />} tom="ouro" />
         <Indicador rotulo="A receber" valor={`R$ ${compacto(f.saldo)}`} sub="saldo dos contratos" icone={<Receipt size={20} />} tom="ambar" />
@@ -130,7 +124,7 @@ export function ListaCasos({ mudou }: { mudou?: () => void }) {
   return (
     <section className="painel overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-        <h2 className="font-display text-xl font-semibold text-noite">Casos In Company e Private</h2>
+        <h2 className="font-display text-lg font-semibold text-noite sm:text-xl">Casos In Company e Private</h2>
         <div className="flex flex-wrap gap-2">
           <select className="entrada w-auto py-1 text-xs" value={produto} onChange={(e) => setProduto(e.target.value)}>
             <option value="">Todos os produtos</option>
@@ -144,7 +138,31 @@ export function ListaCasos({ mudou }: { mudou?: () => void }) {
         </div>
       </div>
       {!casos ? <Carregando /> : lista.length === 0 ? <div className="p-6"><Vazio>Nenhum caso por aqui.</Vazio></div> : (
-        <div className="overflow-x-auto">
+        <>
+        <ul className="divide-y divide-slate-100 md:hidden">
+          {lista.map((c) => {
+            const dias = c.ultima_atualizacao ? diasDesde(c.ultima_atualizacao) : null
+            return (
+              <li key={c.id}>
+                <button className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-nude" onClick={() => abrir(String(c.id))}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xs font-semibold text-noite">
+                    {c.nome.split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-noite">{c.nome}</span>
+                    <span className="block truncate text-xs text-slate-500">{c.produto.replace('Moonshot ', '')} · {data(c.data_fechamento)}</span>
+                    <span className={`block text-[11px] ${dias == null || dias > 30 ? 'text-red-600' : 'text-slate-400'}`}>{dias == null ? 'sem atualização' : `atualizado há ${dias} dias`}</span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="font-mono text-sm text-noite">{c.valor_total == null ? 'sem valor' : `R$ ${compacto(c.valor_total)}`}</span>
+                    <Selo cor={STATUS_CASO[c.status]?.cor ?? ''}>{STATUS_CASO[c.status]?.rotulo}</Selo>
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[60rem] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -173,6 +191,7 @@ export function ListaCasos({ mudou }: { mudou?: () => void }) {
             </tbody>
           </table>
         </div>
+        </>
       )}
       {aberto && <CasoGaveta key={aberto} id={aberto === 'novo' ? 'novo' : Number(aberto)} fechar={() => abrir(null)} mudou={() => { carregar(); mudou?.() }} />}
     </section>
@@ -181,7 +200,23 @@ export function ListaCasos({ mudou }: { mudou?: () => void }) {
 
 function Tabela({ cabecalho, linhas }: { cabecalho: string[]; linhas: (string | number)[][] }) {
   return (
-    <div className="painel overflow-x-auto">
+    <>
+    <div className="space-y-3 md:hidden">
+      {linhas.map((l, i) => (
+        <div key={i} className="painel p-4">
+          <div className="mb-2 font-medium text-noite">{l[0]}</div>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {l.slice(1).map((v, j) => (
+              <div key={j}>
+                <dt className="text-[11px] uppercase tracking-wide text-slate-500">{cabecalho[j + 1]}</dt>
+                <dd className="font-mono text-sm text-noite">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+    </div>
+    <div className="painel hidden overflow-x-auto md:block">
       <table className="w-full min-w-[48rem] text-sm">
         <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>{cabecalho.map((c, i) => <th key={c} className={`px-3 py-2 ${i ? 'text-right' : 'pl-4'}`}>{c}</th>)}</tr>
@@ -193,6 +228,7 @@ function Tabela({ cabecalho, linhas }: { cabecalho: string[]; linhas: (string | 
         </tbody>
       </table>
     </div>
+    </>
   )
 }
 
@@ -226,7 +262,7 @@ function AbaContratos({ painel }: { painel: Painel }) {
   const vivos = c.reduce((s, x) => s + x.ativos + x.em_cancelamento + x.parados, 0)
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Indicador rotulo="Contratos vivos" valor={String(vivos)} sub="ativos, parados e em cancelamento" icone={<Briefcase size={20} />} tom="noite" />
         <Indicador rotulo="Em cancelamento" valor={String(c.reduce((s, x) => s + x.em_cancelamento, 0))} sub="com a retenção" icone={<AlertTriangle size={20} />} tom="vermelho" alerta />
         <Indicador rotulo="Inadimplentes" valor={String(c.reduce((s, x) => s + x.inadimplentes, 0))} sub="com contrato vivo" icone={<Receipt size={20} />} tom="ambar" />

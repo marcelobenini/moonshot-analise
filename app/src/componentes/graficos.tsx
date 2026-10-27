@@ -194,7 +194,7 @@ export function Colunas({ dados, cor, altura = 200, formatar = String }: {
 }) {
   const [ref, w] = useLargura<HTMLDivElement>()
   const [ativo, setAtivo] = useState<number | null>(null)
-  const esq = 28, topo = 18, baixo = 24
+  const esq = 36, topo = 18, baixo = 24
   const larg = Math.max(0, w - esq), alt = altura - topo - baixo
   const max = arredondar(Math.max(1, ...dados.map((d) => d.valor)))
   const banda = dados.length ? larg / dados.length : 0

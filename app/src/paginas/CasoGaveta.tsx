@@ -53,7 +53,7 @@ export function CasoGaveta({ id, fechar, mudou }: { id: number | 'novo'; fechar:
                 salvo={() => { setEditando(false); if (caso) salvo(); else { mudou(); fechar() } }} />
             : caso && (
               <>
-                <section className="grid grid-cols-3 gap-3">
+                <section className="grid grid-cols-3 gap-2 sm:gap-3">
                   <Valor rotulo="Total" valor={caso.valor_total == null ? 'sem valor' : reais(caso.valor_total)} />
                   <Valor rotulo="Pago" valor={reais(caso.valor_pago)} />
                   <Valor rotulo="A receber" valor={reais(caso.saldo)} destaque={caso.saldo > 0} />
@@ -96,7 +96,7 @@ function Valor({ rotulo, valor, destaque }: { rotulo: string; valor: string; des
   return (
     <div className="rounded-xl border border-slate-200 p-3">
       <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{rotulo}</div>
-      <div className={`mt-0.5 font-mono text-lg ${destaque ? 'text-amber-700' : 'text-noite'}`}>{valor}</div>
+      <div className={`mt-0.5 truncate font-mono text-sm sm:text-lg ${destaque ? 'text-amber-700' : 'text-noite'}`}>{valor}</div>
     </div>
   )
 }

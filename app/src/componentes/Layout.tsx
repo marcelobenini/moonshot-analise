@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, Menu, X, CalendarDays, FileUp, FileSignature, LineChart } from 'lucide-react'
+import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, MoreHorizontal, X, CalendarDays, FileUp, FileSignature, LineChart } from 'lucide-react'
 import { useSessao } from '../lib/sessao'
 import { PAPEL } from '../lib/util'
 import { Sino } from './Sino'
@@ -26,23 +26,21 @@ export function Layout() {
     ] : []),
   ]
 
+  // Celular: as quatro primeiras ficam na barra de baixo; o resto e o Sair vao em "Mais".
+  const ordemCelular = ['/', '/funis', '/alunas', '/gerencial', '/fechamentos', '/demandas']
+  const principais = [...itens].sort((a, b) => ordemCelular.indexOf(a.para) - ordemCelular.indexOf(b.para))
+    .filter((i) => ordemCelular.includes(i.para)).slice(0, 4)
+  const extras = itens.filter((i) => !principais.includes(i))
+
   const nav = (
     <nav className="flex flex-col gap-1">
       {itens.map(({ para, rotulo, icone: I }) => (
-        <NavLink key={para} to={para} end={para === '/'} onClick={() => setMenu(false)}
+        <NavLink key={para} to={para} end={para === '/'}
           className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${isActive ? 'bg-white/10 font-medium text-indigo-200' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}>
           {({ isActive }) => <><I size={18} className={isActive ? 'text-ouro' : ''} /> {rotulo}</>}
         </NavLink>
       ))}
     </nav>
-  )
-
-  const rodape = (
-    <div className="border-t border-white/10 pt-3">
-      <div className="px-3 text-sm font-medium text-white">{eu?.nome}</div>
-      <div className="px-3 text-xs uppercase tracking-wider text-ouro">{eu?.papel ? PAPEL[eu.papel] : ''}</div>
-      <button className="btn mt-2 w-full justify-start text-slate-300 hover:bg-white/5 hover:text-white" onClick={sair}><LogOut size={16} /> Sair</button>
-    </div>
   )
 
   return (
@@ -52,29 +50,64 @@ export function Layout() {
           <Marca />
           {nav}
         </div>
-        {rodape}
+        <div className="border-t border-white/10 pt-3">
+          <div className="px-3 text-sm font-medium text-white">{eu?.nome}</div>
+          <div className="px-3 text-xs uppercase tracking-wider text-ouro">{eu?.papel ? PAPEL[eu.papel] : ''}</div>
+          <button className="btn mt-2 w-full justify-start text-slate-300 hover:bg-white/5 hover:text-white" onClick={sair}><LogOut size={16} /> Sair</button>
+        </div>
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-nude/85 px-4 py-2 backdrop-blur">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-nude/85 px-4 py-2 backdrop-blur [padding-top:max(0.5rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-2 lg:invisible">
-            <button className="btn-fantasma p-2 lg:hidden" onClick={() => setMenu(true)} aria-label="Menu"><Menu size={20} /></button>
+            <img src="/icone.svg" alt="" className="h-7 w-7 lg:hidden" />
             <span className="font-display text-lg font-semibold tracking-[0.2em] lg:hidden">MOONSHOT</span>
           </div>
-          <Sino />
+          <div className="flex items-center gap-2">
+            <Sino />
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-noite text-xs font-semibold text-ouro lg:hidden" title={eu?.nome}>
+              {(eu?.nome ?? '').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
+            </span>
+          </div>
         </header>
-        <main className="mx-auto max-w-[1600px] p-4 sm:p-6"><Outlet /></main>
+        <main className="mx-auto max-w-[1600px] p-4 pb-28 sm:p-6 sm:pb-28 lg:pb-6"><Outlet /></main>
       </div>
 
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden [padding-bottom:env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-lg">
+          {principais.map(({ para, rotulo, icone: I }) => (
+            <NavLink key={para} to={para} end={para === '/'} onClick={() => setMenu(false)}
+              className={({ isActive }) => `flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] ${isActive ? 'font-semibold text-noite' : 'text-slate-400'}`}>
+              {({ isActive }) => <><I size={22} strokeWidth={isActive ? 2.4 : 1.8} /> {rotulo}</>}
+            </NavLink>
+          ))}
+          <button onClick={() => setMenu(!menu)} className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] ${menu ? 'font-semibold text-noite' : 'text-slate-400'}`}>
+            <MoreHorizontal size={22} /> Mais
+          </button>
+        </div>
+      </nav>
+
       {menu && (
-        <div className="fixed inset-0 z-50 bg-slate-950/50 lg:hidden" onClick={() => setMenu(false)}>
-          <aside className="flex h-full w-64 flex-col justify-between bg-noite p-3" onClick={(e) => e.stopPropagation()}>
-            <div>
-              <div className="flex items-center justify-between"><Marca /><button className="btn p-1.5 text-slate-300 hover:bg-white/10" onClick={() => setMenu(false)}><X size={18} /></button></div>
-              {nav}
+        <div className="fixed inset-0 z-20 bg-slate-950/40 lg:hidden" onClick={() => setMenu(false)}>
+          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-white p-4 pb-24 shadow-2xl [padding-bottom:calc(6rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
+            <div className="mb-3 flex items-center justify-between px-1">
+              <div>
+                <div className="font-medium text-noite">{eu?.nome}</div>
+                <div className="text-xs uppercase tracking-wider text-ouro">{eu?.papel ? PAPEL[eu.papel] : ''}</div>
+              </div>
+              <button className="btn-fantasma p-1.5" onClick={() => setMenu(false)} aria-label="Fechar"><X size={18} /></button>
             </div>
-            {rodape}
-          </aside>
+            <div className="grid grid-cols-3 gap-2">
+              {extras.map(({ para, rotulo, icone: I }) => (
+                <NavLink key={para} to={para} onClick={() => setMenu(false)}
+                  className={({ isActive }) => `flex flex-col items-center gap-2 rounded-2xl p-3 text-center text-xs ${isActive ? 'bg-noite text-white' : 'bg-nude text-noite'}`}>
+                  <I size={22} /> {rotulo}
+                </NavLink>
+              ))}
+              <button onClick={sair} className="flex flex-col items-center gap-2 rounded-2xl bg-nude p-3 text-xs text-red-700"><LogOut size={22} /> Sair</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

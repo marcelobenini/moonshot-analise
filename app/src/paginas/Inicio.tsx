@@ -117,7 +117,7 @@ export function Inicio() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Indicador rotulo={geral ? 'Alunas ativas' : 'Alunas ativas na carteira'} valor={painel ? String(painel.ativas) : '…'}
           sub={painel ? `${painel.novas_30d} novas nos últimos 30 dias` : ''} icone={<Users size={20} />} tom="ouro" />
         <Indicador rotulo="Faturamento" valor={painel ? `R$ ${compacto(painel.faturamento)}` : '…'}
