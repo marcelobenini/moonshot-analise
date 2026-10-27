@@ -144,6 +144,10 @@ select como(:cs, $$select mudar_status_aluna((select id from aluna where nome = 
 select ok((select produto = 'Moonshot Club' from aluna where id = :helena)
           and (select produto = 'Moonshot Club' from contrato where chave = 'teste-crm'),
           'o contrato muda junto e mudar status nao desfaz o programa');
+update aluna set produto = 'Moonshot Elite' where id = :helena;
+select como(:cs, $$update card set etapa_id = (select id from etapa where funil_id = 'ascensao' and nome = 'Moonshot Pró')
+                 where funil_id = 'ascensao' and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$);
+select ok((select produto = 'Moonshot Elite' from aluna where id = :helena), 'Elite no degrau do Pro continua Elite');
 
 rollback;
 \echo 'TODOS OS TESTES DE CRM PASSARAM'

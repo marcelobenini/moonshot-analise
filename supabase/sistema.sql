@@ -425,9 +425,12 @@ declare
   origem card;
   degrau_antes int;
   sentido text;
+  degrau text;
 begin
   select * into a from aluna where id = c.aluna_id;
   nome_aluna := coalesce(a.nome, c.titulo);
+  -- Elite fica no mesmo degrau do Pro.
+  degrau := case when a.produto = 'Moonshot Elite' then 'Moonshot Pró' else a.produto end;
 
   if e.gatilho = 'criar_ciclo_consultor' and a.id is not null then
     insert into card (funil_id, etapa_id, aluna_id, titulo, responsavel_id, origem_card_id)
@@ -494,8 +497,8 @@ begin
 
   -- Ascensao: o degrau e o programa da aluna. Subir e ascensao, descer e
   -- downsell; a ficha muda junto e o historico guarda de onde para onde.
-  elsif e.gatilho = 'mudar_programa' and a.id is not null and a.produto is distinct from e.nome then
-    degrau_antes := (select ordem from etapa where funil_id = e.funil_id and nome = a.produto);
+  elsif e.gatilho = 'mudar_programa' and a.id is not null and degrau is distinct from e.nome then
+    degrau_antes := (select ordem from etapa where funil_id = e.funil_id and nome = degrau);
     sentido := case when degrau_antes is null then 'Programa' when degrau_antes < e.ordem then 'Ascensão' else 'Downsell' end;
     perform set_config('moonshot.motivo', sentido || ': ' || coalesce(a.produto, 'sem programa') || ' → ' || e.nome
                        || coalesce('. ' || nullif(trim(c.motivo), ''), ''), true);

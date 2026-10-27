@@ -125,7 +125,7 @@ on conflict (funil_id, ordem) do update set
 -- consultor sobe quem esta pronta, o comercial fecha, a CS acompanha.
 -- "A definir" segura quem ainda nao tem o programa claro no cadastro.
 insert into funil (id, nome, descricao, ordem, papeis_editam, papeis_leem, restringe_carteira, campos, motivos) values
-  ('ascensao', 'Ascensão', 'Escada da aluna: Club → Pró → In Company → Private. Mova a aluna para o degrau em que ela está.', 7,
+  ('ascensao', 'Ascensão', 'Escada da aluna: Club → Pró (e Elite) → In Company → Private. Mova a aluna para o degrau em que ela está.', 7,
    '{consultor,comercial,cs}', '{retencao}', true,
    '[{"chave":"proximo_degrau_em","rotulo":"Previsão de subir","tipo":"data"},
      {"chave":"degrau_origem","rotulo":"De onde veio o degrau","tipo":"texto"},
