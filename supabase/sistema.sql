@@ -423,6 +423,8 @@ declare
   link text := '/funis/' || c.funil_id || '?card=' || c.id;
   novo bigint;
   origem card;
+  degrau_antes int;
+  sentido text;
 begin
   select * into a from aluna where id = c.aluna_id;
   nome_aluna := coalesce(a.nome, c.titulo);
@@ -489,6 +491,26 @@ begin
 
   elsif e.gatilho = 'encaminhar_retencao' and a.id is not null then
     perform abrir_retencao(a.id, 'Renovacao sinalizou saida', c.id);
+
+  -- Ascensao: o degrau e o programa da aluna. Subir e ascensao, descer e
+  -- downsell; a ficha muda junto e o historico guarda de onde para onde.
+  elsif e.gatilho = 'mudar_programa' and a.id is not null and a.produto is distinct from e.nome then
+    degrau_antes := (select ordem from etapa where funil_id = e.funil_id and nome = a.produto);
+    sentido := case when degrau_antes is null then 'Programa' when degrau_antes < e.ordem then 'Ascensão' else 'Downsell' end;
+    perform set_config('moonshot.motivo', sentido || ': ' || coalesce(a.produto, 'sem programa') || ' → ' || e.nome
+                       || coalesce('. ' || nullif(trim(c.motivo), ''), ''), true);
+    -- O contrato principal muda junto; senao a proxima sincronizacao desfaz.
+    update contrato set produto = e.nome
+    where id = (select id from contrato where aluna_id = a.id
+                order by (produto <> 'Máquina de Vendas') desc, (status not in ('cancelado','encerrado')) desc,
+                         termino desc nulls last, id desc
+                limit 1);
+    update aluna set produto = e.nome where id = a.id and produto is distinct from e.nome;
+    perform set_config('moonshot.motivo', '', true);
+    if sentido <> 'Programa' then
+      perform notificar(a.consultor_id, 'carteira', a.nome || ': ' || lower(sentido) || ' para ' || e.nome, null, link);
+      perform notificar(a.cs_id, 'carteira', a.nome || ': ' || lower(sentido) || ' para ' || e.nome, null, link);
+    end if;
 
   end if;
 end $$;

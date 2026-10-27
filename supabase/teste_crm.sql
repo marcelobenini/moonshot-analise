@@ -124,5 +124,26 @@ select ok((select status_contrato = 'em_cancelamento' and status_financeiro = 'i
 select ok(exists (select 1 from card where funil_id = 'retencao' and aluna_id = :helena and fechado_em is null),
           'em processo de cancelamento abre card na retencao');
 
+-- Ascensao: a CS sobe e desce a aluna de programa pelo funil.
+update aluna set produto = 'Moonshot Club' where id = :helena;
+insert into card (funil_id, etapa_id, aluna_id, titulo)
+values ('ascensao', (select id from etapa where funil_id = 'ascensao' and nome = 'Moonshot Club'), :helena, 'Helena Teste Prado');
+select como(:cs, $$update card set etapa_id = (select id from etapa where funil_id = 'ascensao' and nome = 'Moonshot Pró')
+                 where funil_id = 'ascensao' and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$);
+select ok((select produto = 'Moonshot Pró' from aluna where id = :helena)
+          and exists (select 1 from aluna_historico where aluna_id = :helena and campo = 'produto'
+                      and motivo = 'Ascensão: Moonshot Club → Moonshot Pró'),
+          'CS sobe a aluna no funil de ascensao e a ficha muda de programa');
+select como(:cs, $$update card set etapa_id = (select id from etapa where funil_id = 'ascensao' and nome = 'Moonshot Club'), motivo = 'Sem verba'
+                 where funil_id = 'ascensao' and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$);
+select ok((select produto = 'Moonshot Club' from aluna where id = :helena)
+          and exists (select 1 from aluna_historico where aluna_id = :helena and campo = 'produto'
+                      and motivo = 'Downsell: Moonshot Pró → Moonshot Club. Sem verba'),
+          'descer de degrau e downsell, com o motivo no historico');
+select como(:cs, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), 'ativo', null, null)$$);
+select ok((select produto = 'Moonshot Club' from aluna where id = :helena)
+          and (select produto = 'Moonshot Club' from contrato where chave = 'teste-crm'),
+          'o contrato muda junto e mudar status nao desfaz o programa');
+
 rollback;
 \echo 'TODOS OS TESTES DE CRM PASSARAM'

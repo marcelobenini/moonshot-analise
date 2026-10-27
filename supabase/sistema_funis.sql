@@ -133,10 +133,10 @@ insert into funil (id, nome, descricao, ordem, papeis_editam, papeis_leem, restr
 on conflict (id) do update set nome = excluded.nome, descricao = excluded.descricao, papeis_editam = excluded.papeis_editam,
   papeis_leem = excluded.papeis_leem, campos = excluded.campos;
 
-insert into etapa (funil_id, ordem, nome, tipo) values
-  ('ascensao', 1, 'A definir', 'aberta'),
-  ('ascensao', 2, 'Moonshot Club', 'aberta'),
-  ('ascensao', 3, 'Moonshot Pró', 'aberta'),
-  ('ascensao', 4, 'Moonshot In Company', 'aberta'),
-  ('ascensao', 5, 'Moonshot Private', 'aberta')
-on conflict (funil_id, ordem) do update set nome = excluded.nome, tipo = excluded.tipo;
+insert into etapa (funil_id, ordem, nome, tipo, gatilho) values
+  ('ascensao', 1, 'A definir', 'aberta', null),
+  ('ascensao', 2, 'Moonshot Club', 'aberta', 'mudar_programa'),
+  ('ascensao', 3, 'Moonshot Pró', 'aberta', 'mudar_programa'),
+  ('ascensao', 4, 'Moonshot In Company', 'aberta', 'mudar_programa'),
+  ('ascensao', 5, 'Moonshot Private', 'aberta', 'mudar_programa')
+on conflict (funil_id, ordem) do update set nome = excluded.nome, tipo = excluded.tipo, gatilho = excluded.gatilho;
