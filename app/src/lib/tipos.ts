@@ -265,3 +265,44 @@ export interface Notificacao {
   lida_em: string | null
   criado_em: string
 }
+
+export type StatusCaso = 'implantacao' | 'em_andamento' | 'atencao' | 'em_risco' | 'concluido' | 'cancelado'
+
+export interface Fechamento {
+  id: number
+  aluna_id: number | null
+  contrato_id: number | null
+  nome: string
+  produto: string
+  data_fechamento: string
+  valor_total: number | null
+  valor_pago: number
+  saldo: number
+  forma_pagamento: string | null
+  plano_pagamento: string | null
+  meio_pagamento_futuro: string | null
+  observacao: string | null
+  consultor_id: string | null
+  cs_id: string | null
+  status: StatusCaso
+  nivel: number | null
+  proximas_acoes: string | null
+  proxima_acao_em: string | null
+  ultima_atualizacao: string | null
+  criado_em: string
+}
+
+export interface FechamentoRegistro {
+  id: number
+  fechamento_id: number
+  autor_id: string | null
+  tipo: 'atualizacao' | 'transcricao'
+  data: string
+  transcricao: string | null
+  resumo: string | null
+  status: StatusCaso | null
+  nivel: number | null
+  acoes: string | null
+  proxima_acao_em: string | null
+  criado_em: string
+}

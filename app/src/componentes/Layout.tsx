@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, Menu, X, CalendarDays, FileUp } from 'lucide-react'
+import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, Menu, X, CalendarDays, FileUp, FileSignature, LineChart } from 'lucide-react'
 import { useSessao } from '../lib/sessao'
 import { PAPEL } from '../lib/util'
 import { Sino } from './Sino'
@@ -14,6 +14,8 @@ export function Layout() {
     { para: '/alunas', rotulo: 'Alunas', icone: Users },
     { para: '/demandas', rotulo: 'Demandas', icone: MessageSquare },
     { para: '/eventos', rotulo: 'Eventos', icone: CalendarDays },
+    ...(eu?.papel === 'coordenador' ? [{ para: '/gerencial', rotulo: 'Gerencial', icone: LineChart }]
+      : eu?.papel && ['consultor', 'cs', 'comercial'].includes(eu.papel) ? [{ para: '/fechamentos', rotulo: 'Fechamentos', icone: FileSignature }] : []),
     ...(eu?.papel === 'coordenador' ? [
       { para: '/equipe', rotulo: 'Equipe', icone: UserCog },
       { para: '/importar', rotulo: 'Importar planilha', icone: FileUp },

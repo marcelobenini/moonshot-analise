@@ -142,3 +142,19 @@ export function rotuloOrigem(dados: Record<string, unknown>) {
   if (o === 'inbound') return 'Inbound'
   return o
 }
+
+export const STATUS_CASO: Record<string, { rotulo: string; cor: string }> = {
+  implantacao: { rotulo: 'Implantação', cor: 'bg-sky-100 text-sky-800' },
+  em_andamento: { rotulo: 'Em andamento', cor: 'bg-emerald-100 text-emerald-800' },
+  atencao: { rotulo: 'Atenção', cor: 'bg-amber-100 text-amber-800' },
+  em_risco: { rotulo: 'Em risco', cor: 'bg-red-100 text-red-800' },
+  concluido: { rotulo: 'Concluído', cor: 'bg-slate-200 text-slate-700' },
+  cancelado: { rotulo: 'Cancelado', cor: 'bg-slate-800 text-white' },
+}
+
+// Nivel da empresa da aluna no acompanhamento de In Company e Private.
+export const NIVEL: Record<number, string> = {
+  1: 'Inicial', 2: 'Em estruturação', 3: 'Estruturada', 4: 'Em escala', 5: 'Referência',
+}
+
+export const PRODUTOS_FECHAMENTO = ['Moonshot In Company', 'Moonshot Private', 'Moonshot Pró', 'Moonshot Elite', 'Moonshot Club']

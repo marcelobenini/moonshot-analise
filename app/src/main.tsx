@@ -17,6 +17,7 @@ import { Notificacoes } from './paginas/Notificacoes'
 import { Equipe } from './paginas/Equipe'
 import { Eventos, EventoDetalhe } from './paginas/Eventos'
 import { Importar } from './paginas/Importar'
+import { Fechamentos, Gerencial } from './paginas/Gerencial'
 
 function Rotas() {
   const { carregando, sessao, eu } = useSessao()
@@ -64,6 +65,8 @@ function Rotas() {
         <Route path="notificacoes" element={<Notificacoes />} />
         <Route path="eventos" element={<Eventos />} />
         <Route path="eventos/:id" element={<EventoDetalhe />} />
+        {eu.papel === 'coordenador' && <Route path="gerencial" element={<Gerencial />} />}
+        <Route path="fechamentos" element={eu.papel === 'coordenador' ? <Navigate to="/gerencial" replace /> : <Fechamentos />} />
         {eu.papel === 'coordenador' && <Route path="importar" element={<Importar />} />}
         {eu.papel === 'coordenador' && <Route path="equipe" element={<Equipe />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
