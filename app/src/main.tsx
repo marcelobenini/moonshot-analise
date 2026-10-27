@@ -51,6 +51,22 @@ function Rotas() {
       </Routes>
     )
   }
+  // Gestao acompanha os numeros: Inicio, Alunas e Gerencial, sem a operacao.
+  if (eu.papel === 'gestao') {
+    return (
+      <Routes>
+        <Route path="/senha" element={<DefinirSenha />} />
+        <Route element={<Layout />}>
+          <Route index element={<Inicio />} />
+          <Route path="alunas" element={<Alunas />} />
+          <Route path="alunas/:id" element={<AlunaFicha />} />
+          <Route path="gerencial" element={<Gerencial />} />
+          <Route path="notificacoes" element={<Notificacoes />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    )
+  }
   return (
     <Routes>
       <Route path="/senha" element={<DefinirSenha />} />

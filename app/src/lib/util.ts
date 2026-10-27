@@ -6,6 +6,7 @@ export const PAPEL: Record<Papel, string> = {
   consultor: 'Consultor',
   comercial: 'Comercial',
   retencao: 'Retenção',
+  gestao: 'Gestão',
 }
 
 export const SAUDE: Record<Saude, { rotulo: string; cor: string }> = {

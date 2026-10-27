@@ -70,7 +70,7 @@ export function AlunaFicha() {
         {podeRegistrar && <button className="btn-primario" onClick={() => setModal('consultoria')}><ClipboardPlus size={16} /> Registrar consultoria</button>}
         {podeStatus && <button className="btn-secundario" onClick={() => setModal('status')}><Flag size={16} /> Status</button>}
         {podeEnviar && !noComercial && <button className="btn-secundario" onClick={() => setModal('comercial')}><Rocket size={16} /> Enviar ao comercial</button>}
-        <button className="btn-secundario" onClick={() => setModal('demanda')}><MessageSquarePlus size={16} /> Demanda</button>
+        {papel !== 'gestao' && <button className="btn-secundario" onClick={() => setModal('demanda')}><MessageSquarePlus size={16} /> Demanda</button>}
         {podeEditarFicha && <button className="btn-secundario" onClick={() => setModal('editar')}><Pencil size={16} /> Editar</button>}
       </>} />
 

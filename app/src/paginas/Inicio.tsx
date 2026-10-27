@@ -40,7 +40,8 @@ export function Inicio() {
   const [semContato, setSemContato] = useState<{ lista: Aluna[]; total: number }>({ lista: [], total: 0 })
   const coord = eu?.papel === 'coordenador'
   // A CS acompanha a base inteira, como a coordenacao; o consultor ve a carteira.
-  const geral = coord || eu?.papel === 'cs'
+  const gestao = eu?.papel === 'gestao'
+  const geral = coord || eu?.papel === 'cs' || gestao
 
   useEffect(() => {
     if (!eu) return
@@ -130,6 +131,7 @@ export function Inicio() {
       {painel && <Graficos painel={painel} />}
 
       <div className="grid gap-5 lg:grid-cols-3">
+        {!gestao && (
         <Cartao titulo="Funis" icone={<KanbanSquare size={16} />} link={`/funis/${funilGrafico ?? funis[0]?.id ?? ''}`}
           acoes={
             <select className="entrada w-auto py-1 text-xs" value={funilGrafico ?? funis[0]?.id ?? ''} onChange={(e) => setFunilGrafico(e.target.value)}>
@@ -143,6 +145,7 @@ export function Inicio() {
               : <BarrasH dados={linhas.map((l) => ({ rotulo: l.etapa, valor: l.cards, alerta: l.parados }))} cor="#b6884c" />
           })()}
         </Cartao>
+        )}
         <Cartao titulo="Vencimentos por mês" icone={<CalendarClock size={16} />} link="/funis/renovacao">
           {meses.length === 0 ? <Nada>Sem vencimentos cadastrados.</Nada> : (
             <Colunas cor="#141110" dados={meses.map((m) => ({
@@ -159,6 +162,7 @@ export function Inicio() {
         </Cartao>
       </div>
 
+      {!gestao && (<>
       <div className="flex flex-wrap items-center gap-3 pt-2">
         <h2 className="font-display text-2xl font-semibold text-noite">Para agir hoje</h2>
         <span className="selo bg-white text-slate-600 ring-1 ring-slate-200"><Clock size={12} className="mr-1" />{meusCards.length} cards comigo</span>
@@ -240,6 +244,7 @@ export function Inicio() {
         </Bloco>
 
       </div>
+      </>)}
 
       {carteira.length > 0 && (
         <Bloco titulo={geral ? 'Carteiras' : 'Minha carteira'}>

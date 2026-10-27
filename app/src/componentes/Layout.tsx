@@ -8,7 +8,11 @@ import { Sino } from './Sino'
 export function Layout() {
   const { eu, sair } = useSessao()
   const [menu, setMenu] = useState(false)
-  const itens = [
+  const itens = eu?.papel === 'gestao' ? [
+    { para: '/', rotulo: 'Início', icone: Home },
+    { para: '/alunas', rotulo: 'Alunas', icone: Users },
+    { para: '/gerencial', rotulo: 'Gerencial', icone: LineChart },
+  ] : [
     { para: '/', rotulo: 'Início', icone: Home },
     { para: '/funis', rotulo: 'Funis', icone: KanbanSquare },
     { para: '/alunas', rotulo: 'Alunas', icone: Users },

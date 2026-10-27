@@ -10,14 +10,17 @@ insert into auth.users (id, email, raw_user_meta_data) values
  ('30000000-0000-0000-0000-00000000000c', 'coord9@nb.com', '{"nome":"Coord"}'),
  ('30000000-0000-0000-0000-0000000000a1', 'cs9@nb.com',    '{"nome":"CS"}'),
  ('30000000-0000-0000-0000-0000000000b1', 'cons9@nb.com',  '{"nome":"Consultor"}'),
- ('30000000-0000-0000-0000-0000000000b2', 'cons8@nb.com',  '{"nome":"Outro consultor"}');
+ ('30000000-0000-0000-0000-0000000000b2', 'cons8@nb.com',  '{"nome":"Outro consultor"}'),
+ ('30000000-0000-0000-0000-0000000000e1', 'gest9@nb.com',  '{"nome":"Gestao"}');
 update perfil set ativo = true, papel = 'coordenador' where email = 'coord9@nb.com';
 update perfil set ativo = true, papel = 'cs'          where email = 'cs9@nb.com';
 update perfil set ativo = true, papel = 'consultor'   where email in ('cons9@nb.com', 'cons8@nb.com');
+update perfil set ativo = true, papel = 'gestao'      where email = 'gest9@nb.com';
 \set coord '''30000000-0000-0000-0000-00000000000c'''
 \set cs    '''30000000-0000-0000-0000-0000000000a1'''
 \set cons  '''30000000-0000-0000-0000-0000000000b1'''
 \set outro '''30000000-0000-0000-0000-0000000000b2'''
+\set gest  '''30000000-0000-0000-0000-0000000000e1'''
 
 insert into aluna (nome, consultor_id, cs_id, produto) values ('Iris Teste Gerencial', :cons, :cs, 'Moonshot Pró');
 \set iris '(select id from aluna where nome = ''Iris Teste Gerencial'')'
@@ -57,6 +60,16 @@ select como(:coord, $$create temp table pg_teste as select painel_gerencial() as
 select ok((select (p->'fechamentos'->>'qtd')::int >= 1 and (p->'fechamentos'->>'saldo')::numeric >= 45000
            and jsonb_array_length(p->'consultores') >= 2 and jsonb_array_length(p->'cs') >= 1 from pg_teste),
           'painel traz fechamentos, consultores e CS');
+
+-- Gestao: ve os numeros e os casos, nao mexe em nada.
+select ok(conta_como(:gest, 'select 1 from fechamento') >= 1 and barrado(:gest, 'select painel_gerencial()') is false,
+          'gestao ve os casos e o painel gerencial');
+select ok(barrado(:gest, $$insert into fechamento_registro (fechamento_id, resumo) values ((select max(id) from fechamento), 'x')$$)
+          and barrado(:gest, $$insert into fechamento (nome, produto) values ('X', 'Moonshot Private')$$)
+          and barrado(:gest, $$select mudar_status_aluna((select id from aluna where nome = 'Iris Teste Gerencial'), 'pausado', null, 'x')$$),
+          'gestao nao registra, nao lanca fechamento e nao muda status');
+select ok(conta_como(:gest, 'select 1 from aluna') >= 1 and conta_como(:gest, 'select 1 from funil') = 0,
+          'gestao ve as alunas, mas nao os funis');
 
 rollback;
 \echo 'TODOS OS TESTES GERENCIAIS PASSARAM'

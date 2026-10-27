@@ -91,7 +91,7 @@ create table if not exists perfil (
     id             uuid primary key references auth.users(id) on delete cascade,
     nome           text not null,
     email          text,
-    papel          text check (papel in ('coordenador','cs','consultor','comercial','retencao')),
+    papel          text check (papel in ('coordenador','cs','consultor','comercial','retencao','gestao')),
     ativo          boolean not null default false,
     -- Como o nome aparece nas planilhas ("carol", "ana paula"). E a ponte para
     -- a importacao atribuir a carteira certa.

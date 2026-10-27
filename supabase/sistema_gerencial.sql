@@ -56,7 +56,7 @@ create index if not exists ix_fech_registro on fechamento_registro(fechamento_id
 -- Quem acompanha o caso: coordenacao, comercial, o consultor e a CS dele ou da aluna.
 create or replace function ve_fechamento(f fechamento) returns boolean
 language sql stable security definer set search_path = public as $$
-  select eh_coordenador() or meu_papel() = 'comercial'
+  select eh_coordenador() or meu_papel() in ('comercial', 'gestao')
       or f.consultor_id = auth.uid() or f.cs_id = auth.uid()
       or (f.aluna_id is not null and atende_aluna(f.aluna_id))
 $$;
@@ -138,7 +138,7 @@ begin
     ['fechamento', 'fech_mudar', 'create policy fech_mudar on fechamento for update to authenticated using (eh_coordenador() or meu_papel() = ''comercial'') with check (eh_coordenador() or meu_papel() = ''comercial'')'],
     ['fechamento', 'fech_apagar', 'create policy fech_apagar on fechamento for delete to authenticated using (eh_coordenador())'],
     ['fechamento_registro', 'fechreg_ler', 'create policy fechreg_ler on fechamento_registro for select to authenticated using (exists (select 1 from fechamento f where f.id = fechamento_id))'],
-    ['fechamento_registro', 'fechreg_criar', 'create policy fechreg_criar on fechamento_registro for insert to authenticated with check (autor_id = auth.uid() and exists (select 1 from fechamento f where f.id = fechamento_id))'],
+    ['fechamento_registro', 'fechreg_criar', 'create policy fechreg_criar on fechamento_registro for insert to authenticated with check (autor_id = auth.uid() and meu_papel() <> ''gestao'' and exists (select 1 from fechamento f where f.id = fechamento_id))'],
     ['fechamento_registro', 'fechreg_apagar', 'create policy fechreg_apagar on fechamento_registro for delete to authenticated using (eh_coordenador())']
   ] loop
     if not exists (select 1 from pg_policies where tablename = p[1] and policyname = p[2]) then
@@ -156,7 +156,7 @@ create or replace function painel_gerencial() returns jsonb
 language plpgsql stable security definer set search_path = public as $$
 declare r jsonb;
 begin
-  if not eh_coordenador() then raise exception 'so a coordenacao ve o painel gerencial'; end if;
+  if not (eh_coordenador() or meu_papel() = 'gestao') then raise exception 'so a coordenacao e a gestao veem o painel gerencial'; end if;
   with vivas as (
     select * from aluna where status_contrato not in ('cancelado','encerrado')
   ), fech as (
@@ -239,6 +239,20 @@ begin
   ) into r;
   return r;
 end $$;
+
+-- Gestao: acompanha os numeros (Inicio, Alunas e Gerencial) sem mexer na operacao.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'perfil_papel_check'
+                 and pg_get_constraintdef(oid) like '%gestao%') then
+    alter table perfil drop constraint if exists perfil_papel_check;
+    alter table perfil add constraint perfil_papel_check
+      check (papel in ('coordenador','cs','consultor','comercial','retencao','gestao'));
+  end if;
+end $$;
+-- A politica de registro ja existia sem a restricao da gestao.
+alter policy fechreg_criar on fechamento_registro
+  with check (autor_id = auth.uid() and meu_papel() <> 'gestao' and exists (select 1 from fechamento f where f.id = fechamento_id));
 
 revoke execute on function painel_gerencial() from public, anon;
 grant execute on function painel_gerencial() to authenticated;

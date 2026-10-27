@@ -1,6 +1,6 @@
 // Espelho das tabelas de supabase/sistema.sql. Mudou la, muda aqui.
 
-export type Papel = 'coordenador' | 'cs' | 'consultor' | 'comercial' | 'retencao'
+export type Papel = 'coordenador' | 'cs' | 'consultor' | 'comercial' | 'retencao' | 'gestao'
 
 export type Saude = 'engajada' | 'oscilante' | 'sem_contato' | 'risco_saida' | 'renovou_upsell'
 

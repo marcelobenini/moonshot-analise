@@ -324,7 +324,7 @@ begin
   if not eh_coordenador() then raise exception 'so a coordenacao cria acessos'; end if;
   if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'e-mail invalido'; end if;
   if coalesce(trim(p_nome), '') = '' then raise exception 'diga o nome da pessoa'; end if;
-  if p_papel not in ('coordenador', 'cs', 'consultor', 'comercial', 'retencao') then raise exception 'perfil invalido'; end if;
+  if p_papel not in ('coordenador', 'cs', 'consultor', 'comercial', 'retencao', 'gestao') then raise exception 'perfil invalido'; end if;
   if exists (select 1 from auth.users where lower(email) = v_email) then
     raise exception 'ja existe acesso com este e-mail';
   end if;

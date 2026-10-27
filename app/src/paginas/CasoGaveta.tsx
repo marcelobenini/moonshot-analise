@@ -74,7 +74,7 @@ export function CasoGaveta({ id, fechar, mudou }: { id: number | 'novo'; fechar:
                   {caso.proxima_acao_em && <p className="mt-2 text-xs text-slate-500">Próximo passo em {data(caso.proxima_acao_em)}</p>}
                 </section>
 
-                <NovoRegistro caso={caso} salvo={salvo} />
+                {eu?.papel !== 'gestao' && <NovoRegistro caso={caso} salvo={salvo} />}
 
                 <section>
                   <h3 className="mb-3 font-display text-lg font-semibold text-noite">Histórico do caso</h3>
