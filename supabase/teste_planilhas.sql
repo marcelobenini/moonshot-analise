@@ -73,7 +73,7 @@ select ok((select faturamento_mensal = 45000 and cidade = 'Campinas' from aluna 
 select ok((select count(*) = 2 from consultoria_agenda g join aluna a on a.id = g.aluna_id where a.email = 'maria@x.com'),
           'agenda guarda so datas de verdade ("nov/260" fica de fora)');
 select ok((select count(*) = 1 from nota_aluna n join aluna a on a.id = n.aluna_id where a.email = 'maria@x.com' and n.tipo = 'situacao'),
-          'SITUACAO ALUNA vira anotacao sigilosa');
+          'SITUACAO ALUNA vira anotacao');
 select ok((select bool_and(c.status_financeiro = 'inadimplente') from contrato c join aluna a on a.id = c.aluna_id
            where a.nome = 'Beatriz Souza Lima'), 'etiqueta Inadimplente da aba do Hiago marca o contrato');
 
@@ -169,8 +169,8 @@ select ok(conta_como(:thiago, 'select * from importacao') = 0, 'consultor nao ve
 select ok(barrado(:thiago, $$select processar_importacao(1)$$), 'consultor nao processa importacao');
 select ok(conta_como(:thiago, $$select * from nota_aluna n join aluna a on a.id = n.aluna_id where a.email = 'maria@x.com'$$) >= 1,
           'consultor le as anotacoes da propria aluna');
-select ok(conta_como(:thiago, $$select * from nota_aluna n join aluna a on a.id = n.aluna_id where a.nome = 'Beatriz Souza Lima'$$) = 0,
-          'e nao as de aluna de outra carteira');
+select ok(conta_como(:thiago, 'select * from nota_aluna') = (select count(*) from nota_aluna),
+          'e todas as anotacoes, de qualquer carteira');
 
 rollback;
 \echo 'TODOS OS TESTES DE PLANILHA PASSARAM'

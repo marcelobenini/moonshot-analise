@@ -149,8 +149,8 @@ select ok((select count(*) = 1 from card c join aluna a on a.id = c.aluna_id
            where c.funil_id = 'retencao' and a.nome = 'Claudia Benati' and c.fechado_em is null),
           'risco de saida abre card de retencao');
 select ok((select count(*) = 1 from notificacao where usuario_id = :ret and tipo = 'risco'), 'retencao e avisada');
-select ok(conta_como(:bia, 'select * from registro_consultoria') = 0, 'relato do consultor nao vaza para outra carteira');
-select ok(conta_como(:com, 'select * from registro_consultoria') = 0, 'relato do consultor nao vaza para o comercial');
+select ok(conta_como(:bia, 'select * from registro_consultoria') = 1, 'relato do consultor e lido pelos outros consultores');
+select ok(conta_como(:com, 'select * from registro_consultoria') = 1, 'e pelo comercial');
 select ok(conta_como(:coord, 'select * from registro_consultoria') = 1, 'coordenacao le o relato');
 
 -- Engajada e acima do corte vira sugestao, uma vez por mes.

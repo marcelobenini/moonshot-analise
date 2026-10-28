@@ -59,8 +59,8 @@ select ok((select proximo_contato is null from aluna where id = :helena)
 select como(:cons, $$insert into registro_consultoria (aluna_id, consultor_id, numero, saude, situacao)
   values ((select id from aluna where nome = 'Helena Teste Prado'), '20000000-0000-0000-0000-0000000000b1', 1, 'engajada',
           'Dobrou a equipe, quer abrir segunda unidade')$$);
-select ok(conta_como(:com, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 0,
-          'comercial nao ve o relato antes da passagem');
+select ok(conta_como(:com, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 1,
+          'comercial le o relato do consultor');
 select ok(barrado(:outro, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', null, 'x', null, null)$$),
           'consultor de outra carteira nao envia');
 select ok(barrado(:cons, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', null, ' ', null, null)$$),
@@ -84,16 +84,16 @@ select ok(conta_como(:com, $$select * from registro_consultoria where situacao l
 select ok(conta_como(:com, $$select * from nota_aluna where texto = 'Pagou'$$) = 1, 'e as anotacoes');
 select ok(barrado(:cons, $$select enviar_ao_comercial((select id from aluna where nome = 'Helena Teste Prado'), 'Elite', null, 'de novo', null, null)$$),
           'nao abre segundo card no comercial');
-select ok(conta_como(:outro, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 0,
-          'outro consultor continua sem ver o relato');
+select ok(conta_como(:outro, $$select * from registro_consultoria where situacao like 'Dobrou%'$$) = 1,
+          'outro consultor tambem le o relato');
 
 -- Linha do tempo -------------------------------------------------------------------
 select ok(conta_como(:cons, $$select distinct tipo from vw_linha_tempo
             where aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$) >= 5,
           'linha do tempo junta status, contato, consultoria, funil e contrato');
 select ok(conta_como(:outro, $$select * from vw_linha_tempo where tipo = 'consultoria'
-            and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$) = 0,
-          'e respeita o sigilo do relato');
+            and aluna_id = (select id from aluna where nome = 'Helena Teste Prado')$$) >= 1,
+          'e mostra o relato para o time todo');
 
 -- Acessos -------------------------------------------------------------------------
 select ok(barrado(:cs, $$select criar_acesso('nova@nb.com', 'Nova', 'cs')$$), 'so a coordenacao cria acesso');
