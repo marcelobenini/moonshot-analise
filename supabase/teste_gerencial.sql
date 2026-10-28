@@ -71,5 +71,24 @@ select ok(barrado(:gest, $$insert into fechamento_registro (fechamento_id, resum
 select ok(conta_como(:gest, 'select 1 from aluna') >= 1 and conta_como(:gest, 'select 1 from funil') = 0,
           'gestao ve as alunas, mas nao os funis');
 
+-- Ficha: a equipe da operacao edita qualquer aluna; a gestao so le.
+insert into aluna (nome, consultor_id, cs_id) values ('Lia Teste Ficha', :outro, null);
+\set lia '(select id from aluna where nome = ''Lia Teste Ficha'')'
+select como(:cons, $$update aluna set faturamento_mensal = 70000, cidade = 'Campinas' where nome = 'Lia Teste Ficha'$$);
+select ok((select faturamento_mensal = 70000 and cidade = 'Campinas' from aluna where id = :lia),
+          'consultor edita ficha de aluna de outra carteira');
+select como(:cons, $$insert into consultoria_agenda (aluna_id, numero, data_prevista) values ((select id from aluna where nome = 'Lia Teste Ficha'), 2, '2026-12-01')$$);
+select como(:cs, $$update consultoria_agenda set data_prevista = '2026-12-08' where aluna_id = (select id from aluna where nome = 'Lia Teste Ficha') and numero = 2$$);
+select ok((select data_prevista = '2026-12-08' from consultoria_agenda where aluna_id = :lia and numero = 2),
+          'consultor agenda e CS remarca a consultoria de qualquer aluna');
+select como(:cons, $$select mudar_status_aluna((select id from aluna where nome = 'Lia Teste Ficha'), 'pausado', null, 'Viagem de dois meses')$$);
+select ok((select status_contrato = 'pausado' from aluna where id = :lia), 'consultor muda o status de aluna de outra carteira');
+select ok(barrado(:cons, $$update aluna set consultor_id = '30000000-0000-0000-0000-0000000000b1' where nome = 'Lia Teste Ficha'$$),
+          'mas nao puxa a aluna para a propria carteira');
+select ok(barrado(:gest, $$update aluna set cidade = 'X' where nome = 'Lia Teste Ficha'$$) is false
+          and (select cidade = 'Campinas' from aluna where id = :lia)
+          and barrado(:gest, $$insert into consultoria_agenda (aluna_id, numero) values ((select id from aluna where nome = 'Lia Teste Ficha'), 3)$$),
+          'gestao nao edita ficha nem agenda');
+
 rollback;
 \echo 'TODOS OS TESTES GERENCIAIS PASSARAM'

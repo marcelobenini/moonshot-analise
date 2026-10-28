@@ -159,3 +159,6 @@ export const NIVEL: Record<number, string> = {
 }
 
 export const PRODUTOS_FECHAMENTO = ['Moonshot In Company', 'Moonshot Private', 'Moonshot Pró', 'Moonshot Elite', 'Moonshot Club']
+
+// Quem edita a ficha da aluna (cadastro, agenda, contratos, status). Espelha edita_aluna() no banco.
+export const EDITA_ALUNA: string[] = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao']

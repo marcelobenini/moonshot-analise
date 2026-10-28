@@ -86,14 +86,14 @@ create or replace trigger tg_aluna_historico after update on aluna
   for each row execute function aluna_historico_depois();
 
 -- Mudar status pela ficha. Muda o contrato principal (a aluna espelha) e a
--- propria aluna, e guarda o motivo no historico. Quem pode: coordenacao, CS,
--- retencao e quem atende a aluna.
+-- propria aluna, e guarda o motivo no historico. Quem pode: a equipe da
+-- operacao (edita_aluna, em sistema_permissoes.sql).
 create or replace function mudar_status_aluna(p_aluna bigint, p_status_contrato text,
                                               p_status_financeiro text, p_motivo text)
 returns void language plpgsql security definer set search_path = public as $$
 declare c bigint; a aluna;
 begin
-  if not (eh_coordenador() or meu_papel() in ('cs', 'retencao') or atende_aluna(p_aluna)) then
+  if not edita_aluna() then
     raise exception 'sem permissao para mudar o status desta aluna';
   end if;
   select * into a from aluna where id = p_aluna;

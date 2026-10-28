@@ -4,7 +4,7 @@ import { Check, Plus, Send } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { AgendaConsultoria, Aluna, Contrato, NotaAluna, Participante } from '../lib/tipos'
-import { FINANCEIRO, NOTA, PRODUTOS, STATUS_CONTRATO, data, dataHora, hoje, mensagemErro } from '../lib/util'
+import { EDITA_ALUNA, FINANCEIRO, NOTA, PRODUTOS, STATUS_CONTRATO, data, dataHora, hoje, mensagemErro } from '../lib/util'
 import { Campo, Erro, Modal, Selo } from '../componentes/ui'
 
 // Contratos: uma linha por compra. O que a planilha resolvia repetindo a
@@ -13,7 +13,7 @@ export function Contratos({ aluna, mudou }: { aluna: Aluna; mudou: () => void })
   const { eu } = useSessao()
   const [lista, setLista] = useState<Contrato[]>([])
   const [editando, setEditando] = useState<Partial<Contrato> | null>(null)
-  const pode = eu?.papel === 'coordenador' || eu?.papel === 'cs'
+  const pode = EDITA_ALUNA.includes(eu?.papel ?? '')
   const carregar = useCallback(async () => {
     const { data: d } = await supabase.from('contrato').select('*').eq('aluna_id', aluna.id).order('termino', { ascending: false, nullsFirst: false })
     setLista((d ?? []) as Contrato[])

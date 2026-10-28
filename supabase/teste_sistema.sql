@@ -137,9 +137,6 @@ select ok(not barrado(:carol, $$update aluna set faturamento_mensal = 130000 whe
           'consultor atualiza dado da propria aluna');
 
 -- Registro de consultoria -----------------------------------------------------
-select ok(barrado(:carol, $$insert into registro_consultoria (aluna_id, numero, saude, situacao)
-                            select id, 1, 'engajada', 'x' from aluna where nome = 'Joana Prado'$$),
-          'consultor nao registra consultoria de aluna alheia');
 select como(:carol, $$insert into registro_consultoria (aluna_id, numero, saude, situacao, faturamento_mensal)
                       select id, 3, 'risco_saida', 'Falou em parar por caixa apertado', 125000
                       from aluna where nome = 'Claudia Benati'$$);

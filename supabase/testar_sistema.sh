@@ -9,7 +9,7 @@ BANCO=moonshot_teste_$$
 psql -q -v ON_ERROR_STOP=1 -d postgres -c "create database $BANCO" >/dev/null
 trap 'psql -q -d postgres -c "drop database if exists $BANCO" >/dev/null' EXIT
 for vez in 1 2; do
-  for f in schema.sql sistema.sql sistema_funis.sql sistema_importar.sql sistema_planilhas.sql sistema_crm.sql sistema_seguranca.sql sistema_potencial.sql sistema_painel.sql sistema_documento.sql sistema_gerencial.sql; do
+  for f in schema.sql sistema.sql sistema_funis.sql sistema_importar.sql sistema_planilhas.sql sistema_crm.sql sistema_seguranca.sql sistema_potencial.sql sistema_painel.sql sistema_documento.sql sistema_gerencial.sql sistema_permissoes.sql; do
     psql -q -v ON_ERROR_STOP=1 -d "$BANCO" -f "$f" 2>&1 | { grep -v NOTICE || true; }
   done
 done

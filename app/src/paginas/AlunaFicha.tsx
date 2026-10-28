@@ -4,7 +4,7 @@ import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail, PhoneCall, Flag,
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna, Card, Demanda, Etapa, Funil, RegistroConsultoria, Saude } from '../lib/tipos'
-import { FINANCEIRO, SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais } from '../lib/util'
+import { FINANCEIRO, SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais, EDITA_ALUNA } from '../lib/util'
 import { Campo, Carregando, Erro, Modal, Selo, Vazio } from '../componentes/ui'
 import { AlunaForm } from './Alunas'
 import { NovoCard } from './CardGaveta'
@@ -51,10 +51,12 @@ export function AlunaFicha() {
   const papel = eu?.papel
   const minha = aluna.consultor_id === eu?.id || aluna.cs_id === eu?.id
   const coordOuCs = papel === 'coordenador' || papel === 'cs'
-  const podeEditarFicha = coordOuCs || minha
-  const podeRegistrar = papel === 'coordenador' || aluna.consultor_id === eu?.id
-  const podeContato = coordOuCs || minha || papel === 'retencao' || papel === 'comercial'
-  const podeStatus = coordOuCs || minha || papel === 'retencao'
+  // A equipe da operacao edita qualquer ficha (edita_aluna no banco); a gestao so le.
+  const equipe = EDITA_ALUNA.includes(papel ?? '')
+  const podeEditarFicha = equipe
+  const podeRegistrar = papel === 'coordenador' || papel === 'consultor' || papel === 'cs'
+  const podeContato = equipe
+  const podeStatus = equipe
   const podeEnviar = coordOuCs || minha
   const noComercial = cards.some((c) => c.funil_id === 'comercial' && !c.fechado_em)
   const abertosPorFunil = new Set(cards.filter((c) => !c.fechado_em).map((c) => c.funil_id))
@@ -156,7 +158,7 @@ export function AlunaFicha() {
 
       {aba === 'consultorias' && (
         <div className="space-y-6">
-          <Agenda aluna={aluna} podeEditar={podeRegistrar || papel === 'cs'} />
+          <Agenda aluna={aluna} podeEditar={equipe} />
           <section className="space-y-3">
             <h2 className="font-display text-xl font-semibold text-noite">Relatos de consultoria</h2>
             {registros.length === 0 ? (

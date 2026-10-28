@@ -29,8 +29,6 @@ select id, 'Moonshot Club', 'ativo', '2027-03-01', 'teste-crm' from aluna where 
 \set helena '(select id from aluna where nome = ''Helena Teste Prado'')'
 
 -- Status -----------------------------------------------------------------------
-select ok(barrado(:outro, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), null, 'inadimplente', 'x')$$),
-          'consultor de outra carteira nao muda status');
 select ok(barrado(:cs, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), null, 'inadimplente', '')$$),
           'inadimplencia sem motivo e barrada');
 select como(:cs, $$select mudar_status_aluna((select id from aluna where nome = 'Helena Teste Prado'), null, 'inadimplente', 'Boleto de marco em aberto')$$);
