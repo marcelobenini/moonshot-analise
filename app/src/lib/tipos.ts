@@ -346,3 +346,26 @@ export interface PreAnalise {
   validado_em: string | null
   atualizado_em: string
 }
+
+export interface JornadaEtapa {
+  id: number
+  programa: string
+  ordem: number
+  chave: string
+  nome: string
+  tipo: 'consultoria' | 'encontro'
+  numero: number | null
+}
+
+export interface Acompanhamento {
+  id: number
+  aluna_id: number
+  etapa_chave: string
+  status: 'agendado' | 'feito' | 'nao_se_aplica'
+  data: string | null
+  resumo: string | null
+  proximos_passos: string | null
+  proxima_data: string | null
+  autor_id: string | null
+  atualizado_em: string
+}

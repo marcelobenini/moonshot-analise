@@ -19,6 +19,7 @@ import { Eventos, EventoDetalhe } from './paginas/Eventos'
 import { Importar } from './paginas/Importar'
 import { Fechamentos, Gerencial } from './paginas/Gerencial'
 import { Entrada } from './paginas/Entrada'
+import { Acompanhamento } from './paginas/Acompanhamento'
 
 function Rotas() {
   const { carregando, sessao, eu } = useSessao()
@@ -74,6 +75,7 @@ function Rotas() {
       <Route element={<Layout />}>
         <Route index element={<Inicio />} />
         <Route path="funis" element={<Funis />} />
+        <Route path="acompanhamento" element={<Acompanhamento />} />
         <Route path="funis/:funilId" element={<Funis />} />
         <Route path="alunas" element={<Alunas />} />
         <Route path="alunas/:id" element={<AlunaFicha />} />

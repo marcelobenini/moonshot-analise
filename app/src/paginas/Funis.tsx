@@ -8,6 +8,7 @@ import type { Aluna, Card, Etapa } from '../lib/tipos'
 import { SAUDE, data, diasDesde, hoje, mensagemErro, reais, rotuloOrigem } from '../lib/util'
 import { Carregando, Erro, Modal, Campo, Potencial, Vazio } from '../componentes/ui'
 import { CardGaveta, NovoCard } from './CardGaveta'
+import { AlternarVisao } from './Acompanhamento'
 
 type CardComAluna = Card & { aluna: Pick<Aluna, 'id' | 'nome' | 'produto' | 'saude' | 'faturamento_mensal' | 'potencial' | 'telefone' | 'email' | 'cs_id' | 'cs_planilha'> | null }
 
@@ -106,6 +107,7 @@ export function Funis() {
 
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
+      {eu?.papel === 'consultor' && <div className="px-4 pt-3 sm:px-6"><AlternarVisao atual="funil" /></div>}
       {/* Barra do funil: qual funil, como ver, filtros. */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-slate-200 bg-white px-4 sm:px-6">
         <div className="relative py-2">
