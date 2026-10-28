@@ -1062,7 +1062,7 @@ begin
                                           else a.consultor_id end
   from aluna a
   where c.aluna_id = a.id and c.responsavel_id is null
-    and c.funil_id in ('consultoria', 'oportunidades', 'onboarding', 'renovacao')
+    and c.funil_id in ('consultoria', 'oportunidades', 'onboarding', 'renovacao', 'ascensao')
     and coalesce(a.consultor_id, a.cs_id) is not null;
   get diagnostics n_cards = row_count;
   perform set_config('moonshot.silencio', 'off', true);

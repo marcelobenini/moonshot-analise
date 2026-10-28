@@ -39,5 +39,22 @@ begin
   end if;
 end $$;
 
+-- Acesso novo ou nome da planilha corrigido: a carteira se liga na hora,
+-- sem depender de alguem lembrar do botao em Equipe.
+create or replace function perfil_vincula() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.ativo and new.consultor_norm is not null and new.papel in ('consultor', 'cs', 'coordenador')
+     and (tg_op = 'INSERT' or new.consultor_norm is distinct from old.consultor_norm
+          or new.papel is distinct from old.papel or new.ativo is distinct from old.ativo)
+     and (auth.uid() is null or eh_coordenador()) then
+    perform vincular_equipe();
+  end if;
+  return new;
+end $$;
+create or replace trigger tg_perfil_vincula after insert or update on perfil
+  for each row execute function perfil_vincula();
+revoke execute on function perfil_vincula() from public, anon, authenticated;
+
 revoke execute on function edita_aluna() from public, anon;
 grant execute on function edita_aluna() to authenticated;

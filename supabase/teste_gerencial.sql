@@ -90,5 +90,11 @@ select ok(barrado(:gest, $$update aluna set cidade = 'X' where nome = 'Lia Teste
           and barrado(:gest, $$insert into consultoria_agenda (aluna_id, numero) values ((select id from aluna where nome = 'Lia Teste Ficha'), 3)$$),
           'gestao nao edita ficha nem agenda');
 
+-- Acesso novo com o nome da planilha: a carteira se liga sozinha.
+insert into aluna (nome, consultor_planilha) values ('Zara Teste Carteira', 'Zuleica');
+select como(:coord, $$select criar_acesso('zuleica@exemplo.teste', 'Zuleica Teste', 'consultor', 'Zuleica')$$);
+select ok((select p.nome = 'Zuleica Teste' from aluna a join perfil p on p.id = a.consultor_id where a.nome = 'Zara Teste Carteira'),
+          'criar acesso de consultor liga a carteira da planilha na hora');
+
 rollback;
 \echo 'TODOS OS TESTES GERENCIAIS PASSARAM'
