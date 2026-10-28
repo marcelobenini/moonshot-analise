@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, MoreHorizontal, X, CalendarDays, FileUp, FileSignature, LineChart } from 'lucide-react'
+import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, MoreHorizontal, X, CalendarDays, FileUp, FileSignature, LineChart, ClipboardList } from 'lucide-react'
 import { useSessao } from '../lib/sessao'
 import { PAPEL } from '../lib/util'
 import { Sino } from './Sino'
@@ -18,6 +18,7 @@ export function Layout() {
     { para: '/alunas', rotulo: 'Alunas', icone: Users },
     { para: '/demandas', rotulo: 'Demandas', icone: MessageSquare },
     { para: '/eventos', rotulo: 'Eventos', icone: CalendarDays },
+    ...(eu?.papel === 'coordenador' || eu?.papel === 'cs' ? [{ para: '/entrada', rotulo: 'Entrada', icone: ClipboardList }] : []),
     ...(eu?.papel === 'coordenador' ? [{ para: '/gerencial', rotulo: 'Gerencial', icone: LineChart }]
       : eu?.papel && ['consultor', 'cs', 'comercial'].includes(eu.papel) ? [{ para: '/fechamentos', rotulo: 'Fechamentos', icone: FileSignature }] : []),
     ...(eu?.papel === 'coordenador' ? [
@@ -27,7 +28,7 @@ export function Layout() {
   ]
 
   // Celular: as quatro primeiras ficam na barra de baixo; o resto e o Sair vao em "Mais".
-  const ordemCelular = ['/', '/funis', '/alunas', '/gerencial', '/fechamentos', '/demandas']
+  const ordemCelular = ['/', '/funis', '/alunas', '/gerencial', '/entrada', '/fechamentos', '/demandas']
   const principais = [...itens].sort((a, b) => ordemCelular.indexOf(a.para) - ordemCelular.indexOf(b.para))
     .filter((i) => ordemCelular.includes(i.para)).slice(0, 4)
   const extras = itens.filter((i) => !principais.includes(i))

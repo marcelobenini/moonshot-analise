@@ -306,3 +306,43 @@ export interface FechamentoRegistro {
   proxima_acao_em: string | null
   criado_em: string
 }
+
+export type StatusEntrada = 'aguardando_formulario' | 'formulario_recebido' | 'para_validar' | 'aprovada' | 'ajustada'
+
+export interface FormularioEntrada {
+  id: number
+  aluna_id: number | null
+  nome: string | null
+  email: string | null
+  telefone: string | null
+  respostas: { pergunta: string; resposta: string }[]
+  enviado_em: string | null
+  recebido_em: string
+}
+
+export interface PreAnalise {
+  id: number
+  aluna_id: number
+  status: StatusEntrada
+  formulario_enviado_em: string | null
+  enviado_por: string | null
+  formulario_id: number | null
+  texto_ia: string | null
+  resumo: string | null
+  porte: string | null
+  dores: string | null
+  objetivos: string | null
+  nivel: number | null
+  justificativa: string | null
+  pauta: string | null
+  consultor_sugerido_id: string | null
+  cs_sugerido_id: string | null
+  analisado_por: string | null
+  analisado_em: string | null
+  consultor_final_id: string | null
+  cs_final_id: string | null
+  motivo_ajuste: string | null
+  validado_por: string | null
+  validado_em: string | null
+  atualizado_em: string
+}

@@ -162,3 +162,11 @@ export const PRODUTOS_FECHAMENTO = ['Moonshot In Company', 'Moonshot Private', '
 
 // Quem edita a ficha da aluna (cadastro, agenda, contratos, status). Espelha edita_aluna() no banco.
 export const EDITA_ALUNA: string[] = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao']
+
+export const STATUS_ENTRADA: Record<string, { rotulo: string; cor: string }> = {
+  aguardando_formulario: { rotulo: 'Aguardando resposta', cor: 'bg-slate-100 text-slate-700' },
+  formulario_recebido: { rotulo: 'Para analisar', cor: 'bg-sky-100 text-sky-800' },
+  para_validar: { rotulo: 'Para validar', cor: 'bg-amber-100 text-amber-800' },
+  aprovada: { rotulo: 'Aprovada', cor: 'bg-emerald-100 text-emerald-800' },
+  ajustada: { rotulo: 'Ajustada', cor: 'bg-indigo-100 text-indigo-800' },
+}

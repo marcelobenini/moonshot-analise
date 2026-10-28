@@ -8,6 +8,7 @@ import { PRIORIDADE, SAUDE, data, diasDesde, hoje, reais } from '../lib/util'
 import { Carregando, Potencial, Selo } from '../componentes/ui'
 import { BarrasH, Colunas, Legenda, Linhas, Rosca, compacto } from '../componentes/graficos'
 import { Cartao, Indicador } from '../componentes/painel'
+import { AvisoEntrada } from './Entrada'
 
 type CardEtapa = Card & { etapa: { nome: string; alerta_dias: number | null } }
 type Resumo = { funil_id: string; etapa: string; ordem: number; cards: number; parados: number; valor: number | null }
@@ -116,6 +117,8 @@ export function Inicio() {
           <p className="mt-1 text-sm text-slate-300">O que precisa da sua atenção hoje.</p>
         </div>
       </div>
+
+      <AvisoEntrada />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Indicador rotulo={geral ? 'Alunas ativas' : 'Alunas ativas na carteira'} valor={painel ? String(painel.ativas) : '…'}

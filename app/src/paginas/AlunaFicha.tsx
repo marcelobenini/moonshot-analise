@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail, PhoneCall, Flag, Rocket } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
+import { PreAnaliseFicha } from './Entrada'
 import type { Aluna, Card, Demanda, Etapa, Funil, RegistroConsultoria, Saude } from '../lib/tipos'
 import { FINANCEIRO, SAUDE, STATUS_DEMANDA, data, hoje, mensagemErro, reais, EDITA_ALUNA } from '../lib/util'
 import { Campo, Carregando, Erro, Modal, Selo, Vazio } from '../componentes/ui'
@@ -86,6 +87,7 @@ export function AlunaFicha() {
       {aba === 'resumo' && (
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            <PreAnaliseFicha alunaId={aluna.id} />
             <Jornada aluna={aluna} registros={registros} />
             <div className="lg:hidden"><ComoEsta aluna={aluna} /></div>
             <PerfilNegocio aluna={aluna} pode={podeEditarFicha} mudou={carregar} />
