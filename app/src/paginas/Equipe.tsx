@@ -226,20 +226,20 @@ function RegistroSeguranca({ versao }: { versao: unknown }) {
 }
 
 // O que cada perfil faz, como as regras do banco aplicam.
-const PERMISSOES: [string, string, string, string, string, string][] = [
-  ['', 'Coordenação', 'CS', 'Consultor', 'Comercial', 'Retenção'],
-  ['Ver e buscar alunas', 'todas', 'todas', 'todas', 'todas', 'todas'],
-  ['Cadastrar aluna', 'sim', 'sim', 'na própria carteira', 'sim', 'sim'],
-  ['Editar ficha e perfil do negócio', 'todas', 'todas', 'da carteira', 'não', 'não'],
-  ['Registrar contato', 'sim', 'sim', 'da carteira', 'com card aberto', 'sim'],
-  ['Mudar status (inadimplente, cancelada…)', 'sim', 'sim', 'da carteira', 'não', 'sim'],
-  ['Registrar consultoria e ler relatos', 'tudo', 'das suas alunas', 'da carteira', 'com card aberto (só ler)', 'com card aberto (só ler)'],
-  ['Enviar ao comercial', 'sim', 'sim', 'da carteira', 'não', 'não'],
-  ['Redistribuir carteira (consultor/CS)', 'sim', 'sim', 'não', 'não', 'não'],
-  ['Contratos', 'editar', 'editar', 'ver', 'ver', 'ver'],
-  ['Funis que move', 'todos', 'Onboarding, Renovação', 'Ciclo, Oportunidades, Renovação', 'Comercial', 'Retenção'],
-  ['Eventos', 'editar', 'editar', 'marcar presença', 'editar', 'marcar presença'],
-  ['Equipe, acessos e importar planilhas', 'sim', 'não', 'não', 'não', 'não'],
+const PERMISSOES: string[][] = [
+  ['', 'Coordenação', 'CS', 'Consultor', 'Comercial', 'Cancelamento', 'Gestão'],
+  ['Ver e buscar alunas', 'todas', 'todas', 'todas', 'todas', 'todas', 'todas'],
+  ['Cadastrar aluna', 'sim', 'sim', 'na própria carteira', 'sim', 'sim', 'não'],
+  ['Editar ficha, agenda e contratos', 'todas', 'todas', 'todas', 'todas', 'todas', 'não'],
+  ['Registrar contato e mudar status', 'sim', 'sim', 'sim', 'sim', 'sim', 'não'],
+  ['Registrar consultoria', 'sim', 'sim', 'sim', 'não', 'não', 'não'],
+  ['Ler relatos e anotações', 'todos', 'todos', 'todos', 'todos', 'todos', 'todos'],
+  ['Ver CPF', 'sim', 'sim', 'da carteira', 'não', 'não', 'não'],
+  ['Redistribuir carteira (consultor/CS)', 'sim', 'sim', 'não', 'não', 'não', 'não'],
+  ['Funis que move', 'todos', 'Onboarding, Renovação, Ascensão', 'Ciclo, Oportunidades, Renovação, Ascensão', 'Comercial, Ascensão', 'Cancelamento', 'nenhum'],
+  ['Entrada (formulário e pré-análise)', 'valida', 'faz a pré-análise', 'lê na ficha', 'não', 'não', 'não'],
+  ['Gerencial', 'sim', 'não', 'não', 'não', 'não', 'ver'],
+  ['Equipe, acessos e importar planilhas', 'sim', 'não', 'não', 'não', 'não', 'não'],
 ]
 
 function PerfisDeAcesso() {

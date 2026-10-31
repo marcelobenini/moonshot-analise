@@ -193,12 +193,12 @@ export function MudarStatus({ aluna, fechar, salvo }: { aluna: Aluna; fechar: ()
         )}
         {mudaContrato && contrato === 'em_cancelamento' && (
           <p className="rounded-lg bg-orange-50 p-3 text-xs text-orange-900">
-            A aluna continua na carteira e entra no funil de <b>Retenção</b> para a equipe tentar reverter.
+            A aluna continua na carteira e entra no funil de <b>Cancelamento</b> para a equipe tentar reverter.
           </p>
         )}
         {mudaContrato && contrato === 'cancelado' && (
           <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
-            Pedido de cancelamento em andamento? Coloque a aluna no funil de <b>Retenção</b> em vez de cancelar direto: assim a retenção tenta reverter e o motivo entra na taxa.
+            Pedido de cancelamento em andamento? Coloque a aluna no funil de <b>Cancelamento</b> em vez de cancelar direto: assim a retenção tenta reverter e o motivo entra na taxa.
           </p>
         )}
         <Erro msg={erro} />

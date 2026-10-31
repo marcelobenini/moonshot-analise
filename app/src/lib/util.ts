@@ -5,7 +5,7 @@ export const PAPEL: Record<Papel, string> = {
   cs: 'CS',
   consultor: 'Consultor',
   comercial: 'Comercial',
-  retencao: 'Retenção',
+  retencao: 'Cancelamento',
   gestao: 'Gestão',
 }
 

@@ -43,7 +43,7 @@ insert into funil (id, nome, descricao, ordem, papeis_editam, papeis_leem, restr
  '[{"chave":"mes_vencimento","rotulo":"Mês de vencimento","tipo":"texto"},
    {"chave":"condicoes","rotulo":"Condições propostas","tipo":"textao"}]',
  '{Financeiro,Insatisfação com a entrega,Saúde ou pessoal,Falta de tempo,Fechou ou vendeu o negócio,Outro}'),
-('retencao', 'Retenção', 'Pedido de saída até o desfecho. Dentro de 7 dias é arrependimento (CDC art. 49), não retenção.', 6,
+('retencao', 'Cancelamento', 'Pedido de saída até o desfecho. Dentro de 7 dias é arrependimento (CDC art. 49), não retenção.', 6,
  '{retencao}', '{cs,consultor}', true,
  '[{"chave":"prazo","rotulo":"Prazo","tipo":"selecao","opcoes":["dentro_7_dias","fora_7_dias"]},
    {"chave":"data_pedido","rotulo":"Data do pedido","tipo":"data"},
