@@ -76,6 +76,8 @@ function Rotas() {
         <Route index element={<Inicio />} />
         <Route path="funis" element={<Funis />} />
         <Route path="acompanhamento" element={<Acompanhamento />} />
+        <Route path="acompanhamento/funil" element={<Funis base="/acompanhamento/funil" />} />
+        <Route path="acompanhamento/funil/:funilId" element={<Funis base="/acompanhamento/funil" />} />
         <Route path="funis/:funilId" element={<Funis />} />
         <Route path="alunas" element={<Alunas />} />
         <Route path="alunas/:id" element={<AlunaFicha />} />

@@ -12,7 +12,8 @@ import { AlternarVisao } from './Acompanhamento'
 
 type CardComAluna = Card & { aluna: Pick<Aluna, 'id' | 'nome' | 'produto' | 'saude' | 'faturamento_mensal' | 'potencial' | 'telefone' | 'email' | 'cs_id' | 'cs_planilha'> | null }
 
-export function Funis() {
+/** Quadro de funis. Dentro do Acompanhamento ganha a alternancia de visao e fica na mesma aba. */
+export function Funis({ base = '/funis' }: { base?: string }) {
   const { funis, etapas, nomeDe, podeEditar, eu } = useSessao()
   const { funilId } = useParams()
   const [busca] = useSearchParams()
@@ -20,8 +21,10 @@ export function Funis() {
   const funil = funis.find((f) => f.id === funilId) ?? null
 
   useEffect(() => {
-    if (!funilId && funis.length) nav(`/funis/${funis[0].id}`, { replace: true })
-  }, [funilId, funis, nav])
+    // No Acompanhamento, o quadro abre no ciclo de consultoria.
+    const inicial = (base !== '/funis' && funis.find((f) => f.id === 'consultoria')) || funis[0]
+    if (!funilId && inicial) nav(`${base}/${inicial.id}`, { replace: true })
+  }, [funilId, funis, nav, base])
 
   const colunas = useMemo(() => etapas.filter((e) => e.funil_id === funilId), [etapas, funilId])
   const [cards, setCards] = useState<CardComAluna[] | null>(null)
@@ -107,7 +110,7 @@ export function Funis() {
 
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
-      {eu?.papel === 'consultor' && <div className="px-4 pt-3 sm:px-6"><AlternarVisao atual="funil" /></div>}
+      {base !== '/funis' && <div className="px-4 pt-3 sm:px-6"><AlternarVisao atual="funil" /></div>}
       {/* Barra do funil: qual funil, como ver, filtros. */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-slate-200 bg-white px-4 sm:px-6">
         <div className="relative py-2">
@@ -120,7 +123,7 @@ export function Funis() {
               <div className="fixed inset-0 z-30" onClick={() => setEscolherFunil(false)} />
               <div className="absolute left-0 top-full z-40 mt-1 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                 {funis.map((f) => (
-                  <button key={f.id} onClick={() => { setEscolherFunil(false); nav(`/funis/${f.id}`) }}
+                  <button key={f.id} onClick={() => { setEscolherFunil(false); nav(`${base}/${f.id}`) }}
                     className={`block w-full px-4 py-2 text-left text-sm hover:bg-slate-50 ${f.id === funilId ? 'font-medium text-indigo-700' : 'text-slate-700'}`}>
                     {f.nome}
                   </button>
@@ -182,12 +185,12 @@ export function Funis() {
             })}
           </div>
         </DndContext>
-        {aberto && largo && <CardGaveta encaixado id={aberto} fechar={() => nav(`/funis/${funil.id}`)} mudou={carregar} />}
+        {aberto && largo && <CardGaveta encaixado id={aberto} fechar={() => nav(`${base}/${funil.id}`)} mudou={carregar} />}
         </div>
       )}
 
       {aberto && (!largo || visao !== 'kanban' || cards === null) && (
-        <CardGaveta id={aberto} fechar={() => nav(`/funis/${funil.id}`)} mudou={carregar} />
+        <CardGaveta id={aberto} fechar={() => nav(`${base}/${funil.id}`)} mudou={carregar} />
       )}
       {novo && <NovoCard funil={funil} etapa={novo} fechar={() => setNovo(null)} criado={(id) => { setNovo(null); carregar(); nav(`?card=${id}`) }} />}
       {pedeMotivo && (

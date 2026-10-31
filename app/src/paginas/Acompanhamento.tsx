@@ -44,7 +44,7 @@ export function AlternarVisao({ atual }: { atual: 'acompanhamento' | 'funil' }) 
   return (
     <div className="inline-flex gap-1 rounded-xl bg-white p-1 ring-1 ring-slate-200">
       {item('acompanhamento', '/acompanhamento', 'Acompanhamento', ClipboardList)}
-      {item('funil', '/funis', 'Funil', KanbanSquare)}
+      {item('funil', '/acompanhamento/funil', 'Funil', KanbanSquare)}
     </div>
   )
 }
