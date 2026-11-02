@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { CalendarClock, CheckCircle2, Circle, ClipboardList, ExternalLink, KanbanSquare, Search, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, CalendarClock, CheckCircle2, Circle, ClipboardList, ExternalLink, KanbanSquare, Plus, Search, Settings2, Trash2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Acompanhamento as Registro, AgendaConsultoria, Aluna, JornadaEtapa, RegistroConsultoria, Saude } from '../lib/tipos'
 import { EDITA_ALUNA, SAUDE, data, mensagemErro } from '../lib/util'
-import { Campo, Carregando, Erro, Gaveta, Selo, Titulo, Vazio } from '../componentes/ui'
+import { Campo, Carregando, Erro, Gaveta, Modal, Selo, Titulo, Vazio } from '../componentes/ui'
 import { Segmento } from '../componentes/painel'
 
 // O Elite segue o roteiro do Pro.
@@ -60,13 +60,14 @@ export function Acompanhamento() {
   const [dados, setDados] = useState<Dados>({ registros: [], agenda: [], encontros: [] })
   const [minhas, setMinhas] = useState(eu?.papel === 'consultor')
   const [termo, setTermo] = useState('')
+  const [editar, setEditar] = useState(false)
 
   const carregar = useCallback(async () => {
     let q = supabase.from('aluna').select('*').not('status_contrato', 'in', '(cancelado,encerrado)')
       .in('produto', ['Moonshot Club', 'Moonshot Pró', 'Moonshot Elite', 'Moonshot In Company', 'Moonshot Private']).order('nome')
     if (minhas && eu) q = q.eq('consultor_id', eu.id)
     const [{ data: e }, { data: a }] = await Promise.all([
-      supabase.from('jornada_etapa').select('*').order('ordem'), q,
+      supabase.from('jornada_etapa').select('*').eq('ativo', true).order('ordem'), q,
     ])
     const lista = (a ?? []) as Aluna[]
     const ids = lista.map((x) => x.id)
@@ -91,7 +92,10 @@ export function Acompanhamento() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Titulo>Acompanhamento</Titulo>
-        <AlternarVisao atual="acompanhamento" />
+        <div className="flex flex-wrap items-center gap-2">
+          {eu?.papel === 'coordenador' && <button className="btn-secundario" onClick={() => setEditar(true)}><Settings2 size={16} /> Editar roteiro</button>}
+          <AlternarVisao atual="acompanhamento" />
+        </div>
       </div>
       <Segmento opcoes={PROGRAMAS.map((p) => ({ id: p.id, rotulo: `${p.rotulo} · ${doPrograma(p.id).length}` }))} valor={programa} mudar={(v) => mudar('programa', v)} />
       <div className="flex flex-wrap items-center gap-3">
@@ -136,6 +140,7 @@ export function Acompanhamento() {
         </ul>
       )}
 
+      {editar && <EditarRoteiro programa={programa} etapas={roteiro} fechar={() => setEditar(false)} salvo={() => { setEditar(false); carregar() }} />}
       {alunaAberta && <RoteiroGaveta key={alunaAberta.id} aluna={alunaAberta} etapas={etapas.filter((e) => e.programa === programaDe(alunaAberta.produto))}
         dados={dados} fechar={() => mudar('aluna', null)} mudou={carregar} />}
     </div>
@@ -178,6 +183,7 @@ function RoteiroGaveta({ aluna, etapas, dados, fechar, mudou }: {
               </button>
               {aberta === e.chave && (
                 <div className="border-t border-slate-100 px-4 py-4">
+                  {e.descricao && <p className="mb-3 rounded-lg bg-nude px-3 py-2 text-xs text-slate-600">{e.descricao}</p>}
                   {reg ? <RegistroFeito r={reg} /> : (
                     <FormEtapa aluna={aluna} etapa={e} encontro={enc} agendada={s.estado === 'agendado' ? s.data : null}
                       salvo={() => { setAberta(null); mudou() }} />
@@ -283,5 +289,92 @@ function FormEtapa({ aluna, etapa, encontro, agendada, salvo }: {
       <Erro msg={erro} />
       <div className="flex justify-end"><button className="btn-primario">Salvar</button></div>
     </form>
+  )
+}
+
+type Linha = Pick<JornadaEtapa, 'chave' | 'nome' | 'tipo' | 'numero'> & { descricao: string; novo?: boolean }
+
+/** Coordenacao ajusta o roteiro de um programa: nome, orientacao, ordem, tipo. Remover so desativa. */
+function EditarRoteiro({ programa, etapas, fechar, salvo }: { programa: string; etapas: JornadaEtapa[]; fechar: () => void; salvo: () => void }) {
+  const [linhas, setLinhas] = useState<Linha[]>(etapas.map((e) => ({ chave: e.chave, nome: e.nome, tipo: e.tipo, numero: e.numero, descricao: e.descricao ?? '' })))
+  const [removidas, setRemovidas] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const muda = (i: number, x: Partial<Linha>) => setLinhas((l) => l.map((y, j) => (j === i ? { ...y, ...x } : y)))
+  const mover = (i: number, d: number) => setLinhas((l) => {
+    const n = [...l]; const j = i + d
+    if (j < 0 || j >= n.length) return l
+    ;[n[i], n[j]] = [n[j], n[i]]; return n
+  })
+  const proximoNumero = () => {
+    const usados = new Set(linhas.filter((l) => l.tipo === 'consultoria').map((l) => l.numero))
+    for (let n = 0; n <= 10; n++) if (!usados.has(n)) return n
+    return null
+  }
+  function adicionar() {
+    setLinhas((l) => [...l, { chave: `etapa_${Date.now().toString(36)}`, nome: '', tipo: 'encontro', numero: null, descricao: '', novo: true }])
+  }
+  function remover(i: number) {
+    const l = linhas[i]
+    if (!l.novo) setRemovidas((r) => [...r, l.chave])
+    setLinhas((x) => x.filter((_, j) => j !== i))
+  }
+  async function salvar(ev: FormEvent) {
+    ev.preventDefault()
+    setErro(null)
+    if (linhas.some((l) => !l.nome.trim())) { setErro('Dê nome a todas as etapas.'); return }
+    const nums = linhas.filter((l) => l.tipo === 'consultoria').map((l) => l.numero)
+    if (nums.some((n) => n == null) || new Set(nums).size !== nums.length) { setErro('Cada consultoria precisa de um número diferente (0 é a inicial).'); return }
+    const linhasBanco = [
+      ...linhas.map((l, i) => ({ programa, chave: l.chave, ordem: i + 1, nome: l.nome.trim(), tipo: l.tipo,
+        numero: l.tipo === 'consultoria' ? l.numero : null, descricao: l.descricao.trim() || null, ativo: true })),
+    ]
+    const { error } = await supabase.from('jornada_etapa').upsert(linhasBanco, { onConflict: 'programa,chave' })
+    if (error) { setErro(mensagemErro(error)); return }
+    if (removidas.length) {
+      const { error: e2 } = await supabase.from('jornada_etapa').update({ ativo: false }).eq('programa', programa).in('chave', removidas)
+      if (e2) { setErro(mensagemErro(e2)); return }
+    }
+    salvo()
+  }
+  return (
+    <Modal titulo={`Roteiro · ${programa}`} aberto fechar={fechar} largo>
+      <form onSubmit={salvar} className="space-y-3">
+        <p className="text-xs text-slate-500">Consultoria é o registro de consultoria de sempre (entra na jornada, agenda e potencial); o número diz qual é (0 é a inicial). Encontro é qualquer outro momento. Remover só tira do roteiro: o que já foi preenchido continua guardado.</p>
+        <ol className="space-y-2">
+          {linhas.map((l, i) => (
+            <li key={l.chave} className="space-y-2 rounded-xl border border-slate-200 p-3">
+              <div className="flex items-center gap-2">
+                <span className="w-5 text-center text-xs font-semibold text-slate-400">{i + 1}</span>
+                <input className="entrada flex-1" placeholder="Nome da etapa" value={l.nome} onChange={(e) => muda(i, { nome: e.target.value })} />
+                <button type="button" className="btn-fantasma p-1.5" onClick={() => mover(i, -1)} aria-label="Subir"><ArrowUp size={15} /></button>
+                <button type="button" className="btn-fantasma p-1.5" onClick={() => mover(i, 1)} aria-label="Descer"><ArrowDown size={15} /></button>
+                <button type="button" className="btn-fantasma p-1.5 text-red-600" onClick={() => remover(i)} aria-label="Remover"><Trash2 size={15} /></button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pl-7">
+                <select className="entrada w-auto py-1 text-xs" value={l.tipo}
+                  onChange={(e) => muda(i, e.target.value === 'consultoria' ? { tipo: 'consultoria', numero: l.numero ?? proximoNumero() } : { tipo: 'encontro', numero: null })}>
+                  <option value="encontro">Encontro</option>
+                  <option value="consultoria">Consultoria</option>
+                </select>
+                {l.tipo === 'consultoria' && (
+                  <label className="flex items-center gap-1 text-xs text-slate-600">nº
+                    <input type="number" min={0} max={10} className="entrada w-16 py-1 text-xs" value={l.numero ?? ''} onChange={(e) => muda(i, { numero: e.target.value === '' ? null : Number(e.target.value) })} />
+                  </label>
+                )}
+              </div>
+              <div className="pl-7">
+                <textarea className="entrada min-h-12 text-xs" placeholder="Orientação para o consultor (opcional)" value={l.descricao} onChange={(e) => muda(i, { descricao: e.target.value })} />
+              </div>
+            </li>
+          ))}
+        </ol>
+        <button type="button" className="btn-secundario" onClick={adicionar}><Plus size={16} /> Adicionar etapa</button>
+        <Erro msg={erro} />
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-secundario" onClick={fechar}>Cancelar</button>
+          <button className="btn-primario">Salvar roteiro</button>
+        </div>
+      </form>
+    </Modal>
   )
 }

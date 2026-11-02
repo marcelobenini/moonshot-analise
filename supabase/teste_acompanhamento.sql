@@ -16,10 +16,11 @@ insert into aluna (nome, produto, consultor_id) values ('Vera Teste Acomp', 'Moo
 \set vera '(select id from aluna where nome = ''Vera Teste Acomp'')'
 
 select ok((select count(*) = 4 from (select distinct programa from jornada_etapa) p)
-          and (select count(*) from jornada_etapa where programa = 'Moonshot Private' and tipo = 'consultoria' and numero = 0) = 1,
-          'quatro programas, cada um com a reuniao inicial como consultoria 0');
+          and (select count(*) from jornada_etapa where programa = 'Moonshot Private' and tipo = 'consultoria' and numero = 0) = 1
+          and exists (select 1 from jornada_etapa where programa = 'Moonshot Private' and chave = 'visita_in_loco' and ativo),
+          'quatro programas, consultoria inicial como 0 e visita in loco no Private');
 select como(:cons, $$insert into acompanhamento (aluna_id, etapa_chave, status, data, resumo, proximos_passos)
-                    values ((select id from aluna where nome = 'Vera Teste Acomp'), 'imersao', 'feito', '2026-10-20',
+                    values ((select id from aluna where nome = 'Vera Teste Acomp'), 'visita_in_loco', 'feito', '2026-10-20',
                             'Imersao de dois dias com a equipe', 'Montar metas por vendedora')$$);
 select ok((select ultimo_contato = '2026-10-20' from aluna where id = :vera), 'encontro feito conta como contato');
 select ok(barrado(:gest, $$update acompanhamento set resumo = 'x'$$) is false

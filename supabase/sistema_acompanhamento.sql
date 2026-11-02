@@ -19,38 +19,49 @@ create table if not exists jornada_etapa (
     check ((tipo = 'consultoria') = (numero is not null))
 );
 
-insert into jornada_etapa (programa, ordem, chave, nome, tipo, numero) values
-  ('Moonshot Club', 1, 'reuniao_inicial', 'Reunião inicial', 'consultoria', 0),
-  ('Moonshot Club', 2, 'consultoria_1', 'Consultoria 1', 'consultoria', 1),
-  ('Moonshot Club', 3, 'consultoria_2', 'Consultoria 2', 'consultoria', 2),
-  ('Moonshot Club', 4, 'consultoria_3', 'Consultoria 3', 'consultoria', 3),
-  ('Moonshot Club', 5, 'encontro_presencial', 'Encontro presencial', 'encontro', null),
-  ('Moonshot Club', 6, 'proximos_passos', 'Próximos passos', 'encontro', null),
-  ('Moonshot Pró', 1, 'reuniao_inicial', 'Reunião inicial', 'consultoria', 0),
-  ('Moonshot Pró', 2, 'consultoria_1', 'Consultoria 1', 'consultoria', 1),
-  ('Moonshot Pró', 3, 'consultoria_2', 'Consultoria 2', 'consultoria', 2),
-  ('Moonshot Pró', 4, 'consultoria_3', 'Consultoria 3', 'consultoria', 3),
-  ('Moonshot Pró', 5, 'encontro_presencial', 'Encontro presencial', 'encontro', null),
-  ('Moonshot Pró', 6, 'consultoria_4', 'Consultoria 4', 'consultoria', 4),
-  ('Moonshot Pró', 7, 'consultoria_5', 'Consultoria 5', 'consultoria', 5),
-  ('Moonshot Pró', 8, 'proximos_passos', 'Próximos passos', 'encontro', null),
-  ('Moonshot In Company', 1, 'reuniao_inicial', 'Reunião inicial', 'consultoria', 0),
-  ('Moonshot In Company', 2, 'diagnostico_equipe', 'Diagnóstico da equipe', 'encontro', null),
-  ('Moonshot In Company', 3, 'encontro_presencial', 'Encontro presencial na empresa', 'encontro', null),
-  ('Moonshot In Company', 4, 'consultoria_1', 'Acompanhamento 1', 'consultoria', 1),
-  ('Moonshot In Company', 5, 'consultoria_2', 'Acompanhamento 2', 'consultoria', 2),
-  ('Moonshot In Company', 6, 'consultoria_3', 'Acompanhamento 3', 'consultoria', 3),
-  ('Moonshot In Company', 7, 'consultoria_4', 'Acompanhamento 4', 'consultoria', 4),
-  ('Moonshot In Company', 8, 'proximos_passos', 'Próximos passos', 'encontro', null),
-  ('Moonshot Private', 1, 'reuniao_inicial', 'Reunião inicial', 'consultoria', 0),
-  ('Moonshot Private', 2, 'imersao', 'Imersão presencial', 'encontro', null),
-  ('Moonshot Private', 3, 'consultoria_1', 'Mentoria 1', 'consultoria', 1),
-  ('Moonshot Private', 4, 'consultoria_2', 'Mentoria 2', 'consultoria', 2),
-  ('Moonshot Private', 5, 'consultoria_3', 'Mentoria 3', 'consultoria', 3),
-  ('Moonshot Private', 6, 'consultoria_4', 'Mentoria 4', 'consultoria', 4),
-  ('Moonshot Private', 7, 'consultoria_5', 'Mentoria 5', 'consultoria', 5),
-  ('Moonshot Private', 8, 'consultoria_6', 'Mentoria 6', 'consultoria', 6),
-  ('Moonshot Private', 9, 'proximos_passos', 'Próximos passos', 'encontro', null)
+alter table jornada_etapa add column if not exists descricao text;
+alter table jornada_etapa add column if not exists ativo boolean not null default true;
+
+-- Roteiro base, do POP do consultor (consultoria inicial, plano de acao em 7 dias,
+-- retorno a cada 3 meses) e do playbook da visita in loco (In Company e Private).
+-- A coordenacao ajusta pela tela; aqui so entra o que ainda nao existe.
+insert into jornada_etapa (programa, ordem, chave, nome, tipo, numero, descricao) values
+  ('Moonshot Club', 1, 'reuniao_inicial', 'Consultoria inicial', 'consultoria', 0, 'Diagnóstico de 3 horas pelos pilares. Conferir o formulário 24h antes; sem formulário, remarcar.'),
+  ('Moonshot Club', 2, 'plano_acao', 'Plano de ação', 'encontro', null, 'Entregar em até 7 dias: PDF no Notion e na pasta da aluna, com áudio explicando as prioridades.'),
+  ('Moonshot Club', 3, 'consultoria_1', 'Retorno do 3º mês', 'consultoria', 1, 'Consultoria de acompanhamento: andamento das ações e resultados, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Club', 4, 'encontro_presencial', 'Encontro presencial', 'encontro', null, 'Encontro presencial com a aluna, quando houver. Se não houver, marque como não se aplica.'),
+  ('Moonshot Club', 5, 'consultoria_2', 'Retorno do 6º mês', 'consultoria', 2, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Club', 6, 'consultoria_3', 'Retorno do 9º mês', 'consultoria', 3, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Club', 7, 'consultoria_4', 'Retorno do 12º mês', 'consultoria', 4, 'Fechamento do ciclo: resultados do ano e próximos objetivos.'),
+  ('Moonshot Club', 8, 'proximos_passos', 'Renovação ou ascensão', 'encontro', null, 'Próximos passos: renovar, subir de programa ou encerrar. Registre o que foi combinado.'),
+  ('Moonshot Pró', 1, 'reuniao_inicial', 'Consultoria inicial', 'consultoria', 0, 'Diagnóstico de 3 horas pelos pilares. Conferir o formulário 24h antes; sem formulário, remarcar.'),
+  ('Moonshot Pró', 2, 'plano_acao', 'Plano de ação', 'encontro', null, 'Entregar em até 7 dias: PDF no Notion e na pasta da aluna, com áudio explicando as prioridades.'),
+  ('Moonshot Pró', 3, 'consultoria_1', 'Retorno do 3º mês', 'consultoria', 1, 'Consultoria de acompanhamento: andamento das ações e resultados, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Pró', 4, 'encontro_presencial', 'Encontro presencial', 'encontro', null, 'Encontro presencial com a aluna, quando houver. Se não houver, marque como não se aplica.'),
+  ('Moonshot Pró', 5, 'consultoria_2', 'Retorno do 6º mês', 'consultoria', 2, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Pró', 6, 'consultoria_3', 'Retorno do 9º mês', 'consultoria', 3, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Pró', 7, 'consultoria_4', 'Retorno do 12º mês', 'consultoria', 4, 'Fechamento do ciclo: resultados do ano e próximos objetivos.'),
+  ('Moonshot Pró', 8, 'proximos_passos', 'Renovação ou ascensão', 'encontro', null, 'Próximos passos: renovar, subir de programa ou encerrar. Registre o que foi combinado.'),
+  ('Moonshot In Company', 1, 'reuniao_inicial', 'Consultoria inicial', 'consultoria', 0, 'Diagnóstico de 3 horas pelos pilares. Conferir o formulário 24h antes; sem formulário, remarcar.'),
+  ('Moonshot In Company', 2, 'plano_acao', 'Plano de ação', 'encontro', null, 'Entregar em até 7 dias: PDF no Notion e na pasta da aluna, com áudio explicando as prioridades.'),
+  ('Moonshot In Company', 3, 'visita_preparacao', 'Preparação da visita in loco', 'encontro', null, 'D-10 a D-1: data confirmada, termo assinado, questionário prévio, DISC da equipe, documentos e dossiê de pré-visita.'),
+  ('Moonshot In Company', 4, 'visita_in_loco', 'Visita in loco', 'encontro', null, 'Um dia inteiro na operação: observação, jornada do cliente, equipe, financeiro, marketing e vendas. Termina com devolutiva preliminar.'),
+  ('Moonshot In Company', 5, 'devolutiva_final', 'Devolutiva final e plano de 90 dias', 'encontro', null, 'Até D+10: diagnóstico validado, dashboard e plano de ação de 90 dias nos cinco pilares.'),
+  ('Moonshot In Company', 6, 'consultoria_1', 'Retorno do 3º mês', 'consultoria', 1, 'Consultoria de acompanhamento: andamento das ações e resultados, com plano de metas complementares em 7 dias.'),
+  ('Moonshot In Company', 7, 'consultoria_2', 'Retorno do 6º mês', 'consultoria', 2, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot In Company', 8, 'consultoria_3', 'Retorno do 9º mês', 'consultoria', 3, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot In Company', 9, 'consultoria_4', 'Retorno do 12º mês', 'consultoria', 4, 'Fechamento do ciclo: resultados do ano e próximos objetivos.'),
+  ('Moonshot In Company', 10, 'proximos_passos', 'Renovação ou ascensão', 'encontro', null, 'Próximos passos: renovar, subir de programa ou encerrar. Registre o que foi combinado.'),
+  ('Moonshot Private', 1, 'reuniao_inicial', 'Consultoria inicial', 'consultoria', 0, 'Diagnóstico de 3 horas pelos pilares. Conferir o formulário 24h antes; sem formulário, remarcar.'),
+  ('Moonshot Private', 2, 'plano_acao', 'Plano de ação', 'encontro', null, 'Entregar em até 7 dias: PDF no Notion e na pasta da aluna, com áudio explicando as prioridades.'),
+  ('Moonshot Private', 3, 'visita_preparacao', 'Preparação da visita in loco', 'encontro', null, 'D-10 a D-1: data confirmada, termo assinado, questionário prévio, DISC da equipe, documentos e dossiê de pré-visita.'),
+  ('Moonshot Private', 4, 'visita_in_loco', 'Visita in loco', 'encontro', null, 'Um dia inteiro na operação: observação, jornada do cliente, equipe, financeiro, marketing e vendas. Termina com devolutiva preliminar.'),
+  ('Moonshot Private', 5, 'devolutiva_final', 'Devolutiva final e plano de 90 dias', 'encontro', null, 'Até D+10: diagnóstico validado, dashboard e plano de ação de 90 dias nos cinco pilares.'),
+  ('Moonshot Private', 6, 'consultoria_1', 'Retorno do 3º mês', 'consultoria', 1, 'Consultoria de acompanhamento: andamento das ações e resultados, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Private', 7, 'consultoria_2', 'Retorno do 6º mês', 'consultoria', 2, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Private', 8, 'consultoria_3', 'Retorno do 9º mês', 'consultoria', 3, 'Consultoria de acompanhamento, com plano de metas complementares em 7 dias.'),
+  ('Moonshot Private', 9, 'consultoria_4', 'Retorno do 12º mês', 'consultoria', 4, 'Fechamento do ciclo: resultados do ano e próximos objetivos.'),
+  ('Moonshot Private', 10, 'proximos_passos', 'Renovação ou ascensão', 'encontro', null, 'Próximos passos: renovar, subir de programa ou encerrar. Registre o que foi combinado.')
 on conflict (programa, chave) do nothing;
 
 create table if not exists acompanhamento (

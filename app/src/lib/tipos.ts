@@ -355,6 +355,8 @@ export interface JornadaEtapa {
   nome: string
   tipo: 'consultoria' | 'encontro'
   numero: number | null
+  descricao: string | null
+  ativo: boolean
 }
 
 export interface Acompanhamento {
