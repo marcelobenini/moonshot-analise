@@ -13,6 +13,7 @@ export function Equipe() {
   const [novo, setNovo] = useState(false)
   const [senha, setSenha] = useState<{ nome: string; email: string; senha: string } | null>(null)
   const pendentes = equipe.filter((p) => !p.ativo)
+  const listaCs = equipe.filter((p) => p.ativo && p.papel === 'cs')
   const [nomes, setNomes] = useState<{ papel: string; exemplo: string; alunas: number; vinculadas: number }[]>([])
   useEffect(() => {
     supabase.from('vw_nomes_planilha').select('*').order('alunas', { ascending: false }).then(({ data }) => setNomes((data ?? []) as never))
@@ -53,6 +54,10 @@ export function Equipe() {
           6 números para você mandar à pessoa; no primeiro login ela troca por uma senha dela, de 8 números.
         </p>
         <p>
+          <b>CS da carteira</b> é o CS que atende as alunas Club e Pró daquele consultor. Elite, Private e In Company têm CS próprio,
+          definido no quadro abaixo da lista. Ao cadastrar a aluna, ou trocar consultor ou programa, o CS entra sozinho.
+        </p>
+        <p>
           <b>Nome na planilha</b> é como a pessoa aparece nas planilhas, consultor ou CS. Aceita vários, separados por vírgula
           (ex.: “Thiago, Tiago”). Preencha e clique em “Vincular carteiras” para as alunas importadas irem para a carteira certa.
         </p>
@@ -64,7 +69,7 @@ export function Equipe() {
       <div className="painel overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-500">
-            <tr><th className="px-4 py-2.5">Pessoa</th><th className="px-4 py-2.5">Papel</th><th className="px-4 py-2.5">Nome na planilha</th><th className="px-4 py-2.5">Acesso</th></tr>
+            <tr><th className="px-4 py-2.5">Pessoa</th><th className="px-4 py-2.5">Papel</th><th className="px-4 py-2.5">Nome na planilha</th><th className="px-4 py-2.5">CS da carteira</th><th className="px-4 py-2.5">Acesso</th></tr>
           </thead>
           <tbody>
             {[...pendentes, ...equipe.filter((p) => p.ativo)].map((p) => (
@@ -88,6 +93,15 @@ export function Equipe() {
                   ) : null}
                 </td>
                 <td className="px-4 py-2.5">
+                  {p.papel === 'consultor' || p.papel === 'coordenador' ? (
+                    <select className="entrada" value={p.cs_responsavel_id ?? ''} title="CS das alunas Club e Pró deste consultor"
+                      onChange={(e) => mudar(p, { cs_responsavel_id: e.target.value || null })}>
+                      <option value="">Sem CS fixo</option>
+                      {listaCs.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                    </select>
+                  ) : null}
+                </td>
+                <td className="px-4 py-2.5">
                   {p.id === eu?.id ? <Selo cor="bg-emerald-100 text-emerald-800">Você</Selo> : p.ativo ? (
                     <div className="flex flex-wrap items-center gap-1.5">
                       {p.trocar_senha && (p.senha_provisoria_em
@@ -106,6 +120,7 @@ export function Equipe() {
         </table>
       </div>
 
+      <CsPorPrograma listaCs={listaCs} />
       <PerfisDeAcesso />
       <RegistroSeguranca versao={aviso} />
 
@@ -261,5 +276,36 @@ function PerfisDeAcesso() {
         </table>
       </div>
     </details>
+  )
+}
+
+// Elite, Private e In Company: um CS para todos os contratos do programa.
+function CsPorPrograma({ listaCs }: { listaCs: Perfil[] }) {
+  const [linhas, setLinhas] = useState<{ programa: string; cs_id: string | null }[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  useEffect(() => {
+    supabase.from('cs_programa').select('*').order('programa').then(({ data }) => setLinhas((data ?? []) as never))
+  }, [])
+  async function mudar(programa: string, cs_id: string | null) {
+    setErro(null)
+    const { error } = await supabase.from('cs_programa').update({ cs_id }).eq('programa', programa)
+    if (error) { setErro(mensagemErro(error)); return }
+    setLinhas((l) => l.map((x) => (x.programa === programa ? { ...x, cs_id } : x)))
+  }
+  return (
+    <div className="painel mt-6">
+      <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">CS por programa</h2>
+      <div className="grid gap-3 p-4 sm:grid-cols-3">
+        {linhas.map((l) => (
+          <Campo key={l.programa} rotulo={`Moonshot ${l.programa}`}>
+            <select className="entrada" value={l.cs_id ?? ''} onChange={(e) => mudar(l.programa, e.target.value || null)}>
+              <option value="">Sem CS fixo</option>
+              {listaCs.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </Campo>
+        ))}
+      </div>
+      <div className="px-4 pb-3"><Erro msg={erro} /></div>
+    </div>
   )
 }

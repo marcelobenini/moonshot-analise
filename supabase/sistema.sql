@@ -101,6 +101,8 @@ create table if not exists perfil (
 -- Conta criada com senha provisoria: ate trocar, nao ve dado nenhum (ver
 -- meu_papel) e o app so mostra a tela de nova senha.
 alter table perfil add column if not exists trocar_senha boolean not null default false;
+-- Consultor: CS que atende a carteira dele em Club e Pró (ver sistema_cs.sql).
+alter table perfil add column if not exists cs_responsavel_id uuid references perfil(id) on delete set null;
 comment on table perfil is
   'Quem usa o sistema. Conta nova nasce inativa e sem papel; a coordenacao libera na tela Equipe.';
 
@@ -152,6 +154,7 @@ begin
   if auth.uid() is not null and not eh_coordenador()
      and (new.papel is distinct from old.papel or new.ativo is distinct from old.ativo
           or new.consultor_norm is distinct from old.consultor_norm
+          or new.cs_responsavel_id is distinct from old.cs_responsavel_id
           or new.email is distinct from old.email
           -- Nem ligar nem desligar: quem tira a marca e o gatilho do Auth
           -- (roda sem usuario logado), ao ver a senha mudar de verdade.
