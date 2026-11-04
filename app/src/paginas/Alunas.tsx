@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { Aluna } from '../lib/tipos'
 import { FINANCEIRO, PRODUTOS, SAUDE, STATUS_CONTRATO, data, mensagemErro, reais } from '../lib/util'
+import { useConsultores, filtrarConsultor } from '../lib/consultores'
 import { Campo, Carregando, Erro, EscolherPessoa, Modal, Potencial, Selo, Titulo, Vazio } from '../componentes/ui'
 
 const POR_PAGINA = 50
@@ -24,13 +25,15 @@ export function Alunas() {
   // por CS separa quem atende cada uma).
   const [minhas, setMinhas] = useState(eu?.papel === 'consultor')
   const [cs, setCs] = useState('')
+  const [consultor, setConsultor] = useState('')
+  const consultores = useConsultores()
   const [pagina, setPagina] = useState(0)
   const [nova, setNova] = useState(false)
   const [filtros, setFiltros] = useState(false)
-  const nFiltros = [status !== 'vivos', saude, produto, financeiro, cs, minhas].filter(Boolean).length
+  const nFiltros = [status !== 'vivos', saude, produto, financeiro, cs, consultor, minhas].filter(Boolean).length
   const podeCriar = ['coordenador', 'cs', 'consultor', 'comercial', 'retencao'].includes(eu?.papel ?? '')
 
-  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro, ordem, cs])
+  useEffect(() => { setPagina(0) }, [termo, status, saude, minhas, produto, financeiro, ordem, cs, consultor])
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -45,11 +48,12 @@ export function Alunas() {
       if (minhas && eu) q = q.or(`consultor_id.eq.${eu.id},cs_id.eq.${eu.id}`)
       if (cs === 'sem') q = q.is('cs_id', null)
       else if (cs) q = q.eq('cs_id', cs)
+      q = filtrarConsultor(q, consultor)
       const { data: d, count } = await (ordem === 'potencial' ? q.order('potencial', { ascending: false }).order('nome') : q.order('nome')).range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1)
       setLista((d ?? []) as Aluna[]); setTotal(count ?? 0)
     }, 200)
     return () => clearTimeout(t)
-  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro, ordem, cs])
+  }, [termo, status, saude, minhas, pagina, eu, produto, financeiro, ordem, cs, consultor])
 
   return (
     <div>
@@ -87,6 +91,10 @@ export function Alunas() {
         <select className="entrada w-auto" value={financeiro} onChange={(e) => setFinanceiro(e.target.value)}>
           <option value="">Qualquer financeiro</option>
           {Object.entries(FINANCEIRO).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
+        </select>
+        <select className="entrada w-auto" value={consultor} onChange={(e) => setConsultor(e.target.value)}>
+          <option value="">Qualquer consultor</option>
+          {consultores.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
         </select>
         <select className="entrada w-auto" value={cs} onChange={(e) => setCs(e.target.value)}>
           <option value="">Qualquer CS</option>

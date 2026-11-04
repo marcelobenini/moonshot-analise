@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, MoreHorizontal, X, CalendarDays, FileUp, FileSignature, LineChart, ClipboardList, ListChecks } from 'lucide-react'
+import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, MoreHorizontal, X, CalendarDays, FileUp, FileSignature, LineChart, ClipboardList, ListChecks, FileBarChart } from 'lucide-react'
 import { useSessao } from '../lib/sessao'
 import { PAPEL } from '../lib/util'
 import { Sino } from './Sino'
@@ -12,6 +12,7 @@ export function Layout() {
     { para: '/', rotulo: 'Início', icone: Home },
     { para: '/alunas', rotulo: 'Alunas', icone: Users },
     { para: '/gerencial', rotulo: 'Gerencial', icone: LineChart },
+    { para: '/relatorios', rotulo: 'Relatórios', icone: FileBarChart },
   ] : [
     { para: '/', rotulo: 'Início', icone: Home },
     // Consultor trabalha pelo roteiro de cada programa; o funil fica a um toque, dentro dele.
@@ -19,6 +20,7 @@ export function Layout() {
     { para: '/alunas', rotulo: 'Alunas', icone: Users },
     { para: '/demandas', rotulo: 'Demandas', icone: MessageSquare },
     { para: '/eventos', rotulo: 'Eventos', icone: CalendarDays },
+    { para: '/relatorios', rotulo: 'Relatórios', icone: FileBarChart },
     ...(eu?.papel === 'coordenador' ? [{ para: '/acompanhamento', rotulo: 'Acompanhamento', icone: ListChecks }] : []),
     ...(eu?.papel === 'coordenador' || eu?.papel === 'cs' ? [{ para: '/entrada', rotulo: 'Entrada', icone: ClipboardList }] : []),
     ...(eu?.papel === 'coordenador' ? [{ para: '/gerencial', rotulo: 'Gerencial', icone: LineChart }]

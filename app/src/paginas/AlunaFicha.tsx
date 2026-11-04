@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail, PhoneCall, Flag, Rocket } from 'lucide-react'
+import { Pencil, ClipboardPlus, MessageSquarePlus, Phone, Mail, PhoneCall, Flag, Rocket, HeartPulse, FileDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import { PreAnaliseFicha } from './Entrada'
@@ -12,7 +12,8 @@ import { NovoCard } from './CardGaveta'
 import { NovaDemanda } from './Demandas'
 import { Agenda, Contratos, EventosDaAluna, Notas } from './FichaExtras'
 import { EnviarComercial, LinhaDoTempo, MudarStatus, PainelPotencial, PerfilNegocio, RegistrarContato } from './FichaAcoes'
-import { CabecalhoAluna, ComoEsta, Evolucao, Jornada, Mimos } from './FichaVisual'
+import { CabecalhoAluna, ComoEsta, Jornada, Mimos } from './FichaVisual'
+import { Arquivos, AtualizarSaude, FaturamentoMensal, HistoricoSaude, exportarFichaPdf } from './FichaEvolucao'
 
 export function AlunaFicha() {
   const { id } = useParams()
@@ -23,7 +24,8 @@ export function AlunaFicha() {
   const [registros, setRegistros] = useState<RegistroConsultoria[]>([])
   const [demandas, setDemandas] = useState<Demanda[]>([])
   const [aba, setAba] = useState<'resumo' | 'tempo' | 'consultorias' | 'contratos'>('resumo')
-  const [modal, setModal] = useState<'editar' | 'consultoria' | 'contato' | 'status' | 'comercial' | 'demanda' | null>(null)
+  const [modal, setModal] = useState<'editar' | 'consultoria' | 'contato' | 'status' | 'saude' | 'comercial' | 'demanda' | null>(null)
+  const [exportando, setExportando] = useState(false)
   const [novoCard, setNovoCard] = useState<{ funil: Funil; etapa: Etapa } | null>(null)
   const [versao, setVersao] = useState(0)
   const [cpf, setCpf] = useState<string | null>(null)
@@ -72,9 +74,11 @@ export function AlunaFicha() {
         {podeContato && <button className="btn-primario" onClick={() => setModal('contato')}><PhoneCall size={16} /> Registrar contato</button>}
         {podeRegistrar && <button className="btn-primario" onClick={() => setModal('consultoria')}><ClipboardPlus size={16} /> Registrar consultoria</button>}
         {podeStatus && <button className="btn-secundario" onClick={() => setModal('status')}><Flag size={16} /> Status</button>}
+        {podeStatus && <button className="btn-secundario" onClick={() => setModal('saude')}><HeartPulse size={16} /> Saúde</button>}
         {podeEnviar && !noComercial && <button className="btn-secundario" onClick={() => setModal('comercial')}><Rocket size={16} /> Enviar ao comercial</button>}
         {papel !== 'gestao' && <button className="btn-secundario" onClick={() => setModal('demanda')}><MessageSquarePlus size={16} /> Demanda</button>}
         {podeEditarFicha && <button className="btn-secundario" onClick={() => setModal('editar')}><Pencil size={16} /> Editar</button>}
+        <button className="btn-secundario" disabled={exportando} onClick={async () => { setExportando(true); try { await exportarFichaPdf(aluna, nomeDe) } finally { setExportando(false) } }}><FileDown size={16} /> {exportando ? 'Gerando…' : 'Ficha em PDF'}</button>
       </>} />
 
       <div className="flex gap-1 overflow-x-auto rounded-full bg-white/70 p-1 ring-1 ring-rose-100 sm:inline-flex">
@@ -91,7 +95,7 @@ export function AlunaFicha() {
             <Jornada aluna={aluna} registros={registros} />
             <div className="lg:hidden"><ComoEsta aluna={aluna} /></div>
             <PerfilNegocio aluna={aluna} pode={podeEditarFicha} mudou={carregar} />
-            <Evolucao aluna={aluna} registros={registros} />
+            <FaturamentoMensal aluna={aluna} pode={equipe} mudou={carregar} />
             <section className="painel p-4">
               <h2 className="mb-3 font-display text-xl font-semibold text-noite">Contato e negócio</h2>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
@@ -102,6 +106,7 @@ export function AlunaFicha() {
                 <Dado rotulo="Empresa">{aluna.empresa ?? ''}</Dado>
                 <Dado rotulo="Ramo">{aluna.ramo ?? ''}</Dado>
                 <Dado rotulo="Faturamento">{aluna.faturamento_mensal != null ? `${reais(aluna.faturamento_mensal)}/mês` : ''}</Dado>
+                <Dado rotulo="Rentabilidade">{aluna.rentabilidade != null ? `${Number(aluna.rentabilidade).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%` : ''}</Dado>
                 <Dado rotulo="Funcionários">{aluna.funcionarios ?? ''}</Dado>
                 <Dado rotulo="Última consultoria">{data(aluna.ultima_consultoria)}</Dado>
                 <Dado rotulo="Último contato">{data(aluna.ultimo_contato)}</Dado>
@@ -115,6 +120,7 @@ export function AlunaFicha() {
           </div>
           <aside className="space-y-5">
             <div className="hidden lg:block"><ComoEsta aluna={aluna} /></div>
+            <HistoricoSaude aluna={aluna} versao={versao} />
             {aluna.potencial_detalhe && <PainelPotencial detalhe={aluna.potencial_detalhe} />}
             <Mimos aluna={aluna} />
             <section>
@@ -161,6 +167,7 @@ export function AlunaFicha() {
       {aba === 'consultorias' && (
         <div className="space-y-6">
           <Agenda aluna={aluna} podeEditar={equipe} />
+          <Arquivos aluna={aluna} />
           <section className="space-y-3">
             <h2 className="font-display text-xl font-semibold text-noite">Relatos de consultoria</h2>
             {registros.length === 0 ? (
@@ -217,6 +224,7 @@ export function AlunaFicha() {
       {modal === 'consultoria' && <RegistrarConsultoria aluna={aluna} ultimo={registros[0]} fechar={fechar} salvo={salvo} />}
       {modal === 'contato' && <RegistrarContato aluna={aluna} fechar={fechar} salvo={salvo} />}
       {modal === 'status' && <MudarStatus aluna={aluna} fechar={fechar} salvo={salvo} />}
+      {modal === 'saude' && <AtualizarSaude aluna={aluna} fechar={fechar} salvo={salvo} />}
       {modal === 'comercial' && <EnviarComercial aluna={aluna} fechar={fechar} enviado={() => salvo()} />}
       {modal === 'demanda' && <NovaDemanda alunaInicial={aluna} fechar={fechar} criada={(did) => nav(`/demandas/${did}`)} />}
       {novoCard && <NovoCard funil={novoCard.funil} etapa={novoCard.etapa} alunaInicial={aluna} fechar={() => setNovoCard(null)}

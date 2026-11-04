@@ -32,6 +32,7 @@ export interface Aluna {
   status_contrato: 'ativo' | 'pendente' | 'bloqueado' | 'pausado' | 'em_cancelamento' | 'encerrado' | 'cancelado'
   status_financeiro: string | null
   faturamento_mensal: number | null
+  rentabilidade: number | null
   funcionarios: number | null
   consultor_id: string | null
   cs_id: string | null
@@ -372,4 +373,29 @@ export interface Acompanhamento {
   proxima_data: string | null
   autor_id: string | null
   atualizado_em: string
+}
+
+export interface FaturamentoMes {
+  id: number
+  aluna_id: number
+  mes: string
+  faturamento: number | null
+  rentabilidade: number | null
+  observacao: string | null
+  autor_id: string | null
+  atualizado_em: string
+}
+
+export interface ArquivoAluna {
+  id: number
+  aluna_id: number
+  registro_id: number | null
+  tipo: 'transcricao' | 'documento' | 'outro'
+  numero: number | null
+  nome: string
+  caminho: string
+  tamanho: number | null
+  mime: string | null
+  autor_id: string | null
+  criado_em: string
 }

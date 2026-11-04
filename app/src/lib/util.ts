@@ -58,6 +58,7 @@ export const NOTA: Record<string, string> = {
   potencial: 'Potencial',
   contato: 'Contato da CS',
   status: 'Mudança de status',
+  saude: 'Saúde da aluna',
 }
 
 export const CANAIS = ['WhatsApp', 'Ligação', 'Reunião online', 'Presencial', 'E-mail']
