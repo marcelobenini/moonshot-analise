@@ -4,6 +4,7 @@ import { FileSpreadsheet, Upload, CheckCircle2, Users } from 'lucide-react'
 import readXlsxFile from 'read-excel-file/browser'
 import { supabase } from '../lib/supabase'
 import { abasParaLinhas, detectarTipo, TIPOS, type Aba, type TipoImportacao } from '../lib/planilha'
+import { bancoParaRegistros, pareceBanco, type ResultadoBanco } from '../lib/banco'
 import type { Importacao, Pendencia } from '../lib/tipos'
 import { dataHora, mensagemErro } from '../lib/util'
 import { Campo, Carregando, Erro, Selo, Titulo, Vazio } from '../componentes/ui'
@@ -22,6 +23,7 @@ const LOTE = 500
 export function Importar() {
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [abas, setAbas] = useState<Aba[] | null>(null)
+  const [banco, setBanco] = useState<ResultadoBanco | null>(null)
   const [tipo, setTipo] = useState<TipoImportacao | ''>('')
   const [lendo, setLendo] = useState(false)
   const [progresso, setProgresso] = useState<string | null>(null)
@@ -36,13 +38,17 @@ export function Importar() {
   useEffect(() => { carregarHistorico() }, [carregarHistorico])
 
   async function escolher(f: File | null) {
-    setArquivo(f); setAbas(null); setTipo(''); setErro(null); setResultado(null)
+    setArquivo(f); setAbas(null); setBanco(null); setTipo(''); setErro(null); setResultado(null)
     if (!f) return
     setLendo(true)
     try {
-      const lidas = abasParaLinhas(await readXlsxFile(f) as never)
+      const brutas = await readXlsxFile(f) as never as { sheet: string; data: (string | number | boolean | Date | null)[][] }[]
+      const lidas = abasParaLinhas(brutas as never)
       setAbas(lidas)
-      setTipo(detectarTipo(lidas, f.name) ?? '')
+      if (pareceBanco(brutas.map((b) => b.sheet))) {
+        setBanco(bancoParaRegistros(brutas))
+        setTipo('banco')
+      } else setTipo(detectarTipo(lidas, f.name) ?? '')
     } catch (e) {
       setErro('Não consegui ler o arquivo. Ele precisa ser .xlsx (no Google Sheets: Arquivo → Fazer download → Microsoft Excel).')
       console.error(e)
@@ -53,7 +59,10 @@ export function Importar() {
   async function enviar() {
     if (!arquivo || !abas || !tipo) return
     setErro(null); setResultado(null)
-    const linhas = abas.flatMap((a) => a.linhas.map((l) => ({ aba: a.nome, linha: l.linha, dados: l.dados })))
+    if (tipo === 'banco' && !banco) { setErro('Esta planilha não tem as abas do Banco de dados Moonshot.'); return }
+    const linhas = tipo === 'banco' && banco
+      ? banco.registros.map((r, i) => ({ aba: 'BANCO', linha: i + 1, dados: r }))
+      : abas.flatMap((a) => a.linhas.map((l) => ({ aba: a.nome, linha: l.linha, dados: l.dados })))
     setProgresso('Criando a importação…')
     const { data: imp, error } = await supabase.from('importacao').insert({ tipo, arquivo: arquivo.name }).select('id').single()
     if (error) { setErro(mensagemErro(error)); setProgresso(null); return }
@@ -70,7 +79,7 @@ export function Importar() {
     carregarHistorico()
   }
 
-  const total = abas?.reduce((s, a) => s + a.linhas.length, 0) ?? 0
+  const total = tipo === 'banco' && banco ? banco.registros.length : abas?.reduce((s, a) => s + a.linhas.length, 0) ?? 0
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -97,6 +106,15 @@ export function Importar() {
                 {Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </Campo>
+            {tipo === 'banco' && banco && (
+              <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <b>{banco.registros.length} alunas</b> das abas CLUB, PRÓ, ELITE, PRIVATE, IN COMPANY e SEM PROGRAMA,
+                mais as matriculadas marcadas "Entra no banco". A aba Máquina de Vendas fica para depois.
+                {banco.duplicadas.length > 0 && <> {banco.duplicadas.length} linhas repetidas viraram uma ficha só.</>}
+                {banco.semDecisao > 0 && <> {banco.semDecisao} matriculadas sem decisão ficaram de fora.</>}
+                <span className="mt-1 block text-xs text-slate-500">Quem já está no sistema não é alterado: reimportar só traz as alunas novas.</span>
+              </div>
+            )}
             <div className="overflow-hidden rounded-lg border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs text-slate-500">

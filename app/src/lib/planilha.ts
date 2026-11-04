@@ -4,9 +4,10 @@
 
 export type TipoImportacao =
   | 'matriculas' | 'consultorias' | 'cancelamentos' | 'maquina'
-  | 'inadimplentes' | 'evento' | 'kit' | 'cadastro'
+  | 'inadimplentes' | 'evento' | 'kit' | 'cadastro' | 'banco'
 
 export const TIPOS: Record<TipoImportacao, string> = {
+  banco: 'Banco de dados Moonshot (base validada)',
   matriculas: 'Alunos matriculados (abas de turma)',
   consultorias: 'Controle Consultorias (abas de consultor)',
   cancelamentos: 'Cancelamentos',

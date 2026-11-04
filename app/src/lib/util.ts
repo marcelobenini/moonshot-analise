@@ -48,7 +48,7 @@ export const FINANCEIRO: Record<string, { rotulo: string; cor: string }> = {
   inadimplente: { rotulo: 'Inadimplente', cor: 'bg-red-100 text-red-800' },
 }
 
-export const PRODUTOS = ['Moonshot Club', 'Moonshot Pró', 'Moonshot Elite', 'Moonshot Private', 'Moonshot In Company', 'Máquina de Vendas']
+export const PRODUTOS = ['Moonshot Club', 'Moonshot Pró', 'Moonshot Elite', 'Moonshot Private', 'Moonshot In Company', 'Moonshot Franquia', 'Máquina de Vendas']
 
 export const NOTA: Record<string, string> = {
   nota: 'Anotação',
