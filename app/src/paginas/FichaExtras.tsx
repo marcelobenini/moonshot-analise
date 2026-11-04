@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Plus, Send } from 'lucide-react'
+import { Check, Pencil, Plus, Send, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSessao } from '../lib/sessao'
 import type { AgendaConsultoria, Aluna, Contrato, NotaAluna, Participante } from '../lib/tipos'
@@ -96,64 +96,123 @@ function ContratoForm({ c, fechar, salvo }: { c: Partial<Contrato>; fechar: () =
 }
 
 // Agenda das consultorias: o que as colunas 1.CONSULT. a 5.CONSULT. faziam.
+// Quem edita a ficha corrige cada etapa: data, se aconteceu ou não e a observação.
+const SITUACOES = [
+  { v: 'prevista', rotulo: 'Prevista' },
+  { v: 'realizada', rotulo: 'Realizada' },
+  { v: 'nao_realizada', rotulo: 'Não realizada' },
+  { v: 'cancelada', rotulo: 'Cancelada' },
+] as const
+type Situacao = (typeof SITUACOES)[number]['v']
+const situacaoDe = (g?: AgendaConsultoria): Situacao => g?.realizada_em ? 'realizada' : (g?.situacao as Situacao) ?? 'prevista'
+
 export function Agenda({ aluna, podeEditar }: { aluna: Aluna; podeEditar: boolean }) {
   const [lista, setLista] = useState<AgendaConsultoria[]>([])
-  const [erro, setErro] = useState<string | null>(null)
+  const [editando, setEditando] = useState<number | null>(null)
   const carregar = useCallback(async () => {
     const { data: d } = await supabase.from('consultoria_agenda').select('*').eq('aluna_id', aluna.id).order('numero')
     setLista((d ?? []) as AgendaConsultoria[])
   }, [aluna.id])
   useEffect(() => { carregar() }, [carregar])
 
-  async function salvarData(numero: number, data_prevista: string) {
-    setErro(null)
-    const { error } = await supabase.from('consultoria_agenda')
-      .upsert({ aluna_id: aluna.id, numero, data_prevista: data_prevista || null }, { onConflict: 'aluna_id,numero' })
-    if (error) setErro(mensagemErro(error))
-    carregar()
-  }
-
   const linha = (n: number) => lista.find((g) => g.numero === n)
   const h = hoje()
   return (
     <section className="space-y-3">
       <h2 className="font-semibold">Agenda de consultorias</h2>
-      <Erro msg={erro} />
       <div className="painel grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-3 lg:grid-cols-6 sm:divide-y-0">
         {[0, 1, 2, 3, 4, 5].map((n) => {
           const g = linha(n)
-          const atrasada = g && !g.realizada_em && g.data_prevista && g.data_prevista < h
+          const sit = situacaoDe(g)
+          const atrasada = sit === 'prevista' && g?.data_prevista && g.data_prevista < h
           return (
-            <div key={n} className="p-3">
+            <button key={n} type="button" disabled={!podeEditar} onClick={() => setEditando(n)}
+              className="p-3 text-left hover:bg-slate-50 disabled:hover:bg-transparent">
               <div className="text-xs font-medium text-slate-500">{n === 0 ? 'Entrada' : `${n}ª consultoria`}</div>
-              {g?.realizada_em ? (
-                <div className="mt-1 flex items-center gap-1 text-sm font-medium text-emerald-700"><Check size={14} /> {data(g.realizada_em)}</div>
-              ) : podeEditar ? (
-                <input className={`entrada mt-1 px-2 py-1 text-xs ${atrasada ? 'border-red-300 text-red-700' : ''}`} type="date"
-                  value={g?.data_prevista ?? ''} onChange={(e) => salvarData(n, e.target.value)} />
+              {sit === 'realizada' ? (
+                <div className="mt-1 flex items-center gap-1 text-sm font-medium text-emerald-700"><Check size={14} /> {data(g?.realizada_em)}</div>
               ) : (
                 <div className={`mt-1 text-sm ${atrasada ? 'font-medium text-red-600' : ''}`}>{data(g?.data_prevista)}</div>
               )}
               {atrasada && <div className="mt-0.5 text-[11px] text-red-600">atrasada</div>}
-            </div>
+              {sit === 'nao_realizada' && <div className="mt-0.5 text-[11px] text-amber-700">não realizada</div>}
+              {sit === 'cancelada' && <div className="mt-0.5 text-[11px] text-slate-500">cancelada</div>}
+              {g?.observacao && <div className="mt-1 line-clamp-2 text-[11px] text-slate-500" title={g.observacao}>{g.observacao}</div>}
+            </button>
           )
         })}
       </div>
-      <p className="text-xs text-slate-500">Registrar a consultoria marca a data como realizada aqui.</p>
+      <p className="text-xs text-slate-500">{podeEditar ? 'Clique numa etapa para corrigir a data, marcar se aconteceu e anotar.' : 'Registrar a consultoria marca a data como realizada aqui.'}</p>
+      {editando !== null && (
+        <AgendaForm aluna={aluna} numero={editando} g={linha(editando)} fechar={() => setEditando(null)} salvo={() => { setEditando(null); carregar() }} />
+      )}
     </section>
   )
 }
 
+function AgendaForm({ aluna, numero, g, fechar, salvo }: { aluna: Aluna; numero: number; g?: AgendaConsultoria; fechar: () => void; salvo: () => void }) {
+  const [sit, setSit] = useState<Situacao>(situacaoDe(g))
+  const [prevista, setPrevista] = useState(g?.data_prevista ?? '')
+  const [realizada, setRealizada] = useState(g?.realizada_em ?? '')
+  const [obs, setObs] = useState(g?.observacao ?? '')
+  const [erro, setErro] = useState<string | null>(null)
+  async function salvar(e: FormEvent) {
+    e.preventDefault()
+    if (sit === 'realizada' && !realizada) { setErro('Informe a data em que a consultoria aconteceu.'); return }
+    const { error } = await supabase.from('consultoria_agenda').upsert({
+      aluna_id: aluna.id, numero,
+      data_prevista: prevista || null,
+      realizada_em: sit === 'realizada' ? realizada : null,
+      situacao: sit === 'nao_realizada' || sit === 'cancelada' ? sit : null,
+      observacao: obs.trim() || null,
+    }, { onConflict: 'aluna_id,numero' })
+    if (error) { setErro(mensagemErro(error)); return }
+    salvo()
+  }
+  return (
+    <Modal titulo={numero === 0 ? 'Entrada' : `${numero}ª consultoria`} aberto fechar={fechar}>
+      <form onSubmit={salvar} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Campo rotulo="Situação">
+          <select className="entrada" value={sit} onChange={(e) => {
+            const v = e.target.value as Situacao
+            setSit(v)
+            if (v === 'realizada' && !realizada) setRealizada(prevista || hoje())
+          }}>
+            {SITUACOES.map((s) => <option key={s.v} value={s.v}>{s.rotulo}</option>)}
+          </select>
+        </Campo>
+        <Campo rotulo="Data prevista"><input className="entrada" type="date" value={prevista} onChange={(e) => setPrevista(e.target.value)} /></Campo>
+        {sit === 'realizada' && (
+          <Campo rotulo="Realizada em"><input className="entrada" type="date" value={realizada} onChange={(e) => setRealizada(e.target.value)} /></Campo>
+        )}
+        <div className="sm:col-span-2">
+          <Campo rotulo="Observação"><textarea className="entrada min-h-20" value={obs} onChange={(e) => setObs(e.target.value)} /></Campo>
+        </div>
+        <div className="sm:col-span-2"><Erro msg={erro} /></div>
+        <div className="flex justify-end gap-2 sm:col-span-2">
+          <button type="button" className="btn-secundario" onClick={fechar}>Cancelar</button>
+          <button className="btn-primario">Salvar</button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export function Notas({ aluna }: { aluna: Aluna }) {
-  const { nomeDe } = useSessao()
+  const { eu, nomeDe } = useSessao()
   const [lista, setLista] = useState<NotaAluna[] | null>(null)
   const [texto, setTexto] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [editando, setEditando] = useState<NotaAluna | null>(null)
   const carregar = useCallback(async () => {
     const { data: d } = await supabase.from('nota_aluna').select('*').eq('aluna_id', aluna.id).order('criado_em', { ascending: false })
     setLista((d ?? []) as NotaAluna[])
   }, [aluna.id])
   useEffect(() => { carregar() }, [carregar])
+
+  // Mesma regra do banco: coordenação mexe em todas; a equipe, nas suas e nas importadas.
+  const podeMexer = (n: NotaAluna) => eu?.papel === 'coordenador'
+    || (EDITA_ALUNA.includes(eu?.papel ?? '') && (!n.autor_id || n.autor_id === eu?.id))
 
   async function anotar(e: FormEvent) {
     e.preventDefault()
@@ -162,6 +221,14 @@ export function Notas({ aluna }: { aluna: Aluna }) {
     const { error } = await supabase.from('nota_aluna').insert({ aluna_id: aluna.id, texto: texto.trim(), autor_id: u.user?.id })
     if (error) { setErro(mensagemErro(error)); return }
     setTexto(''); carregar()
+  }
+
+  async function apagar(n: NotaAluna) {
+    if (!confirm('Apagar esta anotação?')) return
+    setErro(null)
+    const { error } = await supabase.from('nota_aluna').delete().eq('id', n.id)
+    if (error) setErro(mensagemErro(error))
+    carregar()
   }
 
   if (lista === null) return null
@@ -178,12 +245,50 @@ export function Notas({ aluna }: { aluna: Aluna }) {
         <div key={n.id} className="painel p-3 text-sm">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
             <span className="font-medium text-slate-600">{NOTA[n.tipo] ?? n.tipo}</span>
-            <span>{n.autor_id ? nomeDe(n.autor_id) : n.origem ?? 'planilha'} · {dataHora(n.criado_em)}</span>
+            <span className="flex items-center gap-1">
+              {n.autor_id ? nomeDe(n.autor_id) : n.origem ?? 'planilha'} · {dataHora(n.criado_em)}
+              {podeMexer(n) && <>
+                <button className="btn-fantasma p-1" onClick={() => setEditando(n)} aria-label="Editar anotação"><Pencil size={13} /></button>
+                <button className="btn-fantasma p-1" onClick={() => apagar(n)} aria-label="Apagar anotação"><Trash2 size={13} /></button>
+              </>}
+            </span>
           </div>
           <p className="whitespace-pre-wrap text-slate-700">{n.texto}</p>
         </div>
       ))}
+      {editando && <NotaForm n={editando} fechar={() => setEditando(null)} salvo={() => { setEditando(null); carregar() }} />}
     </section>
+  )
+}
+
+function NotaForm({ n, fechar, salvo }: { n: NotaAluna; fechar: () => void; salvo: () => void }) {
+  const [texto, setTexto] = useState(n.texto)
+  const [tipo, setTipo] = useState(n.tipo)
+  const [erro, setErro] = useState<string | null>(null)
+  async function salvar(e: FormEvent) {
+    e.preventDefault()
+    if (!texto.trim()) { setErro('A anotação não pode ficar vazia.'); return }
+    const { data: d, error } = await supabase.from('nota_aluna').update({ texto: texto.trim(), tipo }).eq('id', n.id).select('id')
+    if (error) { setErro(mensagemErro(error)); return }
+    if (!d?.length) { setErro('Você não tem permissão para editar esta anotação.'); return }
+    salvo()
+  }
+  return (
+    <Modal titulo="Editar anotação" aberto fechar={fechar}>
+      <form onSubmit={salvar} className="space-y-4">
+        <Campo rotulo="Tipo">
+          <select className="entrada" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            {[...new Set([...Object.keys(NOTA), tipo])].map((k) => <option key={k} value={k}>{NOTA[k] ?? k}</option>)}
+          </select>
+        </Campo>
+        <Campo rotulo="Texto"><textarea className="entrada min-h-32" value={texto} onChange={(e) => setTexto(e.target.value)} /></Campo>
+        <Erro msg={erro} />
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-secundario" onClick={fechar}>Cancelar</button>
+          <button className="btn-primario">Salvar</button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 

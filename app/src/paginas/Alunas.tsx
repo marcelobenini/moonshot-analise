@@ -183,7 +183,7 @@ export function Alunas() {
 // `nome_norm`, que e coluna gerada e o Postgres recusa.
 const EDITAVEIS: (keyof Aluna)[] = ['nome', 'telefone', 'email', 'empresa', 'ramo', 'cidade', 'uf', 'produto', 'turma',
   'inicio', 'termino', 'status_contrato', 'status_financeiro', 'faturamento_mensal', 'funcionarios',
-  'consultor_id', 'cs_id', 'tamanho_kit', 'telefone2', 'jaqueta', 'link_notion', 'forma_pagamento']
+  'consultor_id', 'cs_id', 'consultor_planilha', 'cs_planilha', 'tamanho_kit', 'telefone2', 'jaqueta', 'link_notion', 'forma_pagamento']
 
 type Duplicata = { id: number; nome: string; email: string | null; telefone: string | null; motivo: string }
 
@@ -279,12 +279,22 @@ export function AlunaForm({ aluna, fechar, salvo }: { aluna?: Aluna; fechar: () 
           <Campo rotulo="Nº de funcionários"><input className="entrada" type="number" min="0" value={f.funcionarios ?? ''} onChange={(e) => muda('funcionarios', e.target.value === '' ? null : Number(e.target.value))} /></Campo>
           <Campo rotulo="Consultor estratégico">
             {redistribui ? <EscolherPessoa valor={f.consultor_id ?? null} mudar={(v) => muda('consultor_id', v)} papeis={['consultor', 'coordenador']} />
-              : <input className="entrada" disabled value={!aluna && eu?.papel === 'consultor' ? 'Você' : 'Definido pela coordenação/CS'} />}
+              : <input className="entrada" disabled value={!aluna && eu?.papel === 'consultor' ? 'Você' : f.consultor_planilha ?? 'Definido pela coordenação/CS'} />}
           </Campo>
+          {redistribui && !f.consultor_id && (
+            <Campo rotulo="Consultor sem acesso ao sistema" dica="Nome como na planilha. Quando a pessoa ganhar acesso na Equipe, a aluna se liga sozinha.">
+              <input className="entrada" value={f.consultor_planilha ?? ''} onChange={(e) => muda('consultor_planilha', e.target.value)} />
+            </Campo>
+          )}
           <Campo rotulo="CS responsável">
             {redistribui ? <EscolherPessoa valor={f.cs_id ?? null} mudar={(v) => muda('cs_id', v)} papeis={['cs', 'coordenador']} />
-              : <input className="entrada" disabled value="Definido pela coordenação/CS" />}
+              : <input className="entrada" disabled value={f.cs_planilha ?? 'Definido pela coordenação/CS'} />}
           </Campo>
+          {redistribui && !f.cs_id && (
+            <Campo rotulo="CS sem acesso ao sistema" dica="Nome como na planilha.">
+              <input className="entrada" value={f.cs_planilha ?? ''} onChange={(e) => muda('cs_planilha', e.target.value)} />
+            </Campo>
+          )}
           <Campo rotulo="Jaqueta"><input className="entrada" placeholder="Tamanho ou entregue" value={f.jaqueta ?? ''} onChange={(e) => muda('jaqueta', e.target.value)} /></Campo>
           <Campo rotulo="Link do Notion"><input className="entrada" value={f.link_notion ?? ''} onChange={(e) => muda('link_notion', e.target.value)} /></Campo>
           <Campo rotulo="Tamanho do pijama">

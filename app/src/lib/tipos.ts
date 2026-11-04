@@ -91,6 +91,7 @@ export interface AgendaConsultoria {
   data_prevista: string | null
   realizada_em: string | null
   observacao: string | null
+  situacao: string | null
 }
 
 export interface NotaAluna {
