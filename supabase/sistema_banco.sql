@@ -97,12 +97,14 @@ begin
   on conflict (aluna_id, numero) do nothing;
   get diagnostics n_agenda = row_count;
 
-  -- 5) Observacao da planilha e entrega do plano de acao viram anotacao.
+  -- 5) Franquia, observacao da planilha e entrega do plano de acao viram anotacao.
   insert into nota_aluna (aluna_id, tipo, texto, origem)
   select n.aluna_id, 'situacao', t.texto, 'planilha: Banco de dados Moonshot'
   from _b b join _novas n using (pid)
   cross join lateral (
-    select d->>'obs' as texto where d->>'obs' is not null
+    select 'Franquia Natalia Beauty: o Moonshot Pró veio com a franquia.' as texto where (d->>'franquia')::boolean
+    union all
+    select d->>'obs' where d->>'obs' is not null
     union all
     select 'Plano de ação entregue em ' || to_char((d->>'entrega_plano')::date, 'MM/YYYY') where d->>'entrega_plano' is not null
   ) t

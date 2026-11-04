@@ -15,7 +15,8 @@ const MES: Record<string, number> = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, ju
 const LARGAS = ['CLUB', 'PRÓ', 'PRIVATE', 'IN COMPANY', 'SEM PROGRAMA']
 const PROD: Record<string, string> = {
   club: 'Moonshot Club', pro: 'Moonshot Pró', elite: 'Moonshot Elite', private: 'Moonshot Private',
-  'in company': 'Moonshot In Company', franquia: 'Moonshot Franquia',
+  // Franquia e Pro: a franqueada da Natalia Beauty ganha o Moonshot Pro. Vira anotacao.
+  'in company': 'Moonshot In Company', franquia: 'Moonshot Pró',
 }
 const PROD_ABA: Record<string, string> = {
   CLUB: 'Moonshot Club', 'PRÓ': 'Moonshot Pró', ELITE: 'Moonshot Elite', PRIVATE: 'Moonshot Private', 'IN COMPANY': 'Moonshot In Company',
@@ -116,6 +117,7 @@ function largo(d: Record<string, Celula>, aba: string, linha: number, extra: Par
     cidade: s(d['Cidade/Estado']), ramo: s(d['Ramo de atividade']), faturamento: num(d['Faturamento mensal (R$)']),
     turma: s(d['Turma / aba de matrícula']), obs: s(d['Observações / situação']), entrada: mesAno(d['Data de entrada']),
     entrega_plano: mesAno(d['Entrega do plano de ação']), c,
+    franquia: norm(d['Programa']) === 'franquia' || norm(d['Plano na matrícula']) === 'franquia',
     fech: temFech ? enxuto({
       data: dt(d['Data do fechamento']) ?? dt(d['Início do plano']), total: num(d['Valor total (R$)']), pago: num(d['Valor pago (R$)']) ?? 0,
       forma: s(d['Pagamento e forma']), plano: s(d['Plano de pagamento']),

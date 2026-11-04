@@ -17,7 +17,7 @@ update perfil set cs_responsavel_id = '70000000-0000-0000-0000-0000000000a2' whe
 insert into importacao (tipo, arquivo) values ('banco', 'BANCO DE DADOS MOONSHOT.xlsx');
 \set imp '(select max(id) from importacao where arquivo = ''BANCO DE DADOS MOONSHOT.xlsx'')'
 insert into importacao_linha (importacao_id, aba, linha, dados) values
- (:imp, 'BANCO', 1, '{"pid":9001,"nome":"Aluna Banco Um","produto":"Moonshot Pró","consultor":"Bancons","cs":"Bancoum","telefone":"11999990001","cpf":"123.456.789-01","inicio":"2025-11-25","termino":"2026-11-25","plano_meses":12,"status":"ativo","inadimplente":true,"faturamento":30000,"obs":"Aluna muito engajada","entrada":"2025-11-01","entrega_plano":"2026-01-01","c":[[1,"2025-12-01"],[2,"2026-03-01"],[3,"Não realizada"],[4,"2027-06-01"]],"origem":"PRÓ linha 3"}'),
+ (:imp, 'BANCO', 1, '{"pid":9001,"nome":"Aluna Banco Um","produto":"Moonshot Pró","consultor":"Bancons","cs":"Bancoum","telefone":"11999990001","cpf":"123.456.789-01","inicio":"2025-11-25","termino":"2026-11-25","plano_meses":12,"status":"ativo","inadimplente":true,"faturamento":30000,"obs":"Aluna muito engajada","franquia":true,"entrada":"2025-11-01","entrega_plano":"2026-01-01","c":[[1,"2025-12-01"],[2,"2026-03-01"],[3,"Não realizada"],[4,"2027-06-01"]],"origem":"PRÓ linha 3"}'),
  (:imp, 'BANCO', 2, '{"pid":9002,"nome":"Empresa Banco Dois","produto":"Moonshot In Company","consultor":"Bancons","cs":"Bancoum","inicio":"2026-10-16","status":"ativo","fech":{"data":"2026-10-16","total":60000,"pago":15000,"forma":"Pix"},"origem":"IN COMPANY linha 3"}'),
  (:imp, 'BANCO', 3, '{"pid":9003,"nome":"Aluna Banco Tres","produto":"Moonshot Club","consultor":"Vinícius","status":"cancelado","origem":"CLUB linha 3"}');
 select processar_importacao(:imp) as r \gset
@@ -32,7 +32,7 @@ select ok((select count(*) filter (where realizada_em is not null) = 3 and count
            from consultoria_agenda g join aluna a on a.id = g.aluna_id where a.pessoa_id = 9001),
           'agenda: entrada e meses passados feitos; futuro e "Não realizada" em aberto');
 select ok((select ultima_consultoria = '2026-03-01' from aluna where pessoa_id = 9001), 'última consultoria = último mês passado');
-select ok((select count(*) = 2 from nota_aluna n join aluna a on a.id = n.aluna_id where a.pessoa_id = 9001), 'observação e entrega do plano viram anotação');
+select ok((select count(*) = 3 and bool_or(texto like 'Franquia%') from nota_aluna n join aluna a on a.id = n.aluna_id where a.pessoa_id = 9001), 'franquia, observação e entrega do plano viram anotação');
 select ok((select e.marco_consultoria = 2 from card c join etapa e on e.id = c.etapa_id join aluna a on a.id = c.aluna_id
            where a.pessoa_id = 9001 and c.funil_id = 'consultoria'), 'card do ciclo na etapa da 2ª consultoria');
 select ok((select valor_total = 60000 and saldo = 45000 from fechamento f join aluna a on a.id = f.aluna_id where a.pessoa_id = 9002),
