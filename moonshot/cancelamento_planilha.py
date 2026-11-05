@@ -19,7 +19,10 @@ COLUNAS_CANONICAS = ['nome', 'email', 'contato', 'solicitante', 'data', 'prazo',
                      'motivo', 'observacoes', 'responsavel', 'resumo', 'status']
 
 SINONIMOS = {
-    'nome': ('nome', 'nome completo', 'aluna', 'cliente', 'p'),
+    # 'p' e 'coluna 1' sao cabecalhos que ninguem escreveu de proposito: a aba
+    # MAQUINA tem 'P' numa planilha e 'Coluna 1' na outra, e sem os dois as 80
+    # linhas dela ficavam de fora da leitura.
+    'nome': ('nome', 'nome completo', 'aluna', 'cliente', 'p', 'coluna 1'),
     'email': ('e-mail', 'email'),
     'contato': ('contato', 'telefone'),
     'solicitante': ('solicitante',),
