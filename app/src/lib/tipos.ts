@@ -14,6 +14,7 @@ export interface Perfil {
   cs_responsavel_id?: string | null
   trocar_senha: boolean
   senha_provisoria_em: string | null
+  foto?: string | null
 }
 
 export interface Aluna {

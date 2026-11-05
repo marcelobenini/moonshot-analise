@@ -4,6 +4,7 @@ import { Home, KanbanSquare, Users, MessageSquare, UserCog, LogOut, MoreHorizont
 import { useSessao } from '../lib/sessao'
 import { PAPEL } from '../lib/util'
 import { Sino } from './Sino'
+import { MenuConta } from './MinhaConta'
 
 export function Layout() {
   const { eu, sair } = useSessao()
@@ -56,9 +57,7 @@ export function Layout() {
           {nav}
         </div>
         <div className="border-t border-white/10 pt-3">
-          <div className="px-3 text-sm font-medium text-white">{eu?.nome}</div>
-          <div className="px-3 text-xs uppercase tracking-wider text-ouro">{eu?.papel ? PAPEL[eu.papel] : ''}</div>
-          <button className="btn mt-2 w-full justify-start text-slate-300 hover:bg-white/5 hover:text-white" onClick={sair}><LogOut size={16} /> Sair</button>
+          <MenuConta abrePara="cima" comNome />
         </div>
       </aside>
 
@@ -70,9 +69,7 @@ export function Layout() {
           </div>
           <div className="flex items-center gap-2">
             <Sino />
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-noite text-xs font-semibold text-ouro lg:hidden" title={eu?.nome}>
-              {(eu?.nome ?? '').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
-            </span>
+            <div className="lg:hidden"><MenuConta /></div>
           </div>
         </header>
         <main className="mx-auto max-w-[1600px] p-4 pb-28 sm:p-6 sm:pb-28 lg:pb-6"><Outlet /></main>
