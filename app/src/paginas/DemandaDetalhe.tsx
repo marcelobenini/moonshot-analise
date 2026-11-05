@@ -6,6 +6,7 @@ import { useSessao } from '../lib/sessao'
 import type { Demanda, DemandaComentario, StatusDemanda } from '../lib/tipos'
 import { PAPEL, PRIORIDADE, STATUS_DEMANDA, TIPO_DEMANDA, data, dataHora, mensagemErro } from '../lib/util'
 import { Carregando, Erro, EscolherPessoa, Selo, Vazio } from '../componentes/ui'
+import { TextoLongo } from '../componentes/Ditado'
 
 export function DemandaDetalhe() {
   const { id } = useParams()
@@ -113,7 +114,7 @@ export function DemandaDetalhe() {
           ))}
         </ol>
         <form onSubmit={comentar} className="flex gap-2">
-          <textarea className="entrada min-h-11" rows={1} placeholder="Escreva uma resposta…" value={texto}
+          <TextoLongo className="entrada min-h-11" rows={1} placeholder="Escreva uma resposta…" value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); comentar(e) } }} />
           <button className="btn-primario px-3" aria-label="Enviar"><Send size={16} /></button>

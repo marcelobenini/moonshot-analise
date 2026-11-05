@@ -6,6 +6,7 @@ import { useSessao } from '../lib/sessao'
 import type { Aluna, Demanda, Papel } from '../lib/tipos'
 import { PAPEL, PRIORIDADE, STATUS_DEMANDA, TIPO_DEMANDA, data, ha, mensagemErro } from '../lib/util'
 import { Campo, Carregando, Erro, EscolherAluna, EscolherPessoa, Modal, Selo, Titulo, Vazio } from '../componentes/ui'
+import { TextoLongo } from '../componentes/Ditado'
 
 type Aba = 'para_mim' | 'abri' | 'equipe' | 'todas'
 
@@ -104,7 +105,7 @@ export function NovaDemanda({ fechar, criada, alunaInicial }: { fechar: () => vo
     <Modal titulo="Nova demanda" aberto fechar={fechar} largo>
       <form onSubmit={criar} className="space-y-4">
         <Campo rotulo="O que você precisa? *"><input className="entrada" required autoFocus value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></Campo>
-        <Campo rotulo="Detalhes"><textarea className="entrada min-h-24" value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} /></Campo>
+        <Campo rotulo="Detalhes"><TextoLongo className="entrada min-h-24" value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} /></Campo>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Campo rotulo="Tipo">
             <select className="entrada" value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value as Demanda['tipo'] })}>

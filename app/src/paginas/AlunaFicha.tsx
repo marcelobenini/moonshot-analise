@@ -14,6 +14,7 @@ import { Agenda, Contratos, EventosDaAluna, Notas } from './FichaExtras'
 import { EnviarComercial, LinhaDoTempo, MudarStatus, PainelPotencial, PerfilNegocio, RegistrarContato } from './FichaAcoes'
 import { CabecalhoAluna, ComoEsta, Jornada, Mimos } from './FichaVisual'
 import { Arquivos, AtualizarSaude, FaturamentoMensal, HistoricoSaude, exportarFichaPdf } from './FichaEvolucao'
+import { TextoLongo } from '../componentes/Ditado'
 
 export function AlunaFicha() {
   const { id } = useParams()
@@ -300,7 +301,7 @@ function RegistrarConsultoria({ aluna, ultimo, fechar, salvo }: {
           )}
         </div>
         <Campo rotulo="Situação da aluna *" dica="O relato: como está o negócio, o que foi tratado, o que preocupa. Visível só para quem atende a aluna e a coordenação.">
-          <textarea className="entrada min-h-32" required value={f.situacao} onChange={(e) => setF({ ...f, situacao: e.target.value })} />
+          <TextoLongo className="entrada min-h-32" required value={f.situacao} onChange={(e) => setF({ ...f, situacao: e.target.value })} />
         </Campo>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Campo rotulo="Faturamento mensal atual (R$)"><input className="entrada" type="number" min="0" value={f.faturamento_mensal} onChange={(e) => setF({ ...f, faturamento_mensal: e.target.value })} /></Campo>

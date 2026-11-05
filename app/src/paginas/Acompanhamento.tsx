@@ -7,6 +7,7 @@ import type { Acompanhamento as Registro, AgendaConsultoria, Aluna, JornadaEtapa
 import { EDITA_ALUNA, SAUDE, data, mensagemErro } from '../lib/util'
 import { Campo, Carregando, Erro, Gaveta, Modal, Selo, Titulo, Vazio } from '../componentes/ui'
 import { Segmento } from '../componentes/painel'
+import { TextoLongo } from '../componentes/Ditado'
 
 // O Elite segue o roteiro do Pro.
 const PROGRAMAS = [
@@ -278,9 +279,9 @@ function FormEtapa({ aluna, etapa, encontro, agendada, salvo }: {
             </Campo>
           )}
           <Campo rotulo={consultoria ? 'Como foi *' : 'Como foi'}>
-            <textarea className="entrada min-h-24" value={resumo} onChange={(e) => setResumo(e.target.value)} />
+            <TextoLongo className="entrada min-h-24" value={resumo} onChange={(e) => setResumo(e.target.value)} />
           </Campo>
-          <Campo rotulo="Próximos passos"><textarea className="entrada min-h-20" value={passos} onChange={(e) => setPassos(e.target.value)} /></Campo>
+          <Campo rotulo="Próximos passos"><TextoLongo className="entrada min-h-20" value={passos} onChange={(e) => setPassos(e.target.value)} /></Campo>
           <Campo rotulo={consultoria ? 'Próximo encontro em' : 'Próxima data'} dica={consultoria ? 'Já agenda a próxima consultoria.' : undefined}>
             <input type="date" className="entrada" value={proxima} onChange={(e) => setProxima(e.target.value)} />
           </Campo>
@@ -363,7 +364,7 @@ function EditarRoteiro({ programa, etapas, fechar, salvo }: { programa: string; 
                 )}
               </div>
               <div className="pl-7">
-                <textarea className="entrada min-h-12 text-xs" placeholder="Orientação para o consultor (opcional)" value={l.descricao} onChange={(e) => muda(i, { descricao: e.target.value })} />
+                <TextoLongo className="entrada min-h-12 text-xs" placeholder="Orientação para o consultor (opcional)" value={l.descricao} onChange={(e) => muda(i, { descricao: e.target.value })} />
               </div>
             </li>
           ))}

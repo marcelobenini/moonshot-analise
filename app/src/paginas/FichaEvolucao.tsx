@@ -7,6 +7,7 @@ import { EDITA_ALUNA, SAUDE, data, dataHora, hoje, mensagemErro, reais } from '.
 import { Campo, Erro, Modal, Selo } from '../componentes/ui'
 import { Linhas } from '../componentes/graficos'
 import { baixarPdf, type Coluna } from '../lib/exportar'
+import { TextoLongo } from '../componentes/Ditado'
 
 const mesRotulo = (mes: string) => { const [a, m] = mes.split('-'); return `${m}/${a}` }
 const pct = (v: number | null | undefined) => v == null ? '' : `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`
@@ -122,7 +123,7 @@ function MesForm({ aluna, m, fechar, salvo }: { aluna: Aluna; m: Partial<Faturam
         <Campo rotulo="Mês"><input className="entrada" type="month" required value={mes} disabled={!!m.id} onChange={(e) => setMes(e.target.value)} /></Campo>
         <Campo rotulo="Faturamento (R$)"><input className="entrada" inputMode="decimal" placeholder="35000" value={fat} onChange={(e) => setFat(e.target.value)} /></Campo>
         <Campo rotulo="Rentabilidade (%)" dica="Margem de lucro do mês."><input className="entrada" inputMode="decimal" placeholder="22,5" value={rent} onChange={(e) => setRent(e.target.value)} /></Campo>
-        <div className="sm:col-span-3"><Campo rotulo="Observação"><textarea className="entrada min-h-20" value={obs} onChange={(e) => setObs(e.target.value)} /></Campo></div>
+        <div className="sm:col-span-3"><Campo rotulo="Observação"><TextoLongo className="entrada min-h-20" value={obs} onChange={(e) => setObs(e.target.value)} /></Campo></div>
         <div className="sm:col-span-3"><Erro msg={erro} /></div>
         <div className="flex justify-between gap-2 sm:col-span-3">
           {m.id ? <button type="button" className="btn-fantasma text-red-600" onClick={apagar}><Trash2 size={15} /> Apagar mês</button> : <span />}
@@ -169,7 +170,7 @@ export function AtualizarSaude({ aluna, fechar, salvo }: { aluna: Aluna; fechar:
           )}
         </div>
         <Campo rotulo="Observação *" dica="Ex.: sumiu depois da 1ª consultoria; voltou a responder e retomou o plano.">
-          <textarea className="entrada min-h-24" required value={obs} onChange={(e) => setObs(e.target.value)} />
+          <TextoLongo className="entrada min-h-24" required value={obs} onChange={(e) => setObs(e.target.value)} />
         </Campo>
         <Erro msg={erro} />
         <div className="flex justify-end gap-2">

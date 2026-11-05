@@ -8,6 +8,7 @@ import type { Aluna, Card, CardEvento, CampoFunil, Etapa, Funil } from '../lib/t
 import { SAUDE, data, dataHora, diasDesde, linkWhats, mensagemErro, reais, rotuloOrigem } from '../lib/util'
 import { Campo, Carregando, Erro, EscolherAluna, EscolherPessoa, Gaveta, Modal, Potencial } from '../componentes/ui'
 import { PedirMotivo } from './Funis'
+import { TextoLongo } from '../componentes/Ditado'
 
 export function CardGaveta({ id, fechar, mudou, encaixado = false }: { id: number; fechar: () => void; mudou: () => void; encaixado?: boolean }) {
   const { funis, etapas, nomeDe, podeEditar } = useSessao()
@@ -324,7 +325,7 @@ function CampoDinamico({ campo, valor, mudar }: { campo: CampoFunil; valor: stri
             {campo.opcoes?.map((o) => <option key={o} value={o}>{o.replace(/_/g, ' ')}</option>)}
           </select>
         ) : campo.tipo === 'textao' ? (
-          <textarea className="entrada min-h-20" value={String(v)} onChange={(e) => mudar(e.target.value || null)} />
+          <TextoLongo className="entrada min-h-20" value={String(v)} onChange={(e) => mudar(e.target.value || null)} />
         ) : (
           <input className="entrada" value={String(v)}
             type={campo.tipo === 'data' ? 'date' : campo.tipo === 'numero' || campo.tipo === 'moeda' ? 'number' : 'text'}

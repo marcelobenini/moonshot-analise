@@ -6,6 +6,7 @@ import { useSessao } from '../lib/sessao'
 import type { Aluna, Fechamento, FechamentoRegistro } from '../lib/tipos'
 import { NIVEL, PRODUTOS_FECHAMENTO, STATUS_CASO, data, dataHora, mensagemErro, reais } from '../lib/util'
 import { Campo, Carregando, EscolherAluna, EscolherPessoa, Erro, Gaveta, Selo } from '../componentes/ui'
+import { TextoLongo } from '../componentes/Ditado'
 
 /** Caso de In Company / Private: financeiro, situacao e o historico de registros. */
 export function CasoGaveta({ id, fechar, mudou }: { id: number | 'novo'; fechar: () => void; mudou: () => void }) {
@@ -171,7 +172,7 @@ function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) 
     <form onSubmit={salvar} className="space-y-3 rounded-xl border border-ouro/40 p-4">
       <h3 className="font-display text-lg font-semibold text-noite">Registrar acompanhamento</h3>
       <Campo rotulo="Transcrição da reunião" dica="Cole o texto ou suba o arquivo. A transcrição fica arquivada no histórico do caso.">
-        <textarea className="entrada min-h-28 text-xs" value={transcricao} onChange={(e) => setTranscricao(e.target.value)} />
+        <TextoLongo className="entrada min-h-28 text-xs" value={transcricao} onChange={(e) => setTranscricao(e.target.value)} />
       </Campo>
       <div className="flex flex-wrap items-center gap-2">
         <label className="btn-secundario cursor-pointer"><FileText size={15} /> Subir arquivo
@@ -179,7 +180,7 @@ function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) 
         </label>
       </div>
       <Campo rotulo="O que aconteceu">
-        <textarea className="entrada min-h-20" value={resumo} onChange={(e) => setResumo(e.target.value)} />
+        <TextoLongo className="entrada min-h-20" value={resumo} onChange={(e) => setResumo(e.target.value)} />
       </Campo>
       <div className="grid gap-3 sm:grid-cols-2">
         <Campo rotulo="Status do caso">
@@ -195,7 +196,7 @@ function NovoRegistro({ caso, salvo }: { caso: Fechamento; salvo: () => void }) 
         </Campo>
       </div>
       <Campo rotulo="Próximas ações">
-        <textarea className="entrada min-h-20" value={acoes} onChange={(e) => setAcoes(e.target.value)} />
+        <TextoLongo className="entrada min-h-20" value={acoes} onChange={(e) => setAcoes(e.target.value)} />
       </Campo>
       <Campo rotulo="Próximo passo em">
         <input type="date" className="entrada" value={quando} onChange={(e) => setQuando(e.target.value)} />
@@ -257,8 +258,8 @@ function FormFechamento({ caso, cancelar, salvo }: { caso: Fechamento | null; ca
         <Campo rotulo="Como já pagou"><input className="entrada" value={f.forma_pagamento ?? ''} onChange={(e) => muda('forma_pagamento', e.target.value)} /></Campo>
         <Campo rotulo="Meio de pagamento futuro"><input className="entrada" value={f.meio_pagamento_futuro ?? ''} onChange={(e) => muda('meio_pagamento_futuro', e.target.value)} /></Campo>
       </div>
-      <Campo rotulo="Plano de pagamento"><textarea className="entrada min-h-16" value={f.plano_pagamento ?? ''} onChange={(e) => muda('plano_pagamento', e.target.value)} /></Campo>
-      <Campo rotulo="Observação"><textarea className="entrada min-h-16" value={f.observacao ?? ''} onChange={(e) => muda('observacao', e.target.value)} /></Campo>
+      <Campo rotulo="Plano de pagamento"><TextoLongo className="entrada min-h-16" value={f.plano_pagamento ?? ''} onChange={(e) => muda('plano_pagamento', e.target.value)} /></Campo>
+      <Campo rotulo="Observação"><TextoLongo className="entrada min-h-16" value={f.observacao ?? ''} onChange={(e) => muda('observacao', e.target.value)} /></Campo>
       <Erro msg={erro} />
       <div className="flex justify-end gap-2">
         <button type="button" className="btn-secundario" onClick={cancelar}>Cancelar</button>

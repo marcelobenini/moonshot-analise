@@ -6,6 +6,7 @@ import { useSessao } from '../lib/sessao'
 import type { AgendaConsultoria, Aluna, Contrato, NotaAluna, Participante } from '../lib/tipos'
 import { EDITA_ALUNA, FINANCEIRO, NOTA, PRODUTOS, STATUS_CONTRATO, data, dataHora, hoje, mensagemErro } from '../lib/util'
 import { Campo, Erro, Modal, Selo } from '../componentes/ui'
+import { TextoLongo } from '../componentes/Ditado'
 
 // Contratos: uma linha por compra. O que a planilha resolvia repetindo a
 // aluna em abas de turma diferentes.
@@ -186,7 +187,7 @@ function AgendaForm({ aluna, numero, g, fechar, salvo }: { aluna: Aluna; numero:
           <Campo rotulo="Realizada em"><input className="entrada" type="date" value={realizada} onChange={(e) => setRealizada(e.target.value)} /></Campo>
         )}
         <div className="sm:col-span-2">
-          <Campo rotulo="Observação"><textarea className="entrada min-h-20" value={obs} onChange={(e) => setObs(e.target.value)} /></Campo>
+          <Campo rotulo="Observação"><TextoLongo className="entrada min-h-20" value={obs} onChange={(e) => setObs(e.target.value)} /></Campo>
         </div>
         <div className="sm:col-span-2"><Erro msg={erro} /></div>
         <div className="flex justify-end gap-2 sm:col-span-2">
@@ -236,7 +237,7 @@ export function Notas({ aluna }: { aluna: Aluna }) {
     <section className="space-y-3">
       <h2 className="font-semibold">Anotações</h2>
       <form onSubmit={anotar} className="flex gap-2">
-        <input className="entrada" placeholder="Anotar algo sobre a aluna…" value={texto} onChange={(e) => setTexto(e.target.value)} />
+        <TextoLongo className="entrada" rows={2} placeholder="Anotar algo sobre a aluna… (ou toque no microfone e fale)" value={texto} onChange={(e) => setTexto(e.target.value)} />
         <button className="btn-primario px-3" aria-label="Anotar"><Send size={16} /></button>
       </form>
       <Erro msg={erro} />
@@ -281,7 +282,7 @@ function NotaForm({ n, fechar, salvo }: { n: NotaAluna; fechar: () => void; salv
             {[...new Set([...Object.keys(NOTA), tipo])].map((k) => <option key={k} value={k}>{NOTA[k] ?? k}</option>)}
           </select>
         </Campo>
-        <Campo rotulo="Texto"><textarea className="entrada min-h-32" value={texto} onChange={(e) => setTexto(e.target.value)} /></Campo>
+        <Campo rotulo="Texto"><TextoLongo className="entrada min-h-32" value={texto} onChange={(e) => setTexto(e.target.value)} /></Campo>
         <Erro msg={erro} />
         <div className="flex justify-end gap-2">
           <button type="button" className="btn-secundario" onClick={fechar}>Cancelar</button>

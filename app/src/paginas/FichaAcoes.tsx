@@ -6,6 +6,7 @@ import { useSessao } from '../lib/sessao'
 import type { Acontecimento, Aluna, PotencialDetalhe } from '../lib/tipos'
 import { CANAIS, FINANCEIRO, NOTA, SAUDE, STATUS_CONTRATO, data, mensagemErro, reais } from '../lib/util'
 import { Campo, Erro, Modal, Potencial, Selo } from '../componentes/ui'
+import { TextoLongo } from '../componentes/Ditado'
 
 // Perfil do negocio: resumo, dores e objetivos. E o que a comercial le
 // antes de ligar e o que a CS nova le antes do primeiro contato.
@@ -47,13 +48,13 @@ export function PerfilNegocio({ aluna, pode, mudou }: { aluna: Aluna; pode: bool
         <Modal titulo="Perfil do negócio" aberto fechar={() => setEditar(false)} largo>
           <form onSubmit={salvar} className="space-y-4">
             <Campo rotulo="Resumo" dica="Quem é, o que vende, tamanho, momento. Três ou quatro linhas.">
-              <textarea className="entrada min-h-24" value={f.resumo} onChange={(e) => setF({ ...f, resumo: e.target.value })} />
+              <TextoLongo className="entrada min-h-24" value={f.resumo} onChange={(e) => setF({ ...f, resumo: e.target.value })} />
             </Campo>
             <Campo rotulo="Dores" dica="O que trava o negócio hoje, nas palavras dela.">
-              <textarea className="entrada min-h-24" value={f.dores} onChange={(e) => setF({ ...f, dores: e.target.value })} />
+              <TextoLongo className="entrada min-h-24" value={f.dores} onChange={(e) => setF({ ...f, dores: e.target.value })} />
             </Campo>
             <Campo rotulo="Objetivos" dica="Onde quer chegar: faturamento, equipe, unidades, prazo.">
-              <textarea className="entrada min-h-24" value={f.objetivos} onChange={(e) => setF({ ...f, objetivos: e.target.value })} />
+              <TextoLongo className="entrada min-h-24" value={f.objetivos} onChange={(e) => setF({ ...f, objetivos: e.target.value })} />
             </Campo>
             <Campo rotulo="Instagram"><input className="entrada" placeholder="@perfil" value={f.instagram} onChange={(e) => setF({ ...f, instagram: e.target.value })} /></Campo>
             <Erro msg={erro} />
@@ -107,7 +108,7 @@ export function RegistrarContato({ aluna, fechar, salvo }: { aluna: Aluna; fecha
           </div>
         </Campo>
         <Campo rotulo="O que foi falado *">
-          <textarea className="entrada min-h-28" required autoFocus value={f.texto} onChange={(e) => setF({ ...f, texto: e.target.value })} />
+          <TextoLongo className="entrada min-h-28" required autoFocus value={f.texto} onChange={(e) => setF({ ...f, texto: e.target.value })} />
         </Campo>
         <Campo rotulo="Retornar em" dica="Aparece no Início de quem atende a aluna quando chegar o dia.">
           <div className="flex flex-wrap items-center gap-2">
@@ -188,7 +189,7 @@ export function MudarStatus({ aluna, fechar, salvo }: { aluna: Aluna; fechar: ()
         </div>
         {mudou && (
           <Campo rotulo={exige ? 'Motivo *' : 'Motivo'} dica="Fica no histórico da aluna e vai no aviso para o consultor e a CS.">
-            <textarea className="entrada min-h-20" required={!!exige} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+            <TextoLongo className="entrada min-h-20" required={!!exige} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
           </Campo>
         )}
         {mudaContrato && contrato === 'em_cancelamento' && (
@@ -240,11 +241,11 @@ export function EnviarComercial({ aluna, fechar, enviado }: { aluna: Aluna; fech
           <Campo rotulo="Faturamento mensal atual (R$)"><input className="entrada" type="number" min="0" value={f.faturamento} onChange={(e) => setF({ ...f, faturamento: e.target.value })} /></Campo>
         </div>
         <Campo rotulo="Por que é uma oportunidade? *" dica="Porte, momento, interesse que ela demonstrou.">
-          <textarea className="entrada min-h-24" required value={f.justificativa} onChange={(e) => setF({ ...f, justificativa: e.target.value })} />
+          <TextoLongo className="entrada min-h-24" required value={f.justificativa} onChange={(e) => setF({ ...f, justificativa: e.target.value })} />
         </Campo>
         <Campo rotulo="Melhor canal e horário"><input className="entrada" placeholder="WhatsApp, à tarde" value={f.canal} onChange={(e) => setF({ ...f, canal: e.target.value })} /></Campo>
         <Campo rotulo="Observação para a comercial" dica="O que ela precisa saber antes de ligar: objeções, sócio, cuidado com algum assunto.">
-          <textarea className="entrada min-h-20" value={f.observacao} onChange={(e) => setF({ ...f, observacao: e.target.value })} />
+          <TextoLongo className="entrada min-h-20" value={f.observacao} onChange={(e) => setF({ ...f, observacao: e.target.value })} />
         </Campo>
         <Erro msg={erro} />
         <div className="flex justify-end gap-2">
