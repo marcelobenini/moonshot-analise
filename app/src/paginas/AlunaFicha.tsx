@@ -205,6 +205,8 @@ export function AlunaFicha() {
               <h2 className="mb-3 font-display text-xl font-semibold text-noite">Dados da matrícula</h2>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <Dado rotulo="Produto">{aluna.produto ?? ''}</Dado>
+                <Dado rotulo="Telefone">{aluna.telefone ? <a className="flex items-center gap-1 text-indigo-700" href={`https://wa.me/55${aluna.telefone.replace(/\D/g, '').replace(/^55/, '')}`} target="_blank" rel="noreferrer"><Phone size={13} />{aluna.telefone}</a> : ''}</Dado>
+                <Dado rotulo="E-mail">{aluna.email ? <a className="flex items-center gap-1 truncate text-indigo-700" href={`mailto:${aluna.email}`} title={aluna.email}><Mail size={13} />{aluna.email}</a> : ''}</Dado>
                 <Dado rotulo="Turma">{aluna.turma ?? ''}</Dado>
                 <Dado rotulo="Início">{data(aluna.inicio)}</Dado>
                 <Dado rotulo="Término">{data(aluna.termino)}</Dado>
