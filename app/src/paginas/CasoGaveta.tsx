@@ -20,7 +20,7 @@ export function CasoGaveta({ id, fechar, mudou }: { id: number | 'novo'; fechar:
     if (id === 'novo') return
     const [{ data: f }, { data: r }] = await Promise.all([
       supabase.from('fechamento').select('*').eq('id', id).maybeSingle(),
-      supabase.from('fechamento_registro').select('*').eq('fechamento_id', id).order('criado_em', { ascending: false }),
+      supabase.from('fechamento_registro').select('*').eq('fechamento_id', id).order('data', { ascending: false }).order('criado_em', { ascending: false }),
     ])
     setCaso((f ?? null) as Fechamento | null)
     setRegistros((r ?? []) as FechamentoRegistro[])
@@ -117,7 +117,9 @@ function Registro({ r, autor }: { r: FechamentoRegistro; autor: string }) {
     <li className="rounded-xl border border-slate-200 p-3 text-sm">
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
         <span className="font-medium text-noite">{autor}</span>
-        <span>{dataHora(r.criado_em)}</span>
+        <span>{r.origem ? data(r.data) : dataHora(r.criado_em)}</span>
+        {r.origem?.match(/^(regcon|acomp):/) && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">da ficha da aluna</span>}
+        {r.origem?.startsWith('relatorio:') && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">relatório de status</span>}
         {r.tipo === 'transcricao' && <span className="inline-flex items-center gap-1"><FileText size={12} /> transcrição</span>}
         {r.status && <Selo cor={STATUS_CASO[r.status]?.cor ?? ''}>{STATUS_CASO[r.status]?.rotulo}</Selo>}
         {r.nivel && <span>Nível {r.nivel}</span>}

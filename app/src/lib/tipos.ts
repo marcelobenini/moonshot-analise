@@ -308,6 +308,7 @@ export interface FechamentoRegistro {
   nivel: number | null
   acoes: string | null
   proxima_acao_em: string | null
+  origem?: string | null
   criado_em: string
 }
 

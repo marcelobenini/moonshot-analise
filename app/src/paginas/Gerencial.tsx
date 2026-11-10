@@ -293,7 +293,7 @@ export function Fechamentos() {
   return (
     <div className="space-y-5">
       <Titulo>Fechamentos</Titulo>
-      <p className="text-sm text-slate-600">Seus casos de In Company e Private. Abra um caso para registrar a reunião, subir a transcrição e atualizar status, nível e ações.</p>
+      <p className="text-sm text-slate-600">Seus casos de In Company e Private. O que você registra na ficha da aluna ou no Acompanhamento (consultorias, plano, visita) entra aqui sozinho; abra o caso só para ajustar status, nível ou subir uma transcrição.</p>
       <ListaCasos />
     </div>
   )
