@@ -9,12 +9,12 @@ BANCO=moonshot_teste_$$
 psql -q -v ON_ERROR_STOP=1 -d postgres -c "create database $BANCO" >/dev/null
 trap 'psql -q -d postgres -c "drop database if exists $BANCO" >/dev/null' EXIT
 for vez in 1 2; do
-  for f in schema.sql sistema.sql sistema_funis.sql sistema_importar.sql sistema_planilhas.sql sistema_crm.sql sistema_seguranca.sql sistema_potencial.sql sistema_painel.sql sistema_documento.sql sistema_gerencial.sql sistema_permissoes.sql sistema_entrada.sql sistema_acompanhamento.sql sistema_cs.sql sistema_banco.sql sistema_edicao.sql sistema_evolucao.sql sistema_conta.sql sistema_conexao.sql; do
+  for f in schema.sql sistema.sql sistema_funis.sql sistema_importar.sql sistema_planilhas.sql sistema_crm.sql sistema_seguranca.sql sistema_potencial.sql sistema_painel.sql sistema_documento.sql sistema_gerencial.sql sistema_permissoes.sql sistema_entrada.sql sistema_acompanhamento.sql sistema_cs.sql sistema_banco.sql sistema_edicao.sql sistema_evolucao.sql sistema_conta.sql sistema_conexao.sql sistema_unir.sql; do
     psql -q -v ON_ERROR_STOP=1 -d "$BANCO" -f "$f" 2>&1 | { grep -v NOTICE || true; }
   done
 done
 # As funcoes auxiliares (ok, como, barrado...) ficam de um arquivo para o outro.
-cat teste_sistema.sql teste_planilhas.sql teste_crm.sql teste_seguranca.sql teste_potencial.sql teste_documento.sql teste_gerencial.sql teste_entrada.sql teste_acompanhamento.sql teste_cs.sql teste_banco.sql teste_edicao.sql teste_evolucao.sql teste_conta.sql teste_conexao.sql | grep -v '^\\echo' \
+cat teste_sistema.sql teste_planilhas.sql teste_crm.sql teste_seguranca.sql teste_potencial.sql teste_documento.sql teste_gerencial.sql teste_entrada.sql teste_acompanhamento.sql teste_cs.sql teste_banco.sql teste_edicao.sql teste_evolucao.sql teste_conta.sql teste_conexao.sql teste_unir.sql | grep -v '^\\echo' \
   | psql -q -v ON_ERROR_STOP=1 -d "$BANCO" -o /dev/null 2>&1 \
   | sed -n 's/.*NOTICE:  \(ok .*\)/\1/p; /FALHOU\|ERROR/p'
 echo 'TODOS OS TESTES PASSARAM'
